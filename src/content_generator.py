@@ -347,52 +347,82 @@ class ContentGenerator:
     def generate_npc(self, archetype_name: Optional[str] = None,
                     location_id: Optional[str] = None,
                     race: Optional[str] = None,
-                    faction: Optional[str] = None) -> Dict[str, Any]:
+                    faction: Optional[str] = None,
+                    profession_names: Optional[List[str]] = None) -> Dict[str, Any]:
         """
-        Generate a random NPC based on an archetype.
+        Generate a random NPC based on profession(s).
 
         Args:
-            archetype_name: Specific archetype to use (e.g., "blacksmith").
-                           If None, selects random archetype.
+            archetype_name: DEPRECATED - Use profession_names instead. Single profession for backward compatibility.
+            profession_names: List of professions (e.g., ["blacksmith", "merchant"]).
+                            If None and archetype_name is None, generates NPC with random single profession.
+                            If empty list [], generates NPC with no professions.
             location_id: ID of the location where this NPC resides.
-            race: Specific race to use. If None, selects from archetype's possible_races.
-            faction: Specific faction to use. If None, selects from archetype's possible_factions.
+            race: Specific race to use. If None, selects from profession's possible_races or random.
+            faction: Specific faction to use. If None, selects from profession's possible_factions.
 
         Returns:
             Dictionary containing NPC properties including:
             - name: Full NPC name
-            - title: NPC title/role
-            - archetype: Base archetype
+            - title: NPC title/role (based on professions)
+            - professions: List of profession names
             - race: NPC race
-            - faction: NPC faction
-            - stats: Stat values
-            - skills: List of skills
+            - faction: NPC faction (optional)
+            - stats: Stat values (averaged from all professions)
+            - skills: Combined list of skills from all professions
             - dialogue: Random dialogue hook
             - description: Dynamic description
-            - inventory: List of items
-            - location: Location ID reference
+            - inventory: Combined items from all professions
+            - location: Location ID reference (optional)
         """
-        # Select archetype
-        if archetype_name is None:
-            archetype_name = self.rng.choice(list(self.npcs_config["archetypes"].keys()))
+        # Handle backward compatibility with archetype_name
+        if profession_names is None:
+            if archetype_name is not None:
+                profession_names = [archetype_name]
+            else:
+                # Random single profession by default
+                profession_names = [self.rng.choice(list(self.npcs_config["archetypes"].keys()))]
 
-        archetype = self.npcs_config["archetypes"][archetype_name]
+        # profession_names can be an empty list for NPCs with no profession
+        professions = []
+        for prof_name in profession_names:
+            if prof_name in self.npcs_config["archetypes"]:
+                professions.append(self.npcs_config["archetypes"][prof_name])
+            else:
+                raise ValueError(f"Unknown profession: {prof_name}")
 
-        # Select race
-        if race is None and "possible_races" in archetype:
-            race = self.rng.choice(archetype["possible_races"])
-        elif race is None:
-            race = "human"  # Default fallback
+        # If no professions, use generic NPC generation
+        if len(professions) == 0:
+            return self._generate_npc_no_profession(race, faction, location_id)
 
-        # Select faction
-        if faction is None and "possible_factions" in archetype:
-            faction = self.rng.choice(archetype["possible_factions"])
+        # Use first profession as primary for certain attributes
+        primary_profession = professions[0]
+
+        # Select race - check all professions for possible races
+        if race is None:
+            all_possible_races = []
+            for prof in professions:
+                if "possible_races" in prof:
+                    all_possible_races.extend(prof["possible_races"])
+            if all_possible_races:
+                race = self.rng.choice(all_possible_races)
+            else:
+                race = "human"  # Default fallback
+
+        # Select faction - check all professions for possible factions
+        if faction is None:
+            all_possible_factions = []
+            for prof in professions:
+                if "possible_factions" in prof:
+                    all_possible_factions.extend(prof["possible_factions"])
+            if all_possible_factions:
+                faction = self.rng.choice(all_possible_factions)
 
         # Get race data
         race_data = self.races_config["races"].get(race, self.races_config["races"]["human"])
 
-        # Generate name (use race-specific names if archetype requests it)
-        if archetype.get("use_race_names", False) and race in self.races_config["races"]:
+        # Generate name (use race-specific names if primary profession requests it)
+        if primary_profession.get("use_race_names", False) and race in self.races_config["races"]:
             # Use race-specific names
             gender = self.rng.choice(["male", "female"])
             if gender == "male" and "first_names_male" in race_data:
@@ -400,21 +430,31 @@ class ContentGenerator:
             elif gender == "female" and "first_names_female" in race_data:
                 first_name = self.rng.choice(race_data["first_names_female"])
             else:
-                first_name = self.rng.choice(archetype["first_names"])
+                first_name = self.rng.choice(primary_profession["first_names"])
 
             if "last_names" in race_data:
                 last_name = self.rng.choice(race_data["last_names"])
             else:
-                last_name = self.rng.choice(archetype["last_names"])
+                last_name = self.rng.choice(primary_profession["last_names"])
         else:
-            # Use archetype names
-            first_name = self.rng.choice(archetype["first_names"])
-            last_name = self.rng.choice(archetype["last_names"])
+            # Use primary profession names
+            first_name = self.rng.choice(primary_profession["first_names"])
+            last_name = self.rng.choice(primary_profession["last_names"])
 
         full_name = f"{first_name} {last_name}"
 
-        # Get base stats from archetype
-        stats = archetype["base_stats"].copy()
+        # Combine stats from all professions (average them)
+        combined_stats = {}
+        for prof in professions:
+            for stat, value in prof["base_stats"].items():
+                if stat not in combined_stats:
+                    combined_stats[stat] = []
+                combined_stats[stat].append(value)
+
+        # Average the stats
+        stats = {}
+        for stat, values in combined_stats.items():
+            stats[stat] = sum(values) // len(values)
 
         # Apply racial stat modifiers
         if "stat_modifiers" in race_data:
@@ -430,36 +470,161 @@ class ContentGenerator:
             variation = self.rng.randint(-1, 1)
             stats[stat] = max(1, stats[stat] + variation)
 
-        # Select dialogue hook
-        dialogue = self.rng.choice(archetype["dialogue_hooks"])
+        # Combine skills from all professions (unique skills)
+        all_skills = []
+        for prof in professions:
+            all_skills.extend(prof["skills"])
+        skills = list(set(all_skills))  # Remove duplicates
+
+        # Select dialogue hook from random profession
+        dialogue_profession = self.rng.choice(professions)
+        dialogue = self.rng.choice(dialogue_profession["dialogue_hooks"])
+
+        # Generate title based on professions
+        if len(professions) == 1:
+            title = professions[0]["title"]
+        else:
+            # Combine profession titles
+            profession_titles = [prof["title"] for prof in professions]
+            title = " / ".join(profession_titles)
 
         # Generate description
-        description_template = self.rng.choice(archetype["description_templates"])
+        description_template = self.rng.choice(primary_profession["description_templates"])
         description_values = {
             "trait": self.rng.choice(self.attributes["npc_traits"]),
-            "title": archetype["title"].lower(),
+            "title": title.lower(),
             "race": race_data["name"],
             "tactile_adjective": self.rng.choice(self.attributes["tactile_adjectives"]),
             "visual_adjective": self.rng.choice(self.attributes["visual_adjectives"])
         }
         description = self._fill_template(description_template, description_values)
 
-        # Generate inventory based on inventory set
+        # Combine inventory from all professions
         inventory = []
-        if "inventory_set" in archetype:
-            inventory = self.generate_items_from_set(
-                archetype["inventory_set"],
-                count=self.rng.randint(2, 6)
-            )
+        for prof in professions:
+            if "inventory_set" in prof:
+                items_from_prof = self.generate_items_from_set(
+                    prof["inventory_set"],
+                    count=self.rng.randint(1, 3)  # Fewer items per profession
+                )
+                inventory.extend(items_from_prof)
 
         # Build NPC object
         npc = {
             "name": full_name,
-            "title": archetype["title"],
-            "archetype": archetype_name,
+            "title": title,
+            "professions": profession_names,  # Store as list
             "race": race,
             "stats": stats,
-            "skills": archetype["skills"].copy(),
+            "skills": skills,
+            "dialogue": dialogue,
+            "description": description,
+            "inventory": inventory
+        }
+
+        # Add faction if assigned
+        if faction:
+            npc["faction"] = faction
+
+        # Add location reference if provided
+        if location_id:
+            npc["location"] = location_id
+
+        return npc
+
+    def _generate_npc_no_profession(self, race: Optional[str] = None,
+                                     faction: Optional[str] = None,
+                                     location_id: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Generate a generic NPC with no specific profession.
+
+        Args:
+            race: Specific race to use. If None, selects random race.
+            faction: Specific faction to use.
+            location_id: ID of the location where this NPC resides.
+
+        Returns:
+            Dictionary containing NPC properties without profession-specific attributes.
+        """
+        # Select random race if not specified
+        if race is None:
+            race = self.rng.choice(list(self.races_config["races"].keys()))
+
+        # Get race data
+        race_data = self.races_config["races"].get(race, self.races_config["races"]["human"])
+
+        # Generate name using race-specific names
+        gender = self.rng.choice(["male", "female"])
+        if gender == "male" and "first_names_male" in race_data:
+            first_name = self.rng.choice(race_data["first_names_male"])
+        elif gender == "female" and "first_names_female" in race_data:
+            first_name = self.rng.choice(race_data["first_names_female"])
+        else:
+            # Fallback to generic names
+            first_name = self.rng.choice(["Alex", "Sam", "Jordan", "Morgan", "Taylor"])
+
+        if "last_names" in race_data:
+            last_name = self.rng.choice(race_data["last_names"])
+        else:
+            last_name = self.rng.choice(["Smith", "Jones", "Brown", "Wilson", "Moore"])
+
+        full_name = f"{first_name} {last_name}"
+
+        # Generate basic stats (average values)
+        stats = {
+            "Strength": 5,
+            "Dexterity": 5,
+            "Constitution": 5,
+            "Intelligence": 5,
+            "Wisdom": 5,
+            "Charisma": 5
+        }
+
+        # Apply racial stat modifiers
+        if "stat_modifiers" in race_data:
+            for stat, modifier in race_data["stat_modifiers"].items():
+                if stat != "any_two":
+                    if stat in stats:
+                        stats[stat] += modifier
+                    else:
+                        stats[stat] = modifier
+
+        # Add random variation to stats (-2 to +2)
+        for stat in stats:
+            variation = self.rng.randint(-2, 2)
+            stats[stat] = max(1, stats[stat] + variation)
+
+        # Generic skills
+        generic_skills = ["Perception", "Survival", "Athletics", "Persuasion", "Insight"]
+        skills = self.rng.sample(generic_skills, k=min(3, len(generic_skills)))
+
+        # Generic dialogue
+        generic_dialogues = [
+            "Hello there, traveler.",
+            "Can I help you with something?",
+            "Good day to you.",
+            "What brings you here?",
+            "I haven't seen you around before."
+        ]
+        dialogue = self.rng.choice(generic_dialogues)
+
+        # Generic description
+        trait = self.rng.choice(self.attributes["npc_traits"])
+        tactile = self.rng.choice(self.attributes["tactile_adjectives"])
+        visual = self.rng.choice(self.attributes["visual_adjectives"])
+        description = f"A {trait} {race_data['name']} with {tactile} features and a {visual} appearance."
+
+        # Minimal inventory
+        inventory = []
+
+        # Build NPC object
+        npc = {
+            "name": full_name,
+            "title": "Commoner",
+            "professions": [],  # Empty list for no professions
+            "race": race,
+            "stats": stats,
+            "skills": skills,
             "dialogue": dialogue,
             "description": description,
             "inventory": inventory
