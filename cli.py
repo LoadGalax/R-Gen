@@ -4,7 +4,7 @@ R-Gen CLI - Command-line interface for the Random Game Content Generator
 
 Usage:
     python cli.py generate-item [--template TEMPLATE] [--count N] [--seed SEED] [--save] [constraints...]
-    python cli.py generate-npc [--archetype ARCHETYPE] [--count N] [--seed SEED] [--save]
+    python cli.py generate-npc [--profession PROFESSION] [--count N] [--seed SEED] [--save]
     python cli.py generate-location [--template TEMPLATE] [--connections] [--seed SEED] [--save]
     python cli.py generate-world --size N [--seed SEED] [--save]
     python cli.py search-items [filters...]
@@ -62,7 +62,7 @@ def format_npc(npc, indent=0):
     if npc.get('title'):
         lines.append(f"{prefix}   Title: {npc['title']}")
 
-    lines.append(f"{prefix}   Archetype: {npc['archetype']}")
+    lines.append(f"{prefix}   Profession: {npc['archetype']}")
 
     if npc.get('race'):
         lines.append(f"{prefix}   Race: {npc['race']}")
@@ -396,7 +396,7 @@ def cmd_list_templates(args, generator):
         for item_set in generator.items_config['item_sets'].keys():
             print(f"  • {item_set}")
 
-    print("\nNPC Archetypes:")
+    print("\nNPC Professions:")
     if 'archetypes' in generator.npcs_config:
         for archetype in generator.npcs_config['archetypes'].keys():
             print(f"  • {archetype}")
@@ -444,6 +444,30 @@ def cmd_list_biomes(args, generator):
         print()
 
 
+def cmd_list_professions(args, generator):
+    """List available professions (archetypes)"""
+    print("👨‍💼 Available Professions\n")
+
+    # Show profession levels first
+    if 'profession_levels' in generator.npcs_config:
+        print("📊 Profession Levels:")
+        for level_id, level_data in generator.npcs_config['profession_levels'].items():
+            print(f"  • {level_data['title']} (Rank {level_data['rank']})")
+            print(f"    Stat Multiplier: {level_data['stat_multiplier']}x, Skill Bonus: +{level_data['skill_bonus']}")
+            print(f"    {level_data['description']}")
+            print()
+        print("\n" + "="*60 + "\n")
+
+    # Show all professions
+    print("🎭 All Professions:\n")
+    for archetype_id, archetype_data in generator.npcs_config['archetypes'].items():
+        print(f"  • {archetype_data['title']} ({archetype_id})")
+        print(f"    Skills: {', '.join(archetype_data['skills'])}")
+        print(f"    Races: {', '.join(archetype_data.get('possible_races', ['any']))}")
+        print(f"    Factions: {', '.join(archetype_data.get('possible_factions', ['any']))}")
+        print()
+
+
 def main():
     parser = argparse.ArgumentParser(
         description='R-Gen - Random Game Content Generator CLI',
@@ -452,7 +476,7 @@ def main():
 Examples:
   # Basic generation
   %(prog)s generate-item --template weapon_melee
-  %(prog)s generate-npc --archetype blacksmith
+  %(prog)s generate-npc --profession blacksmith
 
   # With seed for reproducibility
   %(prog)s generate-item --template weapon_melee --seed 42
@@ -507,7 +531,7 @@ Examples:
 
     # Generate NPC command
     npc_parser = subparsers.add_parser('generate-npc', help='Generate random NPC(s)')
-    npc_parser.add_argument('--archetype', help='NPC archetype (e.g., blacksmith, merchant, guard)')
+    npc_parser.add_argument('--profession', '--archetype', dest='archetype', help='NPC profession (e.g., blacksmith, merchant, guard)')
     npc_parser.add_argument('--race', help='Specific race (e.g., human, dwarf, elf)')
     npc_parser.add_argument('--faction', help='Specific faction (e.g., kingdom_of_valor, merchants_guild)')
     npc_parser.add_argument('--count', type=int, help='Number of NPCs to generate')
@@ -593,6 +617,9 @@ Examples:
     # List biomes command
     biomes_parser = subparsers.add_parser('list-biomes', help='List all available biomes')
 
+    # List professions command
+    professions_parser = subparsers.add_parser('list-professions', help='List all available professions and profession levels')
+
     args = parser.parse_args()
 
     if not args.command:
@@ -645,6 +672,8 @@ Examples:
             cmd_list_factions(args, generator)
         elif args.command == 'list-biomes':
             cmd_list_biomes(args, generator)
+        elif args.command == 'list-professions':
+            cmd_list_professions(args, generator)
 
         return 0
 
