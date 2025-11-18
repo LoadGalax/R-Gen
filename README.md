@@ -48,6 +48,7 @@ R-Gen/
 │   └── locations.json      # Location templates
 ├── src/
 │   └── content_generator.py # Main ContentGenerator class
+├── cli.py                  # Command-line interface
 ├── example.py              # Demo script showing all features
 └── README.md              # This file
 ```
@@ -77,7 +78,91 @@ python example.py
 
 This will demonstrate all features and export sample generated content to JSON files.
 
-### Basic Usage
+### Command-Line Interface (CLI)
+
+R-Gen includes a powerful CLI for quick content generation:
+
+#### List Available Templates
+
+```bash
+python cli.py list-templates
+```
+
+This shows all available item templates, NPC archetypes, location templates, and item sets.
+
+#### Generate Items
+
+```bash
+# Generate a random item (text format)
+python cli.py generate-item
+
+# Generate a specific item type
+python cli.py generate-item --template weapon_melee
+
+# Generate multiple items
+python cli.py generate-item --count 10
+
+# Output as JSON
+python cli.py generate-item --format json
+
+# Save to file
+python cli.py generate-item --count 5 --format json --output items.json
+```
+
+#### Generate NPCs
+
+```bash
+# Generate a random NPC
+python cli.py generate-npc
+
+# Generate a specific NPC archetype
+python cli.py generate-npc --archetype blacksmith
+
+# Generate multiple NPCs
+python cli.py generate-npc --archetype merchant --count 3
+
+# Save to file
+python cli.py generate-npc --archetype guard --output guards.json
+```
+
+#### Generate Locations
+
+```bash
+# Generate a random location
+python cli.py generate-location
+
+# Generate a specific location type
+python cli.py generate-location --template tavern
+
+# Generate location with connections
+python cli.py generate-location --template forge --connections
+
+# Save to file
+python cli.py generate-location --template cave --format json --output dungeon.json
+```
+
+#### Generate Worlds
+
+```bash
+# Generate a small world
+python cli.py generate-world --size 5
+
+# Generate a large world and save it
+python cli.py generate-world --size 20 --format json --output my_world.json
+```
+
+#### CLI Options
+
+- `--template <name>`: Specify item/location template
+- `--archetype <name>`: Specify NPC archetype
+- `--count <n>`: Generate multiple items/NPCs
+- `--format <type>`: Output format (`text`, `json`, `pretty`)
+- `--output <file>`: Save output to file
+- `--connections`: Generate connected locations (for locations)
+- `--size <n>`: Number of locations (for worlds)
+- `--data-dir <path>`: Custom data directory path
+
+### Basic Usage (Python API)
 
 ```python
 from src.content_generator import ContentGenerator
