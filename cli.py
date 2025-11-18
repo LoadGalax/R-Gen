@@ -64,6 +64,12 @@ def format_npc(npc, indent=0):
 
     lines.append(f"{prefix}   Archetype: {npc['archetype']}")
 
+    if npc.get('race'):
+        lines.append(f"{prefix}   Race: {npc['race']}")
+
+    if npc.get('faction'):
+        lines.append(f"{prefix}   Faction: {npc['faction']}")
+
     if npc.get('stats'):
         stat_str = ', '.join([f"{k}: {v}" for k, v in npc['stats'].items()])
         lines.append(f"{prefix}   Stats: {stat_str}")
@@ -91,6 +97,9 @@ def format_location(location, indent=0):
     lines = []
     lines.append(f"{prefix}🗺️  {location['name']} (ID: {location['id']})")
     lines.append(f"{prefix}   Type: {location['type']}")
+
+    if location.get('biome'):
+        lines.append(f"{prefix}   Biome: {location['biome']}")
 
     if location.get('environment_tags'):
         lines.append(f"{prefix}   Environment: {', '.join(location['environment_tags'])}")
@@ -229,7 +238,11 @@ def cmd_generate_npc(args, generator, db=None):
     count = args.count if args.count else 1
 
     if count == 1:
-        npc = generator.generate_npc(args.archetype)
+        npc = generator.generate_npc(
+            archetype_name=args.archetype,
+            race=args.race,
+            faction=args.faction
+        )
 
         # Save to database if requested
         if args.save and db:
@@ -240,7 +253,11 @@ def cmd_generate_npc(args, generator, db=None):
     else:
         npcs = []
         for _ in range(count):
-            npc = generator.generate_npc(args.archetype)
+            npc = generator.generate_npc(
+                archetype_name=args.archetype,
+                race=args.race,
+                faction=args.faction
+            )
             npcs.append(npc)
 
             # Save to database if requested
@@ -255,7 +272,11 @@ def cmd_generate_npc(args, generator, db=None):
 
 def cmd_generate_location(args, generator, db=None):
     """Generate location"""
-    location = generator.generate_location(args.template, args.connections)
+    location = generator.generate_location(
+        template_name=args.template,
+        generate_connections=args.connections,
+        biome=args.biome
+    )
 
     # Save to database if requested
     if args.save and db:
@@ -392,6 +413,37 @@ def cmd_list_templates(args, generator):
             print(f"  • {template}")
 
 
+def cmd_list_races(args, generator):
+    """List available races"""
+    print("🧬 Available Races\n")
+    for race_id, race_data in generator.races_config['races'].items():
+        print(f"  • {race_data['name']} ({race_id})")
+        print(f"    Size: {race_data['size']}, Lifespan: {race_data['lifespan']['min']}-{race_data['lifespan']['max']} years")
+        print(f"    Traits: {', '.join(race_data['traits'])}")
+        print()
+
+
+def cmd_list_factions(args, generator):
+    """List available factions"""
+    print("⚔️  Available Factions\n")
+    for faction_id, faction_data in generator.factions_config['factions'].items():
+        print(f"  • {faction_data['name']} ({faction_id})")
+        print(f"    Type: {faction_data['type']}, Alignment: {faction_data['alignment']}")
+        print(f"    {faction_data['description']}")
+        print()
+
+
+def cmd_list_biomes(args, generator):
+    """List available biomes"""
+    print("🌍 Available Biomes\n")
+    for biome_id, biome_data in generator.biomes_config['biomes'].items():
+        print(f"  • {biome_data['name']} ({biome_id})")
+        print(f"    Climate: {biome_data['climate']}, Terrain: {biome_data['terrain']}")
+        print(f"    Danger Level: {biome_data['danger_level']}")
+        print(f"    {biome_data['description']}")
+        print()
+
+
 def main():
     parser = argparse.ArgumentParser(
         description='R-Gen - Random Game Content Generator CLI',
@@ -456,6 +508,8 @@ Examples:
     # Generate NPC command
     npc_parser = subparsers.add_parser('generate-npc', help='Generate random NPC(s)')
     npc_parser.add_argument('--archetype', help='NPC archetype (e.g., blacksmith, merchant, guard)')
+    npc_parser.add_argument('--race', help='Specific race (e.g., human, dwarf, elf)')
+    npc_parser.add_argument('--faction', help='Specific faction (e.g., kingdom_of_valor, merchants_guild)')
     npc_parser.add_argument('--count', type=int, help='Number of NPCs to generate')
     npc_parser.add_argument('--seed', type=int, help='Random seed for reproducible generation')
     npc_parser.add_argument('--save', action='store_true', help='Save to database')
@@ -466,6 +520,7 @@ Examples:
     # Generate location command
     location_parser = subparsers.add_parser('generate-location', help='Generate random location')
     location_parser.add_argument('--template', help='Location template (e.g., tavern, forge, cave)')
+    location_parser.add_argument('--biome', help='Specific biome (e.g., urban, temperate_forest, mountains)')
     location_parser.add_argument('--connections', action='store_true',
                                  help='Generate connected locations')
     location_parser.add_argument('--seed', type=int, help='Random seed for reproducible generation')
@@ -529,6 +584,15 @@ Examples:
     # List templates command
     list_parser = subparsers.add_parser('list-templates', help='List all available templates')
 
+    # List races command
+    races_parser = subparsers.add_parser('list-races', help='List all available races')
+
+    # List factions command
+    factions_parser = subparsers.add_parser('list-factions', help='List all available factions')
+
+    # List biomes command
+    biomes_parser = subparsers.add_parser('list-biomes', help='List all available biomes')
+
     args = parser.parse_args()
 
     if not args.command:
@@ -575,6 +639,12 @@ Examples:
             cmd_get_world(args, db)
         elif args.command == 'list-templates':
             cmd_list_templates(args, generator)
+        elif args.command == 'list-races':
+            cmd_list_races(args, generator)
+        elif args.command == 'list-factions':
+            cmd_list_factions(args, generator)
+        elif args.command == 'list-biomes':
+            cmd_list_biomes(args, generator)
 
         return 0
 
