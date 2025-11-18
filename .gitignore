@@ -41,3 +41,7 @@ output_*.json
 *.tmp
 *.bak
 *.log
+
+# Database files
+*.db
+*.db-journal
