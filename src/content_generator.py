@@ -348,7 +348,8 @@ class ContentGenerator:
                     location_id: Optional[str] = None,
                     race: Optional[str] = None,
                     faction: Optional[str] = None,
-                    profession_names: Optional[List[str]] = None) -> Dict[str, Any]:
+                    profession_names: Optional[List[str]] = None,
+                    profession_level: Optional[str] = None) -> Dict[str, Any]:
         """
         Generate a random NPC based on profession(s).
 
@@ -360,20 +361,24 @@ class ContentGenerator:
             location_id: ID of the location where this NPC resides.
             race: Specific race to use. If None, selects from profession's possible_races or random.
             faction: Specific faction to use. If None, selects from profession's possible_factions.
+            profession_level: Specific profession level (novice, apprentice, journeyman, expert, master, grandmaster).
+                            If None, selects random level.
 
         Returns:
             Dictionary containing NPC properties including:
             - name: Full NPC name
             - title: NPC title/role (based on professions)
             - professions: List of profession names
+            - profession_level: Profession level data
             - race: NPC race
             - faction: NPC faction (optional)
-            - stats: Stat values (averaged from all professions)
+            - stats: Stat values (averaged from all professions with level multiplier)
             - skills: Combined list of skills from all professions
             - dialogue: Random dialogue hook
             - description: Dynamic description
             - inventory: Combined items from all professions
             - location: Location ID reference (optional)
+            - challenge_rating: Calculated power level
         """
         # Handle backward compatibility with archetype_name
         if profession_names is None:
@@ -443,6 +448,25 @@ class ContentGenerator:
 
         full_name = f"{first_name} {last_name}"
 
+        # Select profession level
+        if profession_level is None:
+            # Weighted selection favoring middle levels
+            level_weights = {
+                "novice": 0.15,
+                "apprentice": 0.25,
+                "journeyman": 0.30,
+                "expert": 0.20,
+                "master": 0.08,
+                "grandmaster": 0.02
+            }
+            profession_level = self.rng.choices(
+                list(level_weights.keys()),
+                weights=list(level_weights.values()),
+                k=1
+            )[0]
+
+        level_data = self.npcs_config["profession_levels"][profession_level]
+
         # Combine stats from all professions (average them)
         combined_stats = {}
         for prof in professions:
@@ -451,10 +475,11 @@ class ContentGenerator:
                     combined_stats[stat] = []
                 combined_stats[stat].append(value)
 
-        # Average the stats
+        # Average the stats and apply profession level multiplier
         stats = {}
         for stat, values in combined_stats.items():
-            stats[stat] = sum(values) // len(values)
+            base_stat = sum(values) // len(values)
+            stats[stat] = int(base_stat * level_data["stat_multiplier"])
 
         # Apply racial stat modifiers
         if "stat_modifiers" in race_data:
@@ -480,13 +505,13 @@ class ContentGenerator:
         dialogue_profession = self.rng.choice(professions)
         dialogue = self.rng.choice(dialogue_profession["dialogue_hooks"])
 
-        # Generate title based on professions
+        # Generate title based on professions and level
         if len(professions) == 1:
-            title = professions[0]["title"]
+            title = f"{level_data['title_prefix']} {professions[0]['title']}"
         else:
-            # Combine profession titles
+            # Combine profession titles with level prefix
             profession_titles = [prof["title"] for prof in professions]
-            title = " / ".join(profession_titles)
+            title = f"{level_data['title_prefix']} {' / '.join(profession_titles)}"
 
         # Generate description
         description_template = self.rng.choice(primary_profession["description_templates"])
@@ -509,17 +534,22 @@ class ContentGenerator:
                 )
                 inventory.extend(items_from_prof)
 
+        # Calculate challenge rating (power level)
+        challenge_rating = self._calculate_challenge_rating(stats, skills, inventory, level_data["rank"])
+
         # Build NPC object
         npc = {
             "name": full_name,
             "title": title,
             "professions": profession_names,  # Store as list
+            "profession_level": profession_level,
             "race": race,
             "stats": stats,
             "skills": skills,
             "dialogue": dialogue,
             "description": description,
-            "inventory": inventory
+            "inventory": inventory,
+            "challenge_rating": challenge_rating
         }
 
         # Add faction if assigned
@@ -809,6 +839,447 @@ class ContentGenerator:
             "world_map": world_map
         }
 
+    def _calculate_challenge_rating(self, stats: Dict[str, int], skills: List[str],
+                                    inventory: List[Dict], profession_rank: int) -> float:
+        """
+        Calculate NPC power level (challenge rating).
+
+        Args:
+            stats: NPC stats
+            skills: NPC skills
+            inventory: NPC inventory
+            profession_rank: Rank from profession level (1-6)
+
+        Returns:
+            Challenge rating as a float
+        """
+        # Base CR from average stats
+        stat_avg = sum(stats.values()) / len(stats) if stats else 1
+        base_cr = stat_avg / 2.0
+
+        # Add skill bonus
+        skill_bonus = len(skills) * 0.2
+
+        # Add equipment bonus
+        equipment_value = sum(item.get("value", 0) for item in inventory)
+        equipment_bonus = equipment_value / 1000.0
+
+        # Add profession rank bonus
+        rank_bonus = profession_rank * 0.5
+
+        total_cr = base_cr + skill_bonus + equipment_bonus + rank_bonus
+        return round(total_cr, 2)
+
+    def generate_loot_table(self, enemy_type: str = "standard", difficulty: int = 1,
+                           quantity_range: tuple = (1, 3), biome: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Generate a loot table for enemies or treasure chests.
+
+        Args:
+            enemy_type: Type of enemy (standard, boss, elite, minion)
+            difficulty: Difficulty level (1-10)
+            quantity_range: Min and max number of items
+            biome: Biome type to filter materials
+
+        Returns:
+            Loot table with items and gold
+        """
+        multipliers = {
+            "minion": 0.5,
+            "standard": 1.0,
+            "elite": 2.0,
+            "boss": 5.0
+        }
+
+        multiplier = multipliers.get(enemy_type, 1.0)
+        item_count = self.rng.randint(quantity_range[0], quantity_range[1])
+
+        # Adjust quality/rarity based on difficulty
+        quality_constraints = {}
+        if difficulty >= 7:
+            quality_constraints["min_quality"] = "Excellent"
+        elif difficulty >= 4:
+            quality_constraints["min_quality"] = "Fine"
+
+        # Generate items
+        items = []
+        for _ in range(item_count):
+            template = self.rng.choice(list(self.items_config["templates"].keys()))
+
+            # Filter materials by biome if provided
+            constraints = quality_constraints.copy()
+            if biome and biome in self.biomes_config["biomes"]:
+                biome_data = self.biomes_config["biomes"][biome]
+                # Allow common and rare materials from biome
+                allowed_materials = biome_data.get("common_materials", []) + biome_data.get("rare_materials", [])
+                if allowed_materials:
+                    # Don't exclude, just note for thematic generation
+                    pass
+
+            try:
+                item = self.generate_item(template, constraints=constraints)
+                items.append(item)
+            except ValueError:
+                # If constraints too strict, generate without them
+                item = self.generate_item(template)
+                items.append(item)
+
+        # Calculate gold reward
+        base_gold = difficulty * 50
+        gold = int(base_gold * multiplier * self.rng.uniform(0.8, 1.2))
+
+        return {
+            "enemy_type": enemy_type,
+            "difficulty": difficulty,
+            "items": items,
+            "gold": gold,
+            "total_value": sum(item.get("value", 0) for item in items) + gold
+        }
+
+    def generate_quest(self, quest_type: Optional[str] = None, difficulty: int = 1,
+                      faction: Optional[str] = None, location_id: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Generate a quest template.
+
+        Args:
+            quest_type: Type of quest (fetch, kill, escort, explore, craft)
+            difficulty: Quest difficulty (1-10)
+            faction: Faction offering the quest
+            location_id: Location where quest starts
+
+        Returns:
+            Quest data with objectives, rewards, and quest giver
+        """
+        quest_types = ["fetch", "kill", "escort", "explore", "craft", "deliver"]
+        if quest_type is None:
+            quest_type = self.rng.choice(quest_types)
+
+        # Generate quest giver NPC
+        quest_giver = self.generate_npc(faction=faction, location_id=location_id)
+
+        # Generate rewards based on difficulty
+        reward_gold = difficulty * 100 * self.rng.randint(1, 3)
+        reward_items = []
+
+        reward_count = min(difficulty // 2, 3)
+        for _ in range(max(1, reward_count)):
+            reward_items.append(self.generate_item())
+
+        # Quest-type specific objectives
+        objectives = {
+            "fetch": f"Retrieve {self.rng.randint(1, 5)} {self.rng.choice(['ancient artifacts', 'rare herbs', 'lost documents', 'magical crystals'])}",
+            "kill": f"Defeat {self.rng.randint(3, 10)} {self.rng.choice(['bandits', 'monsters', 'corrupted creatures', 'undead'])}",
+            "escort": f"Escort {self.rng.choice(['merchant', 'noble', 'scholar', 'pilgrim'])} safely to their destination",
+            "explore": f"Explore and map the {self.rng.choice(['ancient ruins', 'dark cavern', 'forgotten temple', 'mysterious forest'])}",
+            "craft": f"Craft a {self.rng.choice(['legendary weapon', 'powerful artifact', 'magical item', 'rare potion'])}",
+            "deliver": f"Deliver {self.rng.choice(['urgent message', 'valuable package', 'secret documents', 'rare goods'])} to the destination"
+        }
+
+        quest_name = f"{self.rng.choice(['The', 'A'])} {self.rng.choice(['Dangerous', 'Urgent', 'Secret', 'Ancient', 'Lost', 'Forbidden'])} {quest_type.capitalize()}"
+
+        return {
+            "name": quest_name,
+            "type": quest_type,
+            "difficulty": difficulty,
+            "objective": objectives.get(quest_type, "Complete the objective"),
+            "quest_giver": quest_giver,
+            "rewards": {
+                "gold": reward_gold,
+                "items": reward_items,
+                "experience": difficulty * 100
+            },
+            "faction": faction,
+            "location": location_id,
+            "status": "available"
+        }
+
+    def generate_crafting_recipe(self, output_item: Optional[Dict[str, Any]] = None,
+                                 difficulty: int = 1) -> Dict[str, Any]:
+        """
+        Generate a crafting recipe for an item.
+
+        Args:
+            output_item: The item to craft (if None, generates random item)
+            difficulty: Recipe difficulty (1-10)
+
+        Returns:
+            Crafting recipe with materials, tools, and skill requirements
+        """
+        if output_item is None:
+            output_item = self.generate_item()
+
+        # Determine materials needed based on item properties
+        materials_needed = []
+
+        if "material" in output_item:
+            material = output_item["material"]
+            quantity = self.rng.randint(2, 5) * difficulty
+            materials_needed.append({
+                "material": material,
+                "quantity": quantity
+            })
+
+        # Add additional materials
+        additional_count = min(difficulty // 2, 4)
+        for _ in range(additional_count):
+            mat = self.rng.choice(self.attributes["materials"])
+            materials_needed.append({
+                "material": mat,
+                "quantity": self.rng.randint(1, 3)
+            })
+
+        # Determine required tools
+        tools = []
+        item_type = output_item.get("type", "")
+        if item_type == "weapon" or item_type == "armor":
+            tools = ["forge", "anvil", "hammer"]
+        elif item_type == "consumable":
+            tools = ["alchemy_station", "mortar_and_pestle"]
+        elif item_type == "accessory":
+            tools = ["jeweler_tools", "crafting_table"]
+        else:
+            tools = ["crafting_table"]
+
+        # Skill requirements
+        skill_level = max(1, difficulty * 10)
+
+        return {
+            "output_item": output_item,
+            "materials": materials_needed,
+            "required_tools": tools,
+            "skill_requirements": {
+                "skill": self.rng.choice(["Crafting", "Smithing", "Alchemy", "Jewelcrafting"]),
+                "level": skill_level
+            },
+            "crafting_time": difficulty * 10,  # minutes
+            "difficulty": difficulty,
+            "success_rate": max(0.5, 1.0 - (difficulty * 0.05))
+        }
+
+    def generate_encounter(self, party_level: int = 1, biome: Optional[str] = None,
+                          faction: Optional[str] = None, encounter_type: str = "combat") -> Dict[str, Any]:
+        """
+        Generate an encounter for party.
+
+        Args:
+            party_level: Average party level (1-20)
+            biome: Biome where encounter occurs
+            faction: Faction involved in encounter
+            encounter_type: Type (combat, social, puzzle, trap)
+
+        Returns:
+            Encounter data with enemies/NPCs, difficulty, and rewards
+        """
+        # Determine number of enemies based on party level
+        enemy_count = self.rng.randint(max(1, party_level // 3), max(2, party_level // 2) + 2)
+
+        if encounter_type == "combat":
+            # Generate enemies
+            enemies = []
+            for i in range(enemy_count):
+                # Mix of enemy types
+                if i == 0 and self.rng.random() < 0.3:  # 30% chance of boss
+                    enemy_type = "elite"
+                else:
+                    enemy_type = "standard"
+
+                # Generate NPC as enemy
+                enemy_profession = self.rng.choice(["guard", "soldier", "thief", "mage", "barbarian"])
+                enemy = self.generate_npc(
+                    archetype_name=enemy_profession,
+                    faction=faction,
+                    profession_level=self._get_level_for_party(party_level)
+                )
+                enemy["enemy_type"] = enemy_type
+                enemies.append(enemy)
+
+            # Calculate total CR
+            total_cr = sum(e.get("challenge_rating", 1.0) for e in enemies)
+
+            # Generate loot
+            loot = self.generate_loot_table(
+                enemy_type="standard" if total_cr < party_level * 2 else "elite",
+                difficulty=party_level,
+                quantity_range=(1, max(2, enemy_count // 2)),
+                biome=biome
+            )
+
+            return {
+                "type": "combat",
+                "enemies": enemies,
+                "total_challenge_rating": round(total_cr, 2),
+                "difficulty": "easy" if total_cr < party_level else "medium" if total_cr < party_level * 1.5 else "hard",
+                "loot": loot,
+                "biome": biome,
+                "faction": faction
+            }
+
+        elif encounter_type == "social":
+            # Generate NPCs for social encounter
+            npcs = []
+            for _ in range(self.rng.randint(1, 3)):
+                npc = self.generate_npc(faction=faction)
+                npcs.append(npc)
+
+            return {
+                "type": "social",
+                "npcs": npcs,
+                "objective": self.rng.choice([
+                    "Negotiate a deal",
+                    "Gather information",
+                    "Persuade the NPCs",
+                    "Mediate a conflict"
+                ]),
+                "difficulty": party_level,
+                "faction": faction
+            }
+
+        return {"type": encounter_type, "message": f"{encounter_type} encounter generated"}
+
+    def _get_level_for_party(self, party_level: int) -> str:
+        """Get appropriate profession level for party level."""
+        if party_level <= 3:
+            return "novice"
+        elif party_level <= 7:
+            return "apprentice"
+        elif party_level <= 12:
+            return "journeyman"
+        elif party_level <= 16:
+            return "expert"
+        elif party_level <= 19:
+            return "master"
+        else:
+            return "grandmaster"
+
+    def generate_procedural_name(self, race: str = "human", gender: str = "male") -> str:
+        """
+        Generate a procedural name using syllable combination.
+
+        Args:
+            race: Race type for name generation
+            gender: Gender for name generation
+
+        Returns:
+            Procedurally generated name
+        """
+        syllables = {
+            "human": {
+                "first": ["Al", "Bren", "Ced", "Da", "El", "Finn", "Gar", "Har", "Iv", "Jas"],
+                "middle": ["dri", "nan", "ric", "mi", "en", "na", "eth", "ugh", "an", "per"],
+                "last": ["c", "n", "k", "en", "a", "s", "th", "on", "or", "er"]
+            },
+            "elf": {
+                "first": ["Ae", "Cal", "El", "Fae", "Gal", "Il", "Lor", "Nae", "Syl", "Vae"],
+                "middle": ["la", "ad", "io", "la", "a", "li", "e", "ri", "va", "li"],
+                "last": ["r", "n", "rel", "lyn", "don", "an", "ei", "s", "ra", "s"]
+            },
+            "dwarf": {
+                "first": ["Thor", "Brom", "Grim", "Dur", "Bal", "Krag", "Mor", "Thar", "Gor", "Bor"],
+                "middle": ["in", "on", "ak", "ek", "ik", "im", "um", "ar", "or", "an"],
+                "last": ["", "", "n", "d", "k", "r", "m", "g", "t", "s"]
+            }
+        }
+
+        # Default to human if race not found
+        race_syllables = syllables.get(race, syllables["human"])
+
+        first_name = (
+            self.rng.choice(race_syllables["first"]) +
+            self.rng.choice(race_syllables["middle"]) +
+            self.rng.choice(race_syllables["last"])
+        )
+
+        return first_name
+
+    def generate_item_with_modifiers(self, template_name: Optional[str] = None,
+                                    num_modifiers: int = 0) -> Dict[str, Any]:
+        """
+        Generate item with procedural prefix/suffix modifiers.
+
+        Args:
+            template_name: Item template to use
+            num_modifiers: Number of modifiers to apply (0-2)
+
+        Returns:
+            Item with modifiers applied
+        """
+        item = self.generate_item(template_name)
+
+        if num_modifiers > 0:
+            prefixes = ["Flaming", "Frozen", "Shocking", "Vampiric", "Holy", "Shadow", "Vorpal", "Keen", "Mighty", "Swift"]
+            suffixes = ["of Giants", "of the Bear", "of the Eagle", "of Protection", "of Warding", "of Power", "of Speed", "of the Phoenix", "of the Dragon", "of the Ancients"]
+
+            modifiers_applied = []
+            bonus_value = 0
+
+            if num_modifiers >= 1 and self.rng.random() < 0.7:
+                prefix = self.rng.choice(prefixes)
+                item["name"] = f"{prefix} {item['name']}"
+                modifiers_applied.append(prefix)
+
+                # Add bonus based on prefix
+                if prefix in ["Flaming", "Frozen", "Shocking"]:
+                    item.setdefault("damage_types", []).append(prefix.replace("ing", "e") if prefix == "Flaming" else prefix.replace("ing", ""))
+
+                bonus_value += item["value"] * 0.3
+
+            if num_modifiers >= 2 and self.rng.random() < 0.5:
+                suffix = self.rng.choice(suffixes)
+                item["name"] = f"{item['name']} {suffix}"
+                modifiers_applied.append(suffix)
+
+                # Add stat bonus based on suffix
+                if "of Giants" in suffix:
+                    item["stats"]["Strength"] = item["stats"].get("Strength", 0) + 2
+                elif "of the Bear" in suffix:
+                    item["stats"]["Constitution"] = item["stats"].get("Constitution", 0) + 2
+                elif "of Speed" in suffix or "Swift" in modifiers_applied:
+                    item["stats"]["Dexterity"] = item["stats"].get("Dexterity", 0) + 2
+
+                bonus_value += item["value"] * 0.5
+
+            item["value"] = int(item["value"] + bonus_value)
+            item["modifiers"] = modifiers_applied
+
+        return item
+
+    def validate_thematic_consistency(self, item: Dict[str, Any], biome: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Validate if item fits thematically with biome.
+
+        Args:
+            item: Item to validate
+            biome: Biome to check against
+
+        Returns:
+            Validation result with warnings
+        """
+        warnings = []
+
+        if biome and biome in self.biomes_config["biomes"]:
+            biome_data = self.biomes_config["biomes"][biome]
+
+            # Check material consistency
+            if "material" in item:
+                allowed_materials = biome_data.get("common_materials", []) + biome_data.get("rare_materials", [])
+                if allowed_materials and item["material"] not in allowed_materials:
+                    warnings.append(f"Material '{item['material']}' is unusual for {biome} biome")
+
+            # Check damage type vs biome
+            if "damage_types" in item:
+                biome_env_tags = biome_data.get("environment_tags", [])
+                for damage_type in item["damage_types"]:
+                    if damage_type == "Fire" and "Cold" in biome_env_tags:
+                        warnings.append(f"Fire damage item in cold {biome} biome may be thematically inconsistent")
+                    elif damage_type == "Ice" and "Hot" in biome_env_tags:
+                        warnings.append(f"Ice damage item in hot {biome} biome may be thematically inconsistent")
+
+        return {
+            "valid": len(warnings) == 0,
+            "warnings": warnings,
+            "item": item
+        }
+
     def export_to_json(self, data: Any, filename: str) -> None:
         """
         Export generated content to a JSON file.
@@ -821,3 +1292,373 @@ class ContentGenerator:
         with open(output_path, 'w') as f:
             json.dump(data, f, indent=2)
         print(f"Exported to {output_path}")
+
+    def export_to_xml(self, data: Any, filename: str) -> None:
+        """
+        Export generated content to XML format.
+
+        Args:
+            data: Data to export
+            filename: Output filename
+        """
+        import xml.etree.ElementTree as ET
+
+        def dict_to_xml(tag, d):
+            elem = ET.Element(tag)
+            if isinstance(d, dict):
+                for key, val in d.items():
+                    child = dict_to_xml(key, val)
+                    elem.append(child)
+            elif isinstance(d, list):
+                for item in d:
+                    child = dict_to_xml("item", item)
+                    elem.append(child)
+            else:
+                elem.text = str(d)
+            return elem
+
+        root = dict_to_xml("data", data)
+        tree = ET.ElementTree(root)
+        output_path = Path(filename)
+        tree.write(output_path, encoding='utf-8', xml_declaration=True)
+        print(f"Exported to {output_path}")
+
+    def export_to_csv(self, data: Any, filename: str) -> None:
+        """
+        Export generated content to CSV format (works best for lists of items/NPCs).
+
+        Args:
+            data: Data to export (should be list of dicts)
+            filename: Output filename
+        """
+        import csv
+
+        output_path = Path(filename)
+
+        if isinstance(data, list) and len(data) > 0:
+            # Get all possible keys
+            all_keys = set()
+            for item in data:
+                if isinstance(item, dict):
+                    all_keys.update(item.keys())
+
+            with open(output_path, 'w', newline='', encoding='utf-8') as f:
+                writer = csv.DictWriter(f, fieldnames=sorted(all_keys))
+                writer.writeheader()
+                for item in data:
+                    if isinstance(item, dict):
+                        # Convert nested structures to strings
+                        row = {}
+                        for k, v in item.items():
+                            if isinstance(v, (dict, list)):
+                                row[k] = json.dumps(v)
+                            else:
+                                row[k] = v
+                        writer.writerow(row)
+            print(f"Exported to {output_path}")
+        else:
+            print("CSV export requires a list of dictionaries")
+
+    def export_to_sql(self, data: Any, filename: str, table_name: str = "game_content") -> None:
+        """
+        Export generated content to SQL INSERT statements.
+
+        Args:
+            data: Data to export (should be list of dicts)
+            filename: Output filename
+            table_name: SQL table name
+        """
+        output_path = Path(filename)
+
+        if isinstance(data, list) and len(data) > 0:
+            with open(output_path, 'w', encoding='utf-8') as f:
+                # Get all possible columns
+                all_keys = set()
+                for item in data:
+                    if isinstance(item, dict):
+                        all_keys.update(item.keys())
+
+                columns = sorted(all_keys)
+
+                for item in data:
+                    if isinstance(item, dict):
+                        values = []
+                        for col in columns:
+                            val = item.get(col, None)
+                            if val is None:
+                                values.append("NULL")
+                            elif isinstance(val, (dict, list)):
+                                escaped_json = json.dumps(val).replace("'", "''")
+                                values.append(f"'{escaped_json}'")
+                            elif isinstance(val, str):
+                                escaped_str = val.replace("'", "''")
+                                values.append(f"'{escaped_str}'")
+                            else:
+                                values.append(str(val))
+
+                        sql = f"INSERT INTO {table_name} ({', '.join(columns)}) VALUES ({', '.join(values)});\n"
+                        f.write(sql)
+
+            print(f"Exported to {output_path}")
+        else:
+            print("SQL export requires a list of dictionaries")
+
+    def generate_item_set_collection(self, set_name: Optional[str] = None,
+                                     set_size: int = 5) -> Dict[str, Any]:
+        """
+        Generate a themed item set collection (e.g., "Dragon Slayer Set").
+
+        Args:
+            set_name: Name of the set
+            set_size: Number of items in the set
+
+        Returns:
+            Item set with bonuses
+        """
+        if set_name is None:
+            themes = ["Dragon Slayer", "Shadow", "Holy", "Infernal", "Frost", "Storm", "Ancient", "Ethereal"]
+            theme = self.rng.choice(themes)
+            set_name = f"{theme} Set"
+
+        # Generate complementary items
+        set_templates = ["weapon_melee", "armor", "armor", "jewelry", "jewelry"]
+        items = []
+
+        for template in set_templates[:set_size]:
+            item = self.generate_item_with_modifiers(template, num_modifiers=1)
+            # Add set identifier
+            item["set"] = set_name
+            items.append(item)
+
+        # Define set bonuses
+        set_bonuses = {
+            2: {"description": "2-piece bonus: +10% damage", "stats": {"Strength": 1}},
+            3: {"description": "3-piece bonus: +15% defense", "stats": {"Constitution": 2}},
+            4: {"description": "4-piece bonus: +20% critical chance", "stats": {"Dexterity": 2}},
+            5: {"description": "5-piece bonus: +25% all stats", "stats": {"Strength": 2, "Dexterity": 2, "Constitution": 2}}
+        }
+
+        return {
+            "name": set_name,
+            "items": items,
+            "set_bonuses": set_bonuses,
+            "total_value": sum(item.get("value", 0) for item in items)
+        }
+
+    def generate_batch_with_distribution(self, content_type: str = "item",
+                                        count: int = 100,
+                                        distribution: Optional[Dict[str, float]] = None,
+                                        **kwargs) -> List[Dict[str, Any]]:
+        """
+        Generate batch content with specific rarity distribution.
+
+        Args:
+            content_type: Type to generate (item, npc, location)
+            count: Total number to generate
+            distribution: Rarity distribution (e.g., {"Common": 0.5, "Rare": 0.3, "Epic": 0.2})
+            **kwargs: Additional arguments for generation functions
+
+        Returns:
+            List of generated content matching distribution
+        """
+        if distribution is None:
+            # Default distribution
+            if content_type == "item":
+                distribution = {
+                    "Common": 0.45,
+                    "Uncommon": 0.28,
+                    "Rare": 0.15,
+                    "Epic": 0.08,
+                    "Legendary": 0.03,
+                    "Mythic": 0.01
+                }
+
+        results = []
+
+        # Calculate counts per rarity
+        for rarity, percentage in distribution.items():
+            rarity_count = int(count * percentage)
+
+            for _ in range(rarity_count):
+                if content_type == "item":
+                    constraints = kwargs.get("constraints", {})
+                    constraints["min_rarity"] = rarity
+                    constraints["max_rarity"] = rarity
+                    try:
+                        item = self.generate_item(
+                            template_name=kwargs.get("template_name"),
+                            constraints=constraints
+                        )
+                        results.append(item)
+                    except ValueError:
+                        # If constraints too strict, skip
+                        pass
+
+                elif content_type == "npc":
+                    # Map rarity to profession level
+                    rarity_to_level = {
+                        "Common": "novice",
+                        "Uncommon": "apprentice",
+                        "Rare": "journeyman",
+                        "Epic": "expert",
+                        "Legendary": "master",
+                        "Mythic": "grandmaster"
+                    }
+                    npc = self.generate_npc(
+                        profession_level=rarity_to_level.get(rarity, "journeyman"),
+                        **kwargs
+                    )
+                    results.append(npc)
+
+                elif content_type == "location":
+                    location = self.generate_location(**kwargs)
+                    results.append(location)
+
+        return results
+
+    def generate_weather_and_time(self, biome: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Generate weather and time-of-day conditions.
+
+        Args:
+            biome: Biome type (affects weather possibilities)
+
+        Returns:
+            Weather and time data with gameplay modifiers
+        """
+        times_of_day = {
+            "dawn": {"hour": 6, "light_level": 0.5, "visibility": "moderate"},
+            "morning": {"hour": 9, "light_level": 1.0, "visibility": "clear"},
+            "noon": {"hour": 12, "light_level": 1.0, "visibility": "clear"},
+            "afternoon": {"hour": 15, "light_level": 0.9, "visibility": "clear"},
+            "dusk": {"hour": 18, "light_level": 0.4, "visibility": "dim"},
+            "evening": {"hour": 20, "light_level": 0.2, "visibility": "dark"},
+            "midnight": {"hour": 0, "light_level": 0.0, "visibility": "very_dark"},
+            "late_night": {"hour": 3, "light_level": 0.0, "visibility": "very_dark"}
+        }
+
+        # Weather conditions
+        weather_conditions = {
+            "clear": {"visibility_modifier": 1.0, "movement_modifier": 1.0, "description": "Clear skies"},
+            "cloudy": {"visibility_modifier": 0.9, "movement_modifier": 1.0, "description": "Overcast"},
+            "rain": {"visibility_modifier": 0.7, "movement_modifier": 0.9, "description": "Rainfall"},
+            "heavy_rain": {"visibility_modifier": 0.5, "movement_modifier": 0.7, "description": "Heavy rainfall"},
+            "fog": {"visibility_modifier": 0.4, "movement_modifier": 0.8, "description": "Dense fog"},
+            "snow": {"visibility_modifier": 0.6, "movement_modifier": 0.7, "description": "Snowfall"},
+            "storm": {"visibility_modifier": 0.3, "movement_modifier": 0.6, "description": "Thunderstorm"},
+            "blizzard": {"visibility_modifier": 0.2, "movement_modifier": 0.4, "description": "Blizzard"}
+        }
+
+        # Biome-specific weather probabilities
+        biome_weather = {
+            "desert": ["clear", "clear", "clear", "cloudy"],
+            "swamp": ["fog", "rain", "cloudy", "heavy_rain"],
+            "tundra": ["snow", "blizzard", "cloudy", "clear"],
+            "coastal": ["rain", "cloudy", "clear", "storm"],
+            "mountains": ["snow", "cloudy", "clear", "fog"],
+            "jungle": ["rain", "heavy_rain", "cloudy", "fog"],
+            "volcanic": ["cloudy", "storm", "clear", "fog"]
+        }
+
+        time_key = self.rng.choice(list(times_of_day.keys()))
+        time_data = times_of_day[time_key].copy()
+        time_data["period"] = time_key
+
+        # Select weather based on biome
+        if biome and biome in biome_weather:
+            weather_key = self.rng.choice(biome_weather[biome])
+        else:
+            weather_key = self.rng.choice(["clear", "cloudy", "rain"])
+
+        weather_data = weather_conditions[weather_key].copy()
+        weather_data["condition"] = weather_key
+
+        # Calculate combined modifiers
+        final_visibility = time_data["light_level"] * weather_data["visibility_modifier"]
+
+        return {
+            "time": time_data,
+            "weather": weather_data,
+            "combined_modifiers": {
+                "visibility": round(final_visibility, 2),
+                "movement_speed": weather_data["movement_modifier"],
+                "stealth_bonus": round((1.0 - final_visibility) * 0.5, 2)  # Darkness helps stealth
+            },
+            "description": f"{time_data['period'].capitalize()}, {weather_data['description'].lower()}"
+        }
+
+    def generate_trap_or_puzzle(self, difficulty: int = 1, trap_type: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Generate a trap or puzzle encounter.
+
+        Args:
+            difficulty: Difficulty level (1-10)
+            trap_type: Type of trap (mechanical, magical, puzzle)
+
+        Returns:
+            Trap/puzzle data with detection, disarm mechanics
+        """
+        trap_types_list = ["mechanical", "magical", "puzzle", "environmental"]
+        if trap_type is None:
+            trap_type = self.rng.choice(trap_types_list)
+
+        if trap_type == "mechanical":
+            traps = [
+                {"name": "Spike Pit", "damage": "2d6 piercing", "trigger": "pressure plate"},
+                {"name": "Poison Dart", "damage": "1d4 piercing + poison", "trigger": "tripwire"},
+                {"name": "Swinging Blade", "damage": "3d6 slashing", "trigger": "door"},
+                {"name": "Crushing Walls", "damage": "4d6 bludgeoning", "trigger": "entering room"},
+                {"name": "Arrow Volley", "damage": "2d6 piercing", "trigger": "chest opening"}
+            ]
+            trap_data = self.rng.choice(traps)
+
+        elif trap_type == "magical":
+            traps = [
+                {"name": "Glyph of Warding", "damage": "3d8 force", "trigger": "crossing threshold"},
+                {"name": "Lightning Rune", "damage": "4d6 lightning", "trigger": "touching object"},
+                {"name": "Fireball Trap", "damage": "6d6 fire", "trigger": "opening container"},
+                {"name": "Charm Trap", "damage": "none (charm effect)", "trigger": "reading text"},
+                {"name": "Teleportation Circle", "damage": "none (teleport)", "trigger": "stepping on"}
+            ]
+            trap_data = self.rng.choice(traps)
+
+        elif trap_type == "puzzle":
+            puzzles = [
+                {"name": "Riddle Door", "solution_type": "intelligence check", "hint": "speaks in riddles"},
+                {"name": "Color Sequence", "solution_type": "pattern recognition", "hint": "colored tiles"},
+                {"name": "Weight Balance", "solution_type": "logic puzzle", "hint": "scales and weights"},
+                {"name": "Rotating Statues", "solution_type": "spatial reasoning", "hint": "directional statues"},
+                {"name": "Musical Notes", "solution_type": "memory/hearing", "hint": "sequence of sounds"}
+            ]
+            trap_data = self.rng.choice(puzzles)
+
+        else:  # environmental
+            traps = [
+                {"name": "Collapsing Ceiling", "damage": "5d6 bludgeoning", "trigger": "structural weakness"},
+                {"name": "Flooding Room", "damage": "drowning risk", "trigger": "time-based"},
+                {"name": "Gas Release", "damage": "poison/sleep", "trigger": "air disturbance"},
+                {"name": "Lava Flow", "damage": "10d6 fire", "trigger": "floor mechanism"},
+                {"name": "Rockslide", "damage": "4d8 bludgeoning", "trigger": "vibration"}
+            ]
+            trap_data = self.rng.choice(traps)
+
+        # Calculate DC based on difficulty
+        detection_dc = 10 + (difficulty * 2)
+        disarm_dc = 12 + (difficulty * 2)
+
+        return {
+            "type": trap_type,
+            "name": trap_data["name"],
+            "difficulty": difficulty,
+            "detection_dc": detection_dc,
+            "disarm_dc": disarm_dc if trap_type != "puzzle" else None,
+            "solve_dc": disarm_dc if trap_type == "puzzle" else None,
+            "damage": trap_data.get("damage", "varies"),
+            "trigger": trap_data.get("trigger", "unknown"),
+            "solution_type": trap_data.get("solution_type"),
+            "hint": trap_data.get("hint"),
+            "rewards_on_bypass": {
+                "experience": difficulty * 50,
+                "possible_treasure": self.rng.random() > 0.5
+            }
+        }

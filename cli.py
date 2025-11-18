@@ -486,6 +486,143 @@ def cmd_list_professions(args, generator):
         print()
 
 
+def cmd_generate_loot(args, generator):
+    """Generate loot table"""
+    loot = generator.generate_loot_table(
+        enemy_type=args.enemy_type,
+        difficulty=args.difficulty,
+        quantity_range=(args.min_items, args.max_items),
+        biome=args.biome
+    )
+    output_data(loot, args.format, args.output)
+
+
+def cmd_generate_quest(args, generator):
+    """Generate quest"""
+    quest = generator.generate_quest(
+        quest_type=args.quest_type,
+        difficulty=args.difficulty,
+        faction=args.faction,
+        location_id=args.location
+    )
+    output_data(quest, args.format, args.output)
+
+
+def cmd_generate_recipe(args, generator):
+    """Generate crafting recipe"""
+    output_item = None
+    if args.for_item_template:
+        output_item = generator.generate_item(args.for_item_template)
+
+    recipe = generator.generate_crafting_recipe(
+        output_item=output_item,
+        difficulty=args.difficulty
+    )
+    output_data(recipe, args.format, args.output)
+
+
+def cmd_generate_encounter(args, generator):
+    """Generate encounter"""
+    encounter = generator.generate_encounter(
+        party_level=args.party_level,
+        biome=args.biome,
+        faction=args.faction,
+        encounter_type=args.encounter_type
+    )
+    output_data(encounter, args.format, args.output)
+
+
+def cmd_generate_item_with_modifiers(args, generator):
+    """Generate item with modifiers"""
+    item = generator.generate_item_with_modifiers(
+        template_name=args.template,
+        num_modifiers=args.num_modifiers
+    )
+    output_data(item, args.format, args.output)
+
+
+def cmd_generate_item_set(args, generator):
+    """Generate item set collection"""
+    item_set = generator.generate_item_set_collection(
+        set_name=args.set_name,
+        set_size=args.set_size
+    )
+    output_data(item_set, args.format, args.output)
+
+
+def cmd_generate_batch(args, generator):
+    """Generate batch content with distribution"""
+    distribution = None
+    if args.distribution:
+        # Parse distribution like "Common:0.5,Rare:0.3,Epic:0.2"
+        distribution = {}
+        for pair in args.distribution.split(','):
+            key, val = pair.split(':')
+            distribution[key.strip()] = float(val.strip())
+
+    batch = generator.generate_batch_with_distribution(
+        content_type=args.content_type,
+        count=args.count,
+        distribution=distribution
+    )
+    output_data(batch, args.format, args.output)
+
+
+def cmd_generate_weather(args, generator):
+    """Generate weather and time"""
+    weather = generator.generate_weather_and_time(biome=args.biome)
+    output_data(weather, args.format, args.output)
+
+
+def cmd_generate_trap(args, generator):
+    """Generate trap or puzzle"""
+    trap = generator.generate_trap_or_puzzle(
+        difficulty=args.difficulty,
+        trap_type=args.trap_type
+    )
+    output_data(trap, args.format, args.output)
+
+
+def cmd_generate_procedural_name(args, generator):
+    """Generate procedural name"""
+    name = generator.generate_procedural_name(
+        race=args.race,
+        gender=args.gender
+    )
+    print(f"Generated name: {name}")
+
+
+def cmd_validate_thematic(args, generator):
+    """Validate thematic consistency"""
+    # Load item from JSON if provided
+    if args.item_json:
+        with open(args.item_json, 'r') as f:
+            item = json.load(f)
+    else:
+        # Generate a random item
+        item = generator.generate_item()
+
+    validation = generator.validate_thematic_consistency(item, biome=args.biome)
+    output_data(validation, args.format, args.output)
+
+
+def cmd_export(args, generator):
+    """Export data to various formats"""
+    # Load data from input file
+    with open(args.input, 'r') as f:
+        data = json.load(f)
+
+    # Export to requested format
+    if args.export_format == 'xml':
+        generator.export_to_xml(data, args.output)
+    elif args.export_format == 'csv':
+        generator.export_to_csv(data, args.output)
+    elif args.export_format == 'sql':
+        generator.export_to_sql(data, args.output, table_name=args.table_name or "game_content")
+    else:  # json
+        generator.export_to_json(data, args.output)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description='R-Gen - Random Game Content Generator CLI',
@@ -640,6 +777,123 @@ Examples:
     # List professions command
     professions_parser = subparsers.add_parser('list-professions', help='List all available professions and profession levels')
 
+    # Generate loot command
+    loot_parser = subparsers.add_parser('generate-loot', help='Generate a loot table')
+    loot_parser.add_argument('--enemy-type', choices=['minion', 'standard', 'elite', 'boss'], default='standard',
+                            help='Enemy type (default: standard)')
+    loot_parser.add_argument('--difficulty', type=int, default=1, help='Difficulty level 1-10 (default: 1)')
+    loot_parser.add_argument('--min-items', type=int, default=1, help='Minimum items (default: 1)')
+    loot_parser.add_argument('--max-items', type=int, default=3, help='Maximum items (default: 3)')
+    loot_parser.add_argument('--biome', help='Biome type for material filtering')
+    loot_parser.add_argument('--format', choices=['json', 'pretty', 'text'], default='text',
+                            help='Output format (default: text)')
+    loot_parser.add_argument('--output', help='Output file (default: stdout)')
+    loot_parser.add_argument('--seed', type=int, help='Random seed for reproducibility')
+
+    # Generate quest command
+    quest_parser = subparsers.add_parser('generate-quest', help='Generate a quest')
+    quest_parser.add_argument('--quest-type', choices=['fetch', 'kill', 'escort', 'explore', 'craft', 'deliver'],
+                             help='Quest type (default: random)')
+    quest_parser.add_argument('--difficulty', type=int, default=1, help='Quest difficulty 1-10 (default: 1)')
+    quest_parser.add_argument('--faction', help='Faction offering the quest')
+    quest_parser.add_argument('--location', help='Starting location ID')
+    quest_parser.add_argument('--format', choices=['json', 'pretty', 'text'], default='text',
+                             help='Output format (default: text)')
+    quest_parser.add_argument('--output', help='Output file (default: stdout)')
+    quest_parser.add_argument('--seed', type=int, help='Random seed for reproducibility')
+
+    # Generate recipe command
+    recipe_parser = subparsers.add_parser('generate-recipe', help='Generate a crafting recipe')
+    recipe_parser.add_argument('--for-item-template', help='Generate recipe for specific item template')
+    recipe_parser.add_argument('--difficulty', type=int, default=1, help='Recipe difficulty 1-10 (default: 1)')
+    recipe_parser.add_argument('--format', choices=['json', 'pretty', 'text'], default='text',
+                              help='Output format (default: text)')
+    recipe_parser.add_argument('--output', help='Output file (default: stdout)')
+    recipe_parser.add_argument('--seed', type=int, help='Random seed for reproducibility')
+
+    # Generate encounter command
+    encounter_parser = subparsers.add_parser('generate-encounter', help='Generate an encounter')
+    encounter_parser.add_argument('--party-level', type=int, default=1, help='Party level 1-20 (default: 1)')
+    encounter_parser.add_argument('--biome', help='Biome where encounter occurs')
+    encounter_parser.add_argument('--faction', help='Faction involved')
+    encounter_parser.add_argument('--encounter-type', choices=['combat', 'social', 'puzzle', 'trap'], default='combat',
+                                  help='Encounter type (default: combat)')
+    encounter_parser.add_argument('--format', choices=['json', 'pretty', 'text'], default='text',
+                                  help='Output format (default: text)')
+    encounter_parser.add_argument('--output', help='Output file (default: stdout)')
+    encounter_parser.add_argument('--seed', type=int, help='Random seed for reproducibility')
+
+    # Generate item with modifiers command
+    item_mod_parser = subparsers.add_parser('generate-item-modifiers', help='Generate item with prefix/suffix modifiers')
+    item_mod_parser.add_argument('--template', help='Item template to use')
+    item_mod_parser.add_argument('--num-modifiers', type=int, default=1, help='Number of modifiers 0-2 (default: 1)')
+    item_mod_parser.add_argument('--format', choices=['json', 'pretty', 'text'], default='text',
+                                help='Output format (default: text)')
+    item_mod_parser.add_argument('--output', help='Output file (default: stdout)')
+    item_mod_parser.add_argument('--seed', type=int, help='Random seed for reproducibility')
+
+    # Generate item set command
+    itemset_parser = subparsers.add_parser('generate-item-set', help='Generate a themed item set')
+    itemset_parser.add_argument('--set-name', help='Name of the item set')
+    itemset_parser.add_argument('--set-size', type=int, default=5, help='Number of items in set (default: 5)')
+    itemset_parser.add_argument('--format', choices=['json', 'pretty', 'text'], default='text',
+                               help='Output format (default: text)')
+    itemset_parser.add_argument('--output', help='Output file (default: stdout)')
+    itemset_parser.add_argument('--seed', type=int, help='Random seed for reproducibility')
+
+    # Generate batch command
+    batch_parser = subparsers.add_parser('generate-batch', help='Generate batch content with distribution')
+    batch_parser.add_argument('--content-type', choices=['item', 'npc', 'location'], default='item',
+                             help='Content type (default: item)')
+    batch_parser.add_argument('--count', type=int, default=100, help='Number to generate (default: 100)')
+    batch_parser.add_argument('--distribution', help='Rarity distribution (e.g., "Common:0.5,Rare:0.3,Epic:0.2")')
+    batch_parser.add_argument('--format', choices=['json', 'pretty', 'text'], default='json',
+                             help='Output format (default: json)')
+    batch_parser.add_argument('--output', help='Output file (default: stdout)')
+    batch_parser.add_argument('--seed', type=int, help='Random seed for reproducibility')
+
+    # Generate weather command
+    weather_parser = subparsers.add_parser('generate-weather', help='Generate weather and time conditions')
+    weather_parser.add_argument('--biome', help='Biome type')
+    weather_parser.add_argument('--format', choices=['json', 'pretty', 'text'], default='text',
+                               help='Output format (default: text)')
+    weather_parser.add_argument('--output', help='Output file (default: stdout)')
+    weather_parser.add_argument('--seed', type=int, help='Random seed for reproducibility')
+
+    # Generate trap command
+    trap_parser = subparsers.add_parser('generate-trap', help='Generate a trap or puzzle')
+    trap_parser.add_argument('--difficulty', type=int, default=1, help='Difficulty level 1-10 (default: 1)')
+    trap_parser.add_argument('--trap-type', choices=['mechanical', 'magical', 'puzzle', 'environmental'],
+                            help='Trap type (default: random)')
+    trap_parser.add_argument('--format', choices=['json', 'pretty', 'text'], default='text',
+                            help='Output format (default: text)')
+    trap_parser.add_argument('--output', help='Output file (default: stdout)')
+    trap_parser.add_argument('--seed', type=int, help='Random seed for reproducibility')
+
+    # Generate procedural name command
+    procname_parser = subparsers.add_parser('generate-name', help='Generate a procedural name')
+    procname_parser.add_argument('--race', default='human', help='Race type (default: human)')
+    procname_parser.add_argument('--gender', choices=['male', 'female'], default='male',
+                                help='Gender (default: male)')
+    procname_parser.add_argument('--seed', type=int, help='Random seed for reproducibility')
+
+    # Validate thematic consistency command
+    validate_parser = subparsers.add_parser('validate-thematic', help='Validate item thematic consistency')
+    validate_parser.add_argument('--item-json', help='Path to item JSON file (default: generates random item)')
+    validate_parser.add_argument('--biome', required=True, help='Biome to validate against')
+    validate_parser.add_argument('--format', choices=['json', 'pretty', 'text'], default='text',
+                                help='Output format (default: text)')
+    validate_parser.add_argument('--output', help='Output file (default: stdout)')
+    validate_parser.add_argument('--seed', type=int, help='Random seed for reproducibility')
+
+    # Export command
+    export_parser = subparsers.add_parser('export', help='Export data to various formats')
+    export_parser.add_argument('--input', required=True, help='Input JSON file')
+    export_parser.add_argument('--output', required=True, help='Output file')
+    export_parser.add_argument('--export-format', choices=['json', 'xml', 'csv', 'sql'], required=True,
+                              help='Export format')
+    export_parser.add_argument('--table-name', help='SQL table name (for SQL export)')
+
     args = parser.parse_args()
 
     if not args.command:
@@ -694,6 +948,30 @@ Examples:
             cmd_list_biomes(args, generator)
         elif args.command == 'list-professions':
             cmd_list_professions(args, generator)
+        elif args.command == 'generate-loot':
+            cmd_generate_loot(args, generator)
+        elif args.command == 'generate-quest':
+            cmd_generate_quest(args, generator)
+        elif args.command == 'generate-recipe':
+            cmd_generate_recipe(args, generator)
+        elif args.command == 'generate-encounter':
+            cmd_generate_encounter(args, generator)
+        elif args.command == 'generate-item-modifiers':
+            cmd_generate_item_with_modifiers(args, generator)
+        elif args.command == 'generate-item-set':
+            cmd_generate_item_set(args, generator)
+        elif args.command == 'generate-batch':
+            cmd_generate_batch(args, generator)
+        elif args.command == 'generate-weather':
+            cmd_generate_weather(args, generator)
+        elif args.command == 'generate-trap':
+            cmd_generate_trap(args, generator)
+        elif args.command == 'generate-name':
+            cmd_generate_procedural_name(args, generator)
+        elif args.command == 'validate-thematic':
+            cmd_validate_thematic(args, generator)
+        elif args.command == 'export':
+            cmd_export(args, generator)
 
         return 0
 
