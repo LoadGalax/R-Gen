@@ -1,0 +1,105 @@
+{
+  "templates": {
+    "weapon_melee": {
+      "type": "weapon",
+      "subtype": "melee",
+      "base_names": ["Sword", "Axe", "Mace", "Dagger", "Spear", "Hammer"],
+      "has_material": true,
+      "has_quality": true,
+      "has_rarity": true,
+      "stat_count": {"min": 1, "max": 3},
+      "value_range": {"min": 50, "max": 500},
+      "description_templates": [
+        "A {quality} {rarity} {material} {base_name}, which feels {tactile_adjective} to the touch.",
+        "This {visual_adjective} {material} {base_name} is of {quality} quality and appears to be {rarity}.",
+        "A {quality} {base_name} forged from {material}, with a {tactile_adjective} grip."
+      ],
+      "damage_type_count": {"min": 1, "max": 2}
+    },
+    "weapon_ranged": {
+      "type": "weapon",
+      "subtype": "ranged",
+      "base_names": ["Bow", "Crossbow", "Longbow", "Shortbow"],
+      "has_material": true,
+      "has_quality": true,
+      "has_rarity": true,
+      "stat_count": {"min": 1, "max": 3},
+      "value_range": {"min": 75, "max": 600},
+      "description_templates": [
+        "A {quality} {material} {base_name}, {visual_adjective} and well-maintained.",
+        "This {rarity} {base_name} is crafted from {material} and feels {tactile_adjective}."
+      ],
+      "damage_type_count": {"min": 1, "max": 1}
+    },
+    "armor": {
+      "type": "armor",
+      "subtype": "protective",
+      "base_names": ["Helmet", "Chestplate", "Gauntlets", "Boots", "Shield"],
+      "has_material": true,
+      "has_quality": true,
+      "has_rarity": true,
+      "stat_count": {"min": 1, "max": 2},
+      "value_range": {"min": 100, "max": 800},
+      "description_templates": [
+        "A {quality} {material} {base_name}, {visual_adjective} and sturdy.",
+        "This {rarity} piece of armor is made from {material} and appears {quality}.",
+        "A {tactile_adjective} {material} {base_name} of {quality} craftsmanship."
+      ],
+      "provides_defense": true
+    },
+    "potion": {
+      "type": "consumable",
+      "subtype": "potion",
+      "base_names": ["Health Potion", "Mana Potion", "Stamina Potion", "Strength Elixir", "Speed Tonic", "Antidote"],
+      "has_material": false,
+      "has_quality": true,
+      "has_rarity": true,
+      "stat_count": {"min": 0, "max": 1},
+      "value_range": {"min": 10, "max": 100},
+      "description_templates": [
+        "A {quality} {base_name} contained in a {visual_adjective} vial.",
+        "This {rarity} {base_name} glows with a {tactile_adjective} light.",
+        "A {quality} quality {base_name}, with a {visual_adjective} appearance."
+      ],
+      "consumable": true
+    },
+    "scroll": {
+      "type": "consumable",
+      "subtype": "scroll",
+      "base_names": ["Fireball Scroll", "Lightning Scroll", "Healing Scroll", "Teleport Scroll", "Identify Scroll"],
+      "has_material": false,
+      "has_quality": true,
+      "has_rarity": true,
+      "stat_count": {"min": 0, "max": 0},
+      "value_range": {"min": 25, "max": 200},
+      "description_templates": [
+        "A {quality} {base_name} with {visual_adjective} inscriptions.",
+        "This {rarity} scroll bears {quality} quality magical runes."
+      ],
+      "consumable": true,
+      "single_use": true
+    },
+    "jewelry": {
+      "type": "accessory",
+      "subtype": "jewelry",
+      "base_names": ["Ring", "Amulet", "Bracelet", "Earring", "Crown"],
+      "has_material": true,
+      "has_quality": true,
+      "has_rarity": true,
+      "stat_count": {"min": 1, "max": 4},
+      "value_range": {"min": 200, "max": 2000},
+      "description_templates": [
+        "A {quality} {material} {base_name}, {visual_adjective} and intricate.",
+        "This {rarity} {base_name} is crafted from {material} and feels {tactile_adjective}.",
+        "An {visual_adjective} {material} {base_name} of {quality} quality."
+      ]
+    }
+  },
+  "item_sets": {
+    "blacksmith_inventory": ["weapon_melee", "armor"],
+    "merchant_inventory": ["potion", "scroll", "jewelry"],
+    "warrior_inventory": ["weapon_melee", "armor", "potion"],
+    "mage_inventory": ["scroll", "potion", "jewelry"],
+    "treasure_hoard": ["jewelry", "weapon_melee", "weapon_ranged", "armor"]
+  }
+}

@@ -1,0 +1,102 @@
+{
+  "quality": [
+    "Poor",
+    "Standard",
+    "Fine",
+    "Excellent",
+    "Masterwork",
+    "Legendary"
+  ],
+  "rarity": [
+    "Common",
+    "Uncommon",
+    "Rare",
+    "Epic",
+    "Legendary",
+    "Mythic"
+  ],
+  "materials": [
+    "iron",
+    "steel",
+    "bronze",
+    "silver",
+    "mithril",
+    "obsidian",
+    "crystal",
+    "wood",
+    "leather",
+    "bone"
+  ],
+  "tactile_adjectives": [
+    "rough",
+    "smooth",
+    "cold",
+    "warm",
+    "heavy",
+    "light",
+    "balanced",
+    "awkward",
+    "comfortable",
+    "mysterious"
+  ],
+  "damage_types": [
+    "Slashing",
+    "Piercing",
+    "Bludgeoning",
+    "Fire",
+    "Ice",
+    "Lightning",
+    "Poison",
+    "Necrotic",
+    "Radiant",
+    "Psychic"
+  ],
+  "environment_tags": [
+    "Dark",
+    "Bright",
+    "Wet",
+    "Dry",
+    "Cold",
+    "Hot",
+    "Traversable",
+    "Dangerous",
+    "Peaceful",
+    "Ancient",
+    "Ruined",
+    "Pristine",
+    "Overgrown",
+    "Barren"
+  ],
+  "stats": {
+    "Strength": {"min": -5, "max": 10},
+    "Dexterity": {"min": -5, "max": 10},
+    "Constitution": {"min": -5, "max": 10},
+    "Intelligence": {"min": -5, "max": 10},
+    "Wisdom": {"min": -5, "max": 10},
+    "Charisma": {"min": -5, "max": 10}
+  },
+  "npc_traits": [
+    "gruff",
+    "friendly",
+    "mysterious",
+    "nervous",
+    "confident",
+    "suspicious",
+    "cheerful",
+    "melancholic",
+    "wise",
+    "foolish"
+  ],
+  "visual_adjectives": [
+    "weathered",
+    "pristine",
+    "ornate",
+    "simple",
+    "decorated",
+    "plain",
+    "scarred",
+    "polished",
+    "tarnished",
+    "gleaming"
+  ]
+}

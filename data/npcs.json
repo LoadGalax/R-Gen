@@ -1,0 +1,166 @@
+{
+  "archetypes": {
+    "blacksmith": {
+      "title": "Blacksmith",
+      "first_names": ["Thorin", "Bronn", "Grimm", "Forge", "Anvil", "Steel"],
+      "last_names": ["Ironhammer", "Steelforge", "Coalbeard", "Firehand", "Metalborn"],
+      "skills": ["Smithing", "Metalworking", "Weapon Repair", "Armor Crafting"],
+      "base_stats": {
+        "Strength": 8,
+        "Dexterity": 5,
+        "Constitution": 7,
+        "Intelligence": 4,
+        "Wisdom": 5,
+        "Charisma": 3
+      },
+      "dialogue_hooks": [
+        "Need something repaired?",
+        "Finest weapons in all the realm!",
+        "I can make you something special... for the right price.",
+        "My forge has been burning for three generations."
+      ],
+      "description_templates": [
+        "A {trait} {title} with soot-covered hands and a {tactile_adjective} demeanor.",
+        "This {trait} craftsperson works at a {visual_adjective} forge.",
+        "A {trait} {title} who seems {tactile_adjective} and experienced."
+      ],
+      "inventory_set": "blacksmith_inventory",
+      "typical_locations": ["forge", "workshop", "market"]
+    },
+    "guard": {
+      "title": "Guard",
+      "first_names": ["Marcus", "Helena", "Roland", "Cassandra", "Viktor", "Aria"],
+      "last_names": ["Shieldborn", "Watchful", "Steadfast", "the Vigilant", "Ironwall"],
+      "skills": ["Combat", "Patrol", "Investigation", "Intimidation"],
+      "base_stats": {
+        "Strength": 7,
+        "Dexterity": 6,
+        "Constitution": 8,
+        "Intelligence": 4,
+        "Wisdom": 6,
+        "Charisma": 4
+      },
+      "dialogue_hooks": [
+        "Move along, citizen.",
+        "Any trouble and you'll answer to me.",
+        "The city is safe while we're on watch.",
+        "Halt! State your business."
+      ],
+      "description_templates": [
+        "A {trait} {title} in {visual_adjective} armor, standing at attention.",
+        "This {trait} sentinel maintains a {tactile_adjective} watch over the area.",
+        "A {trait} {title} with a {visual_adjective} weapon at their side."
+      ],
+      "inventory_set": "warrior_inventory",
+      "typical_locations": ["gate", "barracks", "city_square"]
+    },
+    "merchant": {
+      "title": "Wandering Merchant",
+      "first_names": ["Zara", "Felix", "Milo", "Seraphina", "Jasper", "Luna"],
+      "last_names": ["Goldheart", "the Wealthy", "Coinpurse", "Tradewise", "Silvertounge"],
+      "skills": ["Persuasion", "Appraisal", "Haggling", "Trade Routes"],
+      "base_stats": {
+        "Strength": 3,
+        "Dexterity": 5,
+        "Constitution": 4,
+        "Intelligence": 7,
+        "Wisdom": 6,
+        "Charisma": 9
+      },
+      "dialogue_hooks": [
+        "Step right up! Best prices in the land!",
+        "I have rare goods from distant shores.",
+        "Perhaps we can make a deal?",
+        "Everything must go! Well, almost everything."
+      ],
+      "description_templates": [
+        "A {trait} {title} with a {visual_adjective} cart full of wares.",
+        "This {trait} trader has a {tactile_adjective} smile and shrewd eyes.",
+        "A {trait} {title} surrounded by {visual_adjective} merchandise."
+      ],
+      "inventory_set": "merchant_inventory",
+      "typical_locations": ["market", "crossroads", "tavern"]
+    },
+    "mage": {
+      "title": "Mage",
+      "first_names": ["Eldrin", "Morgana", "Thaddeus", "Lyra", "Arcturus", "Celestia"],
+      "last_names": ["the Wise", "Starweaver", "Spellbound", "Arcane", "Mystborne"],
+      "skills": ["Arcane Magic", "Elemental Control", "Enchanting", "Lore"],
+      "base_stats": {
+        "Strength": 2,
+        "Dexterity": 4,
+        "Constitution": 3,
+        "Intelligence": 9,
+        "Wisdom": 8,
+        "Charisma": 5
+      },
+      "dialogue_hooks": [
+        "The arcane flows strongly here.",
+        "Magic is both art and science.",
+        "I sense great potential in you.",
+        "The weave of reality is delicate indeed."
+      ],
+      "description_templates": [
+        "A {trait} {title} wearing {visual_adjective} robes that shimmer with power.",
+        "This {trait} spellcaster has a {tactile_adjective} presence about them.",
+        "A {trait} {title} surrounded by {visual_adjective} magical auras."
+      ],
+      "inventory_set": "mage_inventory",
+      "typical_locations": ["tower", "library", "shrine"]
+    },
+    "innkeeper": {
+      "title": "Innkeeper",
+      "first_names": ["Bertram", "Rosie", "Gareth", "Mabel", "Oswald", "Beatrice"],
+      "last_names": ["Brewmaster", "Warmhearth", "the Jolly", "Hearthkeeper", "Taverner"],
+      "skills": ["Hospitality", "Brewing", "Gossip", "Cooking"],
+      "base_stats": {
+        "Strength": 5,
+        "Dexterity": 4,
+        "Constitution": 6,
+        "Intelligence": 5,
+        "Wisdom": 7,
+        "Charisma": 8
+      },
+      "dialogue_hooks": [
+        "Welcome! Come in, come in!",
+        "Best ale this side of the mountains.",
+        "I hear all sorts of rumors in this tavern.",
+        "Room and board? We have plenty!"
+      ],
+      "description_templates": [
+        "A {trait} {title} with a {tactile_adjective} laugh and warm smile.",
+        "This {trait} host maintains a {visual_adjective} establishment.",
+        "A {trait} {title} who greets everyone with {tactile_adjective} hospitality."
+      ],
+      "inventory_set": "merchant_inventory",
+      "typical_locations": ["tavern", "inn"]
+    },
+    "hermit": {
+      "title": "Hermit",
+      "first_names": ["Silas", "Elara", "Grim", "Sage", "Raven", "Thorn"],
+      "last_names": ["the Recluse", "Shadowwalker", "Whisperwind", "the Forgotten", "Moonless"],
+      "skills": ["Survival", "Herbalism", "Ancient Knowledge", "Meditation"],
+      "base_stats": {
+        "Strength": 4,
+        "Dexterity": 6,
+        "Constitution": 5,
+        "Intelligence": 7,
+        "Wisdom": 9,
+        "Charisma": 2
+      },
+      "dialogue_hooks": [
+        "Few venture this far from civilization.",
+        "The old ways are not forgotten by all.",
+        "Silence speaks louder than words.",
+        "You seek something... I can tell."
+      ],
+      "description_templates": [
+        "A {trait} {title} living in isolation, with a {tactile_adjective} presence.",
+        "This {trait} recluse has {visual_adjective} features weathered by solitude.",
+        "A {trait} {title} who observes with {tactile_adjective} intensity."
+      ],
+      "inventory_set": "mage_inventory",
+      "typical_locations": ["forest_clearing", "cave", "mountain_peak"]
+    }
+  }
+}
