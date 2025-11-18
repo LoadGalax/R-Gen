@@ -1,0 +1,293 @@
+{
+  "description_styles": {
+    "technical": {
+      "description": "Precise, mechanical descriptions focusing on stats and function",
+      "tone": "analytical",
+      "templates": {
+        "item": "A {quality} grade {material} {base_name}. Weight: {weight}. Damage: {damage}. Properties: {properties}.",
+        "npc": "{name}, {race} {profession} (Level {level}). STR: {strength}, DEX: {dexterity}, INT: {intelligence}. Skills: {skills}.",
+        "location": "{name}: {type} terrain. Size: {size}. Environment: {environment}. Inhabitants: {inhabitants}. Resources: {resources}.",
+        "spell": "{name} ({school}): Level {level} {effect_type}. Range: {range}. Duration: {duration}. Components: {components}. Effect: {effect}."
+      },
+      "vocabulary": ["grade", "specifications", "parameters", "rating", "coefficient", "metric"]
+    },
+    "poetic": {
+      "description": "Flowery, evocative language with metaphors and imagery",
+      "tone": "artistic",
+      "templates": {
+        "item": "Behold the {adjective} {base_name}, wrought from {material} by {creator}'s steady hand. Its {quality} craftsmanship whispers tales of {origin}, gleaming like {simile} under {lighting}.",
+        "npc": "{name}, the {adjective} {profession}, whose {feature} speaks of {quality}. A {race} of {reputation}, known throughout {region} for {deed}. Their eyes hold {emotion}, and their voice carries {tone}.",
+        "location": "In the {adjective} embrace of {name}, where {imagery} and {atmosphere} intertwine, {description}. The very air {sensation}, and shadows dance with {movement}.",
+        "spell": "The ancient art of {name}, a {adjective} weaving of {school} magic that {metaphor}. When cast, reality itself {imagery}, and {effect} manifests like {simile}."
+      },
+      "vocabulary": ["whispers", "gleaming", "shadows", "ancient", "mystic", "ethereal", "haunting", "radiant"],
+      "literary_devices": ["metaphor", "simile", "personification", "imagery", "alliteration"]
+    },
+    "brief": {
+      "description": "Concise, minimalist descriptions with essential information only",
+      "tone": "efficient",
+      "templates": {
+        "item": "{quality} {material} {base_name}. {main_property}.",
+        "npc": "{name}. {race} {profession}. {defining_trait}.",
+        "location": "{name}. {type}. {key_feature}.",
+        "spell": "{name}. {school}. {effect}."
+      },
+      "vocabulary": ["basic", "simple", "standard", "common", "typical"],
+      "max_words": 20
+    },
+    "detailed": {
+      "description": "Comprehensive descriptions with extensive information",
+      "tone": "thorough",
+      "templates": {
+        "item": "This {quality} {material} {base_name} was {origin_story}. The {base_name} measures {dimensions} and weighs {weight}. Its {material} construction features {details}, with {additional_features}. The craftsmanship is {quality_description}, evident in {examples}. Notable properties include {properties}. {history} {current_condition}",
+        "npc": "{name} is a {age} year old {race} {profession} who {background}. Standing {height} with {build} build, they have {physical_description}. Their {feature} is particularly {adjective}, and they typically wear {clothing}. Known for {reputation}, {name} possesses skills in {skills} and is affiliated with {faction}. They {personality} and {motivation}. Currently, they {current_situation}.",
+        "location": "The {name} is a {size} {type} located in {region}. This {quality} {location_type} features {major_features}. The environment is characterized by {environment_details}, with {climate} climate and {terrain} terrain. {Historical_significance}. The area is inhabited by {inhabitants} and contains {resources}. Notable landmarks include {landmarks}. {Current_state} The atmosphere is {mood}, and visitors often remark on {distinctive_feature}.",
+        "spell": "{name} is a {level} level {school} spell {origin}. The casting requires {components} and takes {casting_time} to perform. With a range of {range}, the spell {effect_detailed}. The magical energies manifest as {visual_description}, accompanied by {sensory_effects}. Duration: {duration}. {mechanical_effects} Practitioners note that {special_note}. {history_or_lore}"
+      },
+      "vocabulary": ["comprehensive", "extensive", "elaborate", "intricate", "multifaceted"],
+      "min_words": 50
+    },
+    "historical": {
+      "description": "Focus on origins, past events, and legacy",
+      "tone": "archival",
+      "templates": {
+        "item": "Forged in {era} by {creator}, this {base_name} was {original_purpose}. Once wielded by {famous_owner}, it {notable_deed}. The {material} was sourced from {origin}, and the techniques used {crafting_history}. Over {time_period}, the {base_name} has {changes}. {legend}",
+        "npc": "Born in {birthplace} during {era}, {name} is descended from {lineage}. In their youth, they {early_life}, which shaped their path as a {profession}. {name} is remembered for {historical_deed} and their role in {historical_event}. {family_history} Their {achievement} earned them {recognition}.",
+        "location": "Established in {founding_year} by {founder}, {name} was originally {original_purpose}. Throughout history, the {type} has witnessed {major_events}. During {historical_period}, {significant_event}. The architecture reflects {architectural_style} from {era}. {name} played a crucial role in {historical_importance}. Today, {current_legacy}.",
+        "spell": "Discovered in {era} by {creator}, {name} was originally {original_use}. The spell's development {creation_story}. Notable practitioners include {famous_users}, who {achievements}. The spell was {historical_use} during {historical_event}. Over centuries, the casting method has {evolution}. {current_status}"
+      },
+      "vocabulary": ["ancient", "bygone", "erstwhile", "legacy", "heritage", "chronicle", "annals"],
+      "temporal_markers": ["once", "formerly", "in ages past", "throughout history", "to this day"]
+    },
+    "dramatic": {
+      "description": "Exciting, intense descriptions emphasizing action and emotion",
+      "tone": "intense",
+      "templates": {
+        "item": "The legendary {base_name}! {exclamation} Forged from {material} in {dramatic_origin}, this {quality} weapon has {dramatic_history}! Its {feature} strikes fear into {enemies}, and its {property} has {dramatic_effect}! {call_to_action}",
+        "npc": "{name}! The {adjective} {profession} whose {dramatic_quality} is known far and wide! With {dramatic_feature}, they have {dramatic_achievement}! Their {skill} is {intensity}, their {trait} is {intensity}, and their {reputation} precedes them! {dramatic_current_state}!",
+        "location": "The {adjective} {name}! A place where {dramatic_event}! Here, {intensity} reaches new heights! The {feature} {dramatic_description}, while {another_feature} {dramatic_description}! {warning} This is where {dramatic_possibility}!",
+        "spell": "Behold {name}! The most {adjective} {school} spell ever created! When unleashed, {dramatic_effect}! {dramatic_visual}! The raw power {intensity}, the destruction {intensity}, the {aspect} beyond imagination! {warning}"
+      },
+      "vocabulary": ["legendary", "devastating", "incredible", "overwhelming", "fearsome", "mighty", "unstoppable"],
+      "punctuation": "heavy_exclamation",
+      "intensity_words": ["extreme", "ultimate", "supreme", "maximum", "absolute"]
+    },
+    "mysterious": {
+      "description": "Enigmatic descriptions with questions and suggestions",
+      "tone": "cryptic",
+      "templates": {
+        "item": "This {adjective} {base_name} of {material}... its true origin remains unclear. Some say {rumor}, while others whisper of {alternative_rumor}. What secrets might it hold? The {feature} seems {observation}, though perhaps {alternative_interpretation}. {unanswered_question}",
+        "npc": "Little is truly known about {name}. The {race} {profession} appears to be {observation}, yet {contradiction}. They claim to {stated_purpose}, but why {question}? Their {feature} hints at {suggestion}, and their {behavior} raises questions about {mystery}. {enigmatic_statement}",
+        "location": "The {name} holds many secrets. What transpired here? The {feature} suggests {interpretation}, yet {contradiction}. Strange {phenomena} occur, and some report {strange_occurrence}. Is it possible that {speculation}? The truth remains hidden within {mystery_location}. {warning_or_invitation}",
+        "spell": "The enigmatic {name}... its true purpose unknown. How was it created? Why does {unusual_property}? Scholars debate whether {theory_a} or {theory_b}. The {effect} defies normal explanation, and the {component} requirements suggest {implication}. What could {creator} have intended? {mystery}"
+      },
+      "vocabulary": ["perhaps", "seemingly", "supposedly", "allegedly", "rumored", "unknown", "hidden", "secret"],
+      "question_markers": ["What", "Why", "How", "Could it be", "Is it possible"],
+      "uncertainty": "high"
+    },
+    "humorous": {
+      "description": "Lighthearted, funny descriptions with jokes and wit",
+      "tone": "comedic",
+      "templates": {
+        "item": "Ah yes, the {quality} {base_name} made of {material}. {joke_about_quality} Legend has it that {humorous_origin_story}. The {feature} is almost as {exaggeration} as {comparison}! Perfect for {humorous_use}, though not recommended for {silly_misuse}. Side effects may include {humorous_side_effect}.",
+        "npc": "Meet {name}, the {race} {profession} who {humorous_trait}. With the {skill} of {humorous_comparison} and the {other_skill} of {another_comparison}, they've managed to {humorous_achievement}. Their {feature} is legendary, mostly because {joke}. {name}'s motto: '{humorous_quote}'",
+        "location": "Welcome to {name}, where {humorous_description}! The local {feature} is {exaggeration}, and the {other_feature} is even more {greater_exaggeration}! Visitors often {humorous_visitor_reaction}. The {establishment} serves {humorous_item}, which tastes like {humorous_comparison}. Fun fact: {silly_fact}!",
+        "spell": "{name}: For when you really want to {humorous_effect}! This {school} spell {joke_about_school}. Requires {component}, {another_component}, and {silly_component} (sold separately). Warning: May cause {humorous_side_effect}, {another_side_effect}, and {silly_side_effect}. Not responsible for {humorous_disclaimer}!"
+      },
+      "vocabulary": ["allegedly", "supposedly", "conveniently", "mysteriously", "suspiciously", "ironically"],
+      "comedic_devices": ["exaggeration", "understatement", "wordplay", "absurdity", "irony"]
+    },
+    "ominous": {
+      "description": "Dark, foreboding descriptions emphasizing danger and dread",
+      "tone": "sinister",
+      "templates": {
+        "item": "The cursed {base_name} of {material}, forged in {dark_origin}. Its {feature} pulses with {ominous_quality}, and those who wield it {warning}. The {quality} craftsmanship belies its {dark_nature}. {ominous_history} They say that {dark_rumor}, and the {feature} seems to {ominous_behavior}. Beware...",
+        "npc": "{name}, the {adjective} {profession}. Their {feature} betrays {dark_quality}, and their {skill} has been used for {dark_deed}. Whispers speak of {dark_rumor}, and their {trait} suggests {ominous_implication}. Those who cross {name} {dark_fate}. Even now, they {ominous_current_action}.",
+        "location": "The forsaken {name}, where {ominous_event} occurred. The {feature} casts {ominous_shadow}, and the air itself {ominous_quality}. Few who enter {warning}, and those who do speak of {ominous_experience}. At night, {ominous_phenomenon}, and the {feature} seems to {ominous_behavior}. Turn back while you still can...",
+        "spell": "The forbidden {name}, a {school} spell that should never have been created. Its power {ominous_description}, and the cost {dark_price}. Those who cast it {warning}, for the {effect} corrupts {corruption}. The {component} required hint at {dark_implication}. {ominous_lore} Use only in darkest desperation..."
+      },
+      "vocabulary": ["cursed", "forbidden", "dark", "sinister", "malevolent", "corrupted", "doomed", "haunted"],
+      "warnings": ["Beware", "Turn back", "Abandon hope", "Flee while you can"],
+      "atmosphere": "dread"
+    },
+    "scholarly": {
+      "description": "Academic, analytical descriptions with citations and observations",
+      "tone": "academic",
+      "templates": {
+        "item": "Classification: {type}. Composition: {material}. Quality assessment: {quality}. The {base_name} exhibits {properties} consistent with {era} craftsmanship. Comparative analysis reveals {comparison}. Functional assessment indicates {function}. Notable observations: {details}. Further study recommended on {research_topic}. References: {citation}.",
+        "npc": "Subject: {name}. Species: {race}. Occupation: {profession}. Physical characteristics: {physical_desc}. Behavioral patterns: {behavior}. Skill assessment: {skills}. Social affiliations: {faction}. Psychological profile: {personality}. Research notes: {observations}. Hypothesis: {theory}. Requires additional observation.",
+        "location": "Geographic designation: {name}. Terrain classification: {type}. Coordinates: {region}. Environmental assessment: {environment}. Geological features: {geology}. Biological survey: {flora_fauna}. Historical significance: {history}. Current utilization: {current_use}. Recommended investigations: {research}. Documentation: {citation}.",
+        "spell": "Spell designation: {name}. School classification: {school}. Power level: {level}. Methodology: {casting_method}. Required components: {components}. Observed effects: {effects}. Theoretical framework: {theory}. Historical development: {history}. Comparative spells: {related_spells}. Practical applications: {applications}. Further research: {research_needed}."
+      },
+      "vocabulary": ["analysis", "assessment", "observation", "classification", "hypothesis", "methodology"],
+      "citation_style": "academic",
+      "objectivity": "high"
+    },
+    "noir": {
+      "description": "Cynical, atmospheric descriptions in detective/noir style",
+      "tone": "cynical",
+      "templates": {
+        "item": "The {base_name}. {material}, {quality}. The kind of {type} that had seen better days, just like this city. It had a {feature} that told a story - and not a pretty one. {observation} In my line of work, you learn that {cynical_wisdom}. This {base_name}? It was trouble. I could tell.",
+        "npc": "{name}. A {race} {profession} with {feature} that had seen too much. The kind of {descriptor} you'd find in a place like this. They said they {claim}, but I knew better. Everyone in this town has secrets, and {name}'s {trait} practically screamed {implication}. I had a feeling we'd meet again. I'm never wrong about these things.",
+        "location": "The {name}. Another {type} in this {adjective} city. The {feature} had seen better days, and so had the {inhabitants}. Rain always seems to fall harder in places like this. {atmospheric_detail} It was the kind of place where {cynical_observation}. I'd been here before. Nothing good ever happens in places like this.",
+        "spell": "They called it {name}. A {school} spell, {level} level. The kind of magic that gets people killed. I'd seen what it could do - {effect}. The {component} cost alone should tell you this wasn't for amateurs. In my experience, {cynical_wisdom_magic}. This spell? It was bad news in a bad package."
+      },
+      "vocabulary": ["dame", "gumshoe", "joint", "racket", "case", "trouble", "bad news"],
+      "atmosphere": "urban_decay",
+      "perspective": "first_person",
+      "mood": "cynical"
+    }
+  },
+  "context_aware_modifiers": {
+    "location_based": {
+      "volcanic": {
+        "adjectives": ["scorching", "molten", "smoldering", "ash-covered", "blazing"],
+        "imagery": ["rivers of lava", "smoke and ash", "heat shimmer", "volcanic glass"],
+        "atmosphere": "oppressive heat"
+      },
+      "arctic": {
+        "adjectives": ["frozen", "ice-covered", "glacial", "frigid", "frost-rimmed"],
+        "imagery": ["crystalline ice", "howling wind", "endless snow", "aurora lights"],
+        "atmosphere": "bone-chilling cold"
+      },
+      "forest": {
+        "adjectives": ["verdant", "shadowed", "moss-covered", "ancient", "tangled"],
+        "imagery": ["dappled sunlight", "rustling leaves", "forest floor", "towering trees"],
+        "atmosphere": "primeval mystery"
+      },
+      "underground": {
+        "adjectives": ["dark", "damp", "echoing", "claustrophobic", "subterranean"],
+        "imagery": ["dripping water", "stone corridors", "torch light", "distant echoes"],
+        "atmosphere": "oppressive darkness"
+      },
+      "desert": {
+        "adjectives": ["sun-bleached", "barren", "scorched", "windswept", "arid"],
+        "imagery": ["endless dunes", "heat waves", "sparse vegetation", "sandstorms"],
+        "atmosphere": "relentless sun"
+      },
+      "coastal": {
+        "adjectives": ["salt-stained", "wave-worn", "breezy", "maritime", "tidal"],
+        "imagery": ["crashing waves", "salt spray", "seabirds", "sandy beaches"],
+        "atmosphere": "ocean air"
+      },
+      "urban": {
+        "adjectives": ["crowded", "noisy", "cobblestoned", "bustling", "towering"],
+        "imagery": ["market stalls", "city walls", "crowded streets", "chimney smoke"],
+        "atmosphere": "human activity"
+      },
+      "ruins": {
+        "adjectives": ["crumbling", "overgrown", "abandoned", "time-worn", "decrepit"],
+        "imagery": ["fallen columns", "weathered stones", "creeping vines", "empty halls"],
+        "atmosphere": "forgotten glory"
+      }
+    },
+    "time_based": {
+      "dawn": {
+        "lighting": ["pale light", "first light", "rosy glow", "breaking dawn"],
+        "atmosphere": "hopeful beginning",
+        "sensory": ["morning dew", "bird song", "cool air"]
+      },
+      "noon": {
+        "lighting": ["bright sunlight", "harsh light", "full daylight", "blazing sun"],
+        "atmosphere": "peak activity",
+        "sensory": ["heat", "clear visibility", "minimal shadows"]
+      },
+      "dusk": {
+        "lighting": ["fading light", "golden hour", "lengthening shadows", "twilight"],
+        "atmosphere": "transitional calm",
+        "sensory": ["cooling air", "evening sounds", "dimming visibility"]
+      },
+      "night": {
+        "lighting": ["darkness", "moonlight", "starlight", "shadows"],
+        "atmosphere": "mysterious stillness",
+        "sensory": ["nocturnal sounds", "limited vision", "cool temperatures"]
+      }
+    },
+    "weather_based": {
+      "rain": {
+        "modifiers": ["rain-slicked", "sodden", "dripping", "water-stained"],
+        "sensory": ["patter of rain", "wet earth", "poor visibility", "dampness"],
+        "effects": ["muddy ground", "reduced sound", "grey skies"]
+      },
+      "snow": {
+        "modifiers": ["snow-covered", "frost-rimed", "icy", "winter-locked"],
+        "sensory": ["muffled sound", "crisp air", "crunching snow", "bite of cold"],
+        "effects": ["white blanket", "difficult movement", "clear tracks"]
+      },
+      "fog": {
+        "modifiers": ["fog-shrouded", "mist-covered", "hazy", "obscured"],
+        "sensory": ["dampness", "limited vision", "eerie silence", "gray veil"],
+        "effects": ["poor visibility", "sense of isolation", "disorientation"]
+      },
+      "storm": {
+        "modifiers": ["storm-lashed", "wind-battered", "tempest-tossed", "lightning-lit"],
+        "sensory": ["howling wind", "thunder crack", "driving rain", "electric tension"],
+        "effects": ["violent weather", "dangerous conditions", "dramatic atmosphere"]
+      }
+    },
+    "mood_based": {
+      "peaceful": {
+        "vocabulary": ["serene", "tranquil", "calm", "gentle", "harmonious"],
+        "tone": "relaxing",
+        "pacing": "slow"
+      },
+      "tense": {
+        "vocabulary": ["anxious", "nervous", "uneasy", "strained", "charged"],
+        "tone": "anticipatory",
+        "pacing": "quick"
+      },
+      "hostile": {
+        "vocabulary": ["threatening", "dangerous", "aggressive", "violent", "deadly"],
+        "tone": "menacing",
+        "pacing": "rapid"
+      },
+      "melancholic": {
+        "vocabulary": ["sorrowful", "mournful", "wistful", "bittersweet", "nostalgic"],
+        "tone": "sad",
+        "pacing": "slow"
+      }
+    }
+  },
+  "lore_generation": {
+    "item_lore": [
+      "Forged by {creator} in the {era} during {event}",
+      "Once belonged to {famous_owner} who {deed}",
+      "Said to contain a fragment of {magical_source}",
+      "Cursed by {entity} after {transgression}",
+      "Blessed by {divine_being} to {purpose}",
+      "Discovered in {location} by {discoverer}",
+      "Created using lost techniques from {civilization}",
+      "Part of a set of {number} legendary {item_type}"
+    ],
+    "location_lore": [
+      "Built by {civilization} to {purpose}",
+      "Site of the legendary {event}",
+      "Where {hero} made their last stand against {enemy}",
+      "Sacred to {deity} since ancient times",
+      "Once the capital of the {kingdom}",
+      "Destroyed during the {war} and rebuilt",
+      "Home to the {organization} for centuries",
+      "Where {magical_event} first occurred"
+    ],
+    "npc_lore": [
+      "Trained by the legendary {mentor}",
+      "Sole survivor of {disaster}",
+      "Bearer of the curse of {curse}",
+      "Prophesied to {prophecy}",
+      "Lost {something_important} in {event}",
+      "Sworn enemy of {enemy} since {event}",
+      "Searching for {quest_goal} for {time_period}",
+      "Hiding from {pursuer} after {crime_or_event}"
+    ],
+    "spell_lore": [
+      "Invented by {creator} while studying {subject}",
+      "Forbidden by the {authority} after {incident}",
+      "Discovered in the ruins of {civilization}",
+      "Derived from {original_spell} through {process}",
+      "Granted to mortals by {divine_being}",
+      "Result of {magical_accident} during {event}",
+      "Final creation of {mage} before {fate}",
+      "Key component of the {ritual} performed during {event}"
+    ]
+  }
+}

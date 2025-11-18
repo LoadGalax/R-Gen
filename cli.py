@@ -619,8 +619,85 @@ def cmd_export(args, generator):
         generator.export_to_csv(data, args.output)
     elif args.export_format == 'sql':
         generator.export_to_sql(data, args.output, table_name=args.table_name or "game_content")
+    elif args.export_format == 'markdown':
+        generator.export_to_markdown(data, args.output, title=args.title or "Generated Content")
     else:  # json
         generator.export_to_json(data, args.output)
+
+
+def cmd_generate_spell(args, generator):
+    """Generate spell"""
+    spell = generator.generate_spell(
+        spell_level=args.spell_level,
+        school=args.school,
+        spell_template=args.spell_template
+    )
+    output_data(spell, args.format, args.output)
+
+
+def cmd_generate_spellbook(args, generator):
+    """Generate spellbook"""
+    spellbook = generator.generate_spellbook(
+        caster_level=args.caster_level,
+        school_preference=args.school_preference
+    )
+    output_data(spellbook, args.format, args.output)
+
+
+def cmd_generate_organization(args, generator):
+    """Generate organization"""
+    organization = generator.generate_organization(
+        org_type=args.org_type,
+        faction=args.faction,
+        size=args.size
+    )
+    output_data(organization, args.format, args.output)
+
+
+def cmd_generate_weather_detailed(args, generator):
+    """Generate detailed weather"""
+    weather = generator.generate_weather_detailed(
+        biome=args.biome,
+        season=args.season,
+        time_of_day=args.time_of_day
+    )
+    output_data(weather, args.format, args.output)
+
+
+def cmd_generate_market(args, generator):
+    """Generate market"""
+    location = None
+    if args.location_id:
+        # Try to load location from database if ID provided
+        # For now, just pass None
+        pass
+
+    market = generator.generate_market(
+        location=location,
+        wealth_level=args.wealth_level
+    )
+    output_data(market, args.format, args.output)
+
+
+def cmd_generate_quest_advanced(args, generator):
+    """Generate advanced quest with branching"""
+    quest = generator.generate_quest_advanced(
+        quest_type=args.quest_type,
+        difficulty=args.difficulty,
+        faction=args.faction,
+        create_chain=args.create_chain
+    )
+    output_data(quest, args.format, args.output)
+
+
+def cmd_generate_npc_network(args, generator):
+    """Generate NPC social network"""
+    central_npc = generator.generate_npc(faction=args.faction)
+    network = generator.generate_npc_network(
+        central_npc=central_npc,
+        network_size=args.network_size
+    )
+    output_data(network, args.format, args.output)
 
 
 def main():
@@ -886,13 +963,83 @@ Examples:
     validate_parser.add_argument('--output', help='Output file (default: stdout)')
     validate_parser.add_argument('--seed', type=int, help='Random seed for reproducibility')
 
+    # Generate spell command
+    spell_parser = subparsers.add_parser('generate-spell', help='Generate a spell')
+    spell_parser.add_argument('--spell-level', type=int, help='Spell level 0-9 (0 is cantrip)')
+    spell_parser.add_argument('--school', help='Magic school (Evocation, Necromancy, Illusion, etc.)')
+    spell_parser.add_argument('--spell-template', help='Spell template (damage_single, damage_area, healing, buff, debuff, summon, utility)')
+    spell_parser.add_argument('--format', choices=['json', 'pretty', 'text'], default='text',
+                             help='Output format (default: text)')
+    spell_parser.add_argument('--output', help='Output file (default: stdout)')
+    spell_parser.add_argument('--seed', type=int, help='Random seed for reproducibility')
+
+    # Generate spellbook command
+    spellbook_parser = subparsers.add_parser('generate-spellbook', help='Generate a spellbook')
+    spellbook_parser.add_argument('--caster-level', type=int, default=1, help='Caster level 1-20 (default: 1)')
+    spellbook_parser.add_argument('--school-preference', help='Preferred magic school')
+    spellbook_parser.add_argument('--format', choices=['json', 'pretty', 'text'], default='text',
+                                  help='Output format (default: text)')
+    spellbook_parser.add_argument('--output', help='Output file (default: stdout)')
+    spellbook_parser.add_argument('--seed', type=int, help='Random seed for reproducibility')
+
+    # Generate organization command
+    org_parser = subparsers.add_parser('generate-organization', help='Generate an organization or guild')
+    org_parser.add_argument('--org-type', help='Organization type (guild, thieves_guild, mages_circle, religious_order, etc.)')
+    org_parser.add_argument('--faction', help='Associated faction')
+    org_parser.add_argument('--size', choices=['small', 'medium', 'large'], help='Organization size')
+    org_parser.add_argument('--format', choices=['json', 'pretty', 'text'], default='text',
+                           help='Output format (default: text)')
+    org_parser.add_argument('--output', help='Output file (default: stdout)')
+    org_parser.add_argument('--seed', type=int, help='Random seed for reproducibility')
+
+    # Generate detailed weather command
+    weather_detail_parser = subparsers.add_parser('generate-weather-detailed', help='Generate detailed weather with seasons and disasters')
+    weather_detail_parser.add_argument('--biome', help='Biome type')
+    weather_detail_parser.add_argument('--season', choices=['spring', 'summer', 'autumn', 'winter'], help='Season')
+    weather_detail_parser.add_argument('--time-of-day', choices=['dawn', 'morning', 'noon', 'afternoon', 'dusk', 'night'], help='Time of day')
+    weather_detail_parser.add_argument('--format', choices=['json', 'pretty', 'text'], default='text',
+                                       help='Output format (default: text)')
+    weather_detail_parser.add_argument('--output', help='Output file (default: stdout)')
+    weather_detail_parser.add_argument('--seed', type=int, help='Random seed for reproducibility')
+
+    # Generate market command
+    market_parser = subparsers.add_parser('generate-market', help='Generate a market with goods and services')
+    market_parser.add_argument('--location-id', help='Location ID for the market')
+    market_parser.add_argument('--wealth-level', choices=['destitute', 'poor', 'modest', 'comfortable', 'wealthy', 'aristocratic'],
+                              default='modest', help='Wealth level (default: modest)')
+    market_parser.add_argument('--format', choices=['json', 'pretty', 'text'], default='text',
+                              help='Output format (default: text)')
+    market_parser.add_argument('--output', help='Output file (default: stdout)')
+    market_parser.add_argument('--seed', type=int, help='Random seed for reproducibility')
+
+    # Generate advanced quest command
+    quest_adv_parser = subparsers.add_parser('generate-quest-advanced', help='Generate advanced quest with branching objectives')
+    quest_adv_parser.add_argument('--quest-type', help='Quest type (fetch, kill, escort, rescue, investigate, diplomacy, craft, exploration, defense, heist)')
+    quest_adv_parser.add_argument('--difficulty', type=int, default=1, help='Quest difficulty 1-10 (default: 1)')
+    quest_adv_parser.add_argument('--faction', help='Faction offering the quest')
+    quest_adv_parser.add_argument('--create-chain', action='store_true', help='Create a quest chain')
+    quest_adv_parser.add_argument('--format', choices=['json', 'pretty', 'text'], default='text',
+                                  help='Output format (default: text)')
+    quest_adv_parser.add_argument('--output', help='Output file (default: stdout)')
+    quest_adv_parser.add_argument('--seed', type=int, help='Random seed for reproducibility')
+
+    # Generate NPC network command
+    npc_network_parser = subparsers.add_parser('generate-npc-network', help='Generate NPC social network')
+    npc_network_parser.add_argument('--network-size', type=int, default=5, help='Number of connected NPCs (default: 5)')
+    npc_network_parser.add_argument('--faction', help='Faction for NPCs')
+    npc_network_parser.add_argument('--format', choices=['json', 'pretty', 'text'], default='text',
+                                    help='Output format (default: text)')
+    npc_network_parser.add_argument('--output', help='Output file (default: stdout)')
+    npc_network_parser.add_argument('--seed', type=int, help='Random seed for reproducibility')
+
     # Export command
     export_parser = subparsers.add_parser('export', help='Export data to various formats')
     export_parser.add_argument('--input', required=True, help='Input JSON file')
     export_parser.add_argument('--output', required=True, help='Output file')
-    export_parser.add_argument('--export-format', choices=['json', 'xml', 'csv', 'sql'], required=True,
+    export_parser.add_argument('--export-format', choices=['json', 'xml', 'csv', 'sql', 'markdown'], required=True,
                               help='Export format')
     export_parser.add_argument('--table-name', help='SQL table name (for SQL export)')
+    export_parser.add_argument('--title', help='Document title (for Markdown export)')
 
     args = parser.parse_args()
 
@@ -972,6 +1119,20 @@ Examples:
             cmd_validate_thematic(args, generator)
         elif args.command == 'export':
             cmd_export(args, generator)
+        elif args.command == 'generate-spell':
+            cmd_generate_spell(args, generator)
+        elif args.command == 'generate-spellbook':
+            cmd_generate_spellbook(args, generator)
+        elif args.command == 'generate-organization':
+            cmd_generate_organization(args, generator)
+        elif args.command == 'generate-weather-detailed':
+            cmd_generate_weather_detailed(args, generator)
+        elif args.command == 'generate-market':
+            cmd_generate_market(args, generator)
+        elif args.command == 'generate-quest-advanced':
+            cmd_generate_quest_advanced(args, generator)
+        elif args.command == 'generate-npc-network':
+            cmd_generate_npc_network(args, generator)
 
         return 0
 

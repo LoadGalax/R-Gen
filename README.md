@@ -1,8 +1,67 @@
 # R-Gen: Random Game Content Generator
 
-A powerful Python-based dynamic game content generation engine that creates Items, NPCs, Locations, and Worlds with advanced features including weighted probabilities, constraints, database integration, and a web interface.
+A powerful Python-based dynamic game content generation engine that creates Items, NPCs, Locations, Worlds, Spells, Organizations, Quests, and much more with advanced features including weighted probabilities, constraints, database integration, and a web interface.
 
-## ✨ What's New
+## 🚀 Latest Major Updates
+
+### NEW: Magic & Spell System
+- ✨ **Spell Generation**: 9 spell levels (0-9) across 8 magic schools
+- 📚 **Spellbooks**: Automatically generated spell collections
+- 🎯 **Spell Components**: Verbal, somatic, material, and focus requirements
+- 🔮 **Spell Effects**: Damage, healing, buffs, debuffs, summons, and utility spells
+- 🌟 **Spell Rarity**: Common to Mythic spells with appropriate value scaling
+
+### NEW: Organizations & Guilds
+- 🏛️ **10+ Organization Types**: Guilds, thieves guilds, mages circles, religious orders, mercenary companies, etc.
+- 👑 **Leadership Hierarchies**: Dynamic leadership structures with ranked NPCs
+- 💰 **Economic Resources**: Wealth tracking, benefits, and membership requirements
+- 🤝 **Relationships**: Allied, neutral, rival, and enemy relationships between organizations
+- 🎭 **Activities**: Each organization has specific activities and purposes
+
+### NEW: Advanced Quest System
+- 📜 **10 Quest Types**: Fetch, Kill, Escort, Rescue, Investigate, Diplomacy, Craft, Exploration, Defense, Heist
+- 🔗 **Quest Chains**: Automatically generated multi-quest storylines
+- 🎲 **Complications**: Random complications and moral dilemmas
+- 🎁 **Reward System**: Gold, items, reputation, and experience scaling with difficulty
+- 🎯 **Secondary Objectives**: Optional objectives for bonus rewards
+
+### NEW: Economic System
+- 💹 **Dynamic Pricing**: Supply & demand, location-based pricing modifiers
+- 🏪 **Market Generation**: Complete markets with merchants, goods, and services
+- 💰 **Wealth Levels**: 7 economic tiers from destitute to royal
+- 📊 **Trade Goods**: Extensive catalog of food, materials, and magical components
+- ⚖️ **Services**: Lodging, meals, transport, professional services, and more
+
+### NEW: Enhanced Weather & Environment
+- 🌦️ **Detailed Weather System**: 11 weather patterns with gameplay effects
+- 🗓️ **Seasonal System**: Four seasons with temperature and weather variations
+- 🌙 **Moon Phases**: 8 moon phases affecting visibility and magic
+- ⛈️ **Natural Disasters**: Earthquakes, floods, tornadoes, volcanic eruptions, and more
+- ⏰ **Time of Day**: 6 time periods with visibility and mood effects
+
+### NEW: Relationship System
+- 🤝 **NPC Relationships**: Friends, rivals, enemies, family, romantic partners, mentors
+- 🕸️ **Social Networks**: Generate interconnected groups of NPCs
+- 💖 **Reputation Tracking**: Quantified relationship values
+- 👨‍👩‍👧‍👦 **Family Trees**: Support for familial relationships
+
+### NEW: Enhanced Description System
+- 📖 **10 Description Styles**: Technical, Poetic, Brief, Detailed, Historical, Dramatic, Mysterious, Humorous, Ominous, Scholarly, Noir
+- 🎨 **Context-Aware**: Descriptions adapt to location, weather, time, and mood
+- 🌍 **Location-Based Modifiers**: Volcanic, arctic, forest, underground, desert, coastal, urban, ruins
+- 🎭 **Mood-Based**: Peaceful, tense, hostile, melancholic atmospheres
+
+### NEW: Export Formats
+- 📝 **Markdown Export**: Beautiful formatted documents
+- 📊 **Enhanced CSV Export**: Spreadsheet-compatible data
+- 📄 **Existing Formats**: JSON, XML, SQL still supported
+
+### NEW: Validation & Error Handling
+- ✅ **Constraint Validation**: Validate generation parameters before use
+- 🛡️ **Type Checking**: Better error messages and input validation
+- 🔍 **Thematic Consistency**: Check if items fit their biome/environment
+
+## ✨ Core Features
 
 ### Advanced Features
 - 🎯 **Seed-based Generation**: Reproducible content generation with random seeds
@@ -151,6 +210,8 @@ Features:
 Generate content quickly from the terminal:
 
 ```bash
+# === Basic Content Generation ===
+
 # Generate a weapon with seed for reproducibility
 python cli.py generate-item --template weapon_melee --seed 42
 
@@ -162,6 +223,78 @@ python cli.py generate-npc --archetype merchant
 
 # Generate a complete world
 python cli.py generate-world --size 10
+
+# === NEW: Spell Generation ===
+
+# Generate a random spell
+python cli.py generate-spell
+
+# Generate a level 5 Evocation spell
+python cli.py generate-spell --spell-level 5 --school Evocation
+
+# Generate a healing spell
+python cli.py generate-spell --spell-template healing
+
+# Generate a complete spellbook for a level 10 caster
+python cli.py generate-spellbook --caster-level 10 --school-preference Necromancy
+
+# === NEW: Organization Generation ===
+
+# Generate a random organization
+python cli.py generate-organization
+
+# Generate a large thieves guild
+python cli.py generate-organization --org-type thieves_guild --size large
+
+# Generate a mages circle aligned with a faction
+python cli.py generate-organization --org-type mages_circle --faction arcane_council
+
+# === NEW: Advanced Quest System ===
+
+# Generate a random quest
+python cli.py generate-quest-advanced
+
+# Generate a difficult rescue quest
+python cli.py generate-quest-advanced --quest-type rescue --difficulty 7
+
+# Generate a quest chain
+python cli.py generate-quest-advanced --quest-type investigation --create-chain
+
+# === NEW: Economic System ===
+
+# Generate a market in a wealthy area
+python cli.py generate-market --wealth-level wealthy
+
+# Generate a market in a poor settlement
+python cli.py generate-market --wealth-level poor
+
+# === NEW: Enhanced Weather ===
+
+# Generate detailed weather
+python cli.py generate-weather-detailed
+
+# Generate winter weather at night
+python cli.py generate-weather-detailed --season winter --time-of-day night
+
+# Generate desert weather in summer
+python cli.py generate-weather-detailed --biome desert --season summer
+
+# === NEW: NPC Social Networks ===
+
+# Generate an NPC with 5 connected relationships
+python cli.py generate-npc-network --network-size 5
+
+# Generate a network for a specific faction
+python cli.py generate-npc-network --network-size 10 --faction merchants_guild
+
+# === Export to Different Formats ===
+
+# Export to Markdown
+python cli.py generate-item --count 5 --output items.json
+python cli.py export --input items.json --output items.md --export-format markdown --title "Epic Items"
+
+# Export to CSV
+python cli.py export --input items.json --output items.csv --export-format csv
 ```
 
 ### Option 3: Python API
@@ -174,6 +307,8 @@ from src.content_generator import ContentGenerator
 # Initialize with seed for reproducible generation
 generator = ContentGenerator(seed=42)
 
+# === Basic Content Generation ===
+
 # Generate item with constraints
 item = generator.generate_item(
     template="weapon_melee",
@@ -184,8 +319,126 @@ item = generator.generate_item(
         "required_stats": ["Strength"]
     }
 )
-
 print(f"Generated: {item['name']} - {item['value']} gold")
+
+# === NEW: Generate Spells ===
+
+# Generate a random spell
+spell = generator.generate_spell()
+print(f"Spell: {spell['name']} (Level {spell['level']} {spell['school']})")
+
+# Generate a specific type of spell
+fireball = generator.generate_spell(
+    spell_level=3,
+    school="Evocation",
+    spell_template="damage_area"
+)
+
+# Generate a spellbook
+spellbook = generator.generate_spellbook(
+    caster_level=10,
+    school_preference="Necromancy"
+)
+print(f"Spellbook with {len(spellbook['spells'])} spells")
+
+# === NEW: Generate Organizations ===
+
+# Create a thieves guild
+guild = generator.generate_organization(
+    org_type="thieves_guild",
+    faction="shadow_syndicate",
+    size="large"
+)
+print(f"Organization: {guild['name']} with {guild['member_count']} members")
+
+# === NEW: Generate Advanced Quests ===
+
+# Generate a quest with chain
+quest = generator.generate_quest_advanced(
+    quest_type="rescue",
+    difficulty=5,
+    faction="kingdom_of_valor",
+    create_chain=True
+)
+print(f"Quest: {quest['name']} - Reward: {quest['rewards']['gold']} gold")
+
+# === NEW: Generate Markets ===
+
+# Create a wealthy market
+market = generator.generate_market(
+    wealth_level="wealthy"
+)
+print(f"Market with {len(market['merchants'])} merchants and {len(market['available_goods'])} goods")
+
+# Calculate dynamic pricing
+pricing = generator.calculate_item_price(
+    item=item,
+    supply="scarce",
+    demand="high"
+)
+print(f"Price: {pricing['final_price']} gold (normally {pricing['base_value']})")
+
+# === NEW: Generate Detailed Weather ===
+
+# Generate weather with all details
+weather = generator.generate_weather_detailed(
+    season="winter",
+    time_of_day="night",
+    biome="mountains"
+)
+print(f"Weather: {weather['description']}")
+
+# === NEW: NPC Relationships ===
+
+# Create an NPC with a social network
+central_npc = generator.generate_npc()
+network = generator.generate_npc_network(
+    central_npc=central_npc,
+    network_size=5
+)
+print(f"Network of {len(network)} NPCs with relationships")
+
+# Add custom relationships
+npc1 = generator.generate_npc()
+npc2 = generator.generate_npc()
+generator.add_relationship(npc1, npc2, relationship_type="rival")
+
+# === NEW: Enhanced Descriptions ===
+
+# Generate descriptions in different styles
+poetic_desc = generator.generate_description(
+    content=item,
+    content_type="item",
+    style="poetic"
+)
+
+technical_desc = generator.generate_description(
+    content=item,
+    content_type="item",
+    style="technical"
+)
+
+# Context-aware descriptions
+context = {
+    "location": "volcanic",
+    "weather": "storm",
+    "mood": "hostile"
+}
+dramatic_desc = generator.generate_description(
+    content=item,
+    content_type="item",
+    style="dramatic",
+    context=context
+)
+
+# === NEW: Export to Different Formats ===
+
+# Export to Markdown
+data = [item, spell, quest]
+generator.export_to_markdown(data, "content.md", title="Epic Game Content")
+
+# Export to JSON
+generator.export_to_json(data, "content.json")
 ```
 
 ### Run the Demo
