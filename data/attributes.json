@@ -134,5 +134,43 @@
     "polished",
     "tarnished",
     "gleaming"
+  ],
+  "biome_types": [
+    "temperate_forest",
+    "desert",
+    "mountains",
+    "swamp",
+    "tundra",
+    "jungle",
+    "volcanic",
+    "coastal",
+    "plains",
+    "underground",
+    "urban",
+    "magical"
+  ],
+  "faction_types": [
+    "kingdom_of_valor",
+    "merchants_guild",
+    "shadow_syndicate",
+    "nature_circle",
+    "iron_legion",
+    "arcane_conclave",
+    "blood_clans",
+    "free_traders"
+  ],
+  "race_types": [
+    "human",
+    "high_elf",
+    "wood_elf",
+    "dark_elf",
+    "dwarf",
+    "halfling",
+    "half_elf",
+    "half_orc",
+    "orc",
+    "gnome",
+    "tiefling",
+    "dragonborn"
   ]
 }
