@@ -2,6 +2,9 @@
   "archetypes": {
     "blacksmith": {
       "title": "Blacksmith",
+      "use_race_names": true,
+      "possible_races": ["human", "dwarf", "half_orc", "dragonborn"],
+      "possible_factions": ["merchants_guild", "kingdom_of_valor", "iron_legion", "free_traders"],
       "first_names": ["Thorin", "Bronn", "Grimm", "Forge", "Anvil", "Steel"],
       "last_names": ["Ironhammer", "Steelforge", "Coalbeard", "Firehand", "Metalborn"],
       "skills": ["Smithing", "Metalworking", "Weapon Repair", "Armor Crafting"],
@@ -20,15 +23,18 @@
         "My forge has been burning for three generations."
       ],
       "description_templates": [
-        "A {trait} {title} with soot-covered hands and a {tactile_adjective} demeanor.",
-        "This {trait} craftsperson works at a {visual_adjective} forge.",
-        "A {trait} {title} who seems {tactile_adjective} and experienced."
+        "A {trait} {race} {title} with soot-covered hands and a {tactile_adjective} demeanor.",
+        "This {trait} {race} craftsperson works at a {visual_adjective} forge.",
+        "A {trait} {race} {title} who seems {tactile_adjective} and experienced."
       ],
       "inventory_set": "blacksmith_inventory",
       "typical_locations": ["forge", "workshop", "market"]
     },
     "guard": {
       "title": "Guard",
+      "use_race_names": true,
+      "possible_races": ["human", "dwarf", "half_orc", "dragonborn", "half_elf"],
+      "possible_factions": ["kingdom_of_valor", "iron_legion"],
       "first_names": ["Marcus", "Helena", "Roland", "Cassandra", "Viktor", "Aria"],
       "last_names": ["Shieldborn", "Watchful", "Steadfast", "the Vigilant", "Ironwall"],
       "skills": ["Combat", "Patrol", "Investigation", "Intimidation"],
@@ -47,15 +53,18 @@
         "Halt! State your business."
       ],
       "description_templates": [
-        "A {trait} {title} in {visual_adjective} armor, standing at attention.",
-        "This {trait} sentinel maintains a {tactile_adjective} watch over the area.",
-        "A {trait} {title} with a {visual_adjective} weapon at their side."
+        "A {trait} {race} {title} in {visual_adjective} armor, standing at attention.",
+        "This {trait} {race} sentinel maintains a {tactile_adjective} watch over the area.",
+        "A {trait} {race} {title} with a {visual_adjective} weapon at their side."
       ],
       "inventory_set": "warrior_inventory",
       "typical_locations": ["gate", "barracks", "city_square"]
     },
     "merchant": {
       "title": "Wandering Merchant",
+      "use_race_names": true,
+      "possible_races": ["human", "halfling", "gnome", "half_elf", "dwarf"],
+      "possible_factions": ["merchants_guild", "free_traders"],
       "first_names": ["Zara", "Felix", "Milo", "Seraphina", "Jasper", "Luna"],
       "last_names": ["Goldheart", "the Wealthy", "Coinpurse", "Tradewise", "Silvertounge"],
       "skills": ["Persuasion", "Appraisal", "Haggling", "Trade Routes"],
@@ -74,15 +83,18 @@
         "Everything must go! Well, almost everything."
       ],
       "description_templates": [
-        "A {trait} {title} with a {visual_adjective} cart full of wares.",
-        "This {trait} trader has a {tactile_adjective} smile and shrewd eyes.",
-        "A {trait} {title} surrounded by {visual_adjective} merchandise."
+        "A {trait} {race} {title} with a {visual_adjective} cart full of wares.",
+        "This {trait} {race} trader has a {tactile_adjective} smile and shrewd eyes.",
+        "A {trait} {race} {title} surrounded by {visual_adjective} merchandise."
       ],
       "inventory_set": "merchant_inventory",
       "typical_locations": ["market", "crossroads", "tavern"]
     },
     "mage": {
       "title": "Mage",
+      "use_race_names": true,
+      "possible_races": ["high_elf", "human", "gnome", "tiefling", "half_elf"],
+      "possible_factions": ["arcane_conclave", "kingdom_of_valor"],
       "first_names": ["Eldrin", "Morgana", "Thaddeus", "Lyra", "Arcturus", "Celestia"],
       "last_names": ["the Wise", "Starweaver", "Spellbound", "Arcane", "Mystborne"],
       "skills": ["Arcane Magic", "Elemental Control", "Enchanting", "Lore"],
@@ -101,15 +113,18 @@
         "The weave of reality is delicate indeed."
       ],
       "description_templates": [
-        "A {trait} {title} wearing {visual_adjective} robes that shimmer with power.",
-        "This {trait} spellcaster has a {tactile_adjective} presence about them.",
-        "A {trait} {title} surrounded by {visual_adjective} magical auras."
+        "A {trait} {race} {title} wearing {visual_adjective} robes that shimmer with power.",
+        "This {trait} {race} spellcaster has a {tactile_adjective} presence about them.",
+        "A {trait} {race} {title} surrounded by {visual_adjective} magical auras."
       ],
       "inventory_set": "mage_inventory",
       "typical_locations": ["tower", "library", "shrine"]
     },
     "innkeeper": {
       "title": "Innkeeper",
+      "use_race_names": true,
+      "possible_races": ["human", "halfling", "dwarf", "half_elf"],
+      "possible_factions": ["merchants_guild", "free_traders", "kingdom_of_valor"],
       "first_names": ["Bertram", "Rosie", "Gareth", "Mabel", "Oswald", "Beatrice"],
       "last_names": ["Brewmaster", "Warmhearth", "the Jolly", "Hearthkeeper", "Taverner"],
       "skills": ["Hospitality", "Brewing", "Gossip", "Cooking"],
@@ -128,15 +143,18 @@
         "Room and board? We have plenty!"
       ],
       "description_templates": [
-        "A {trait} {title} with a {tactile_adjective} laugh and warm smile.",
-        "This {trait} host maintains a {visual_adjective} establishment.",
-        "A {trait} {title} who greets everyone with {tactile_adjective} hospitality."
+        "A {trait} {race} {title} with a {tactile_adjective} laugh and warm smile.",
+        "This {trait} {race} host maintains a {visual_adjective} establishment.",
+        "A {trait} {race} {title} who greets everyone with {tactile_adjective} hospitality."
       ],
       "inventory_set": "merchant_inventory",
       "typical_locations": ["tavern", "inn"]
     },
     "hermit": {
       "title": "Hermit",
+      "use_race_names": true,
+      "possible_races": ["wood_elf", "human", "half_elf", "gnome"],
+      "possible_factions": ["nature_circle", "arcane_conclave"],
       "first_names": ["Silas", "Elara", "Grim", "Sage", "Raven", "Thorn"],
       "last_names": ["the Recluse", "Shadowwalker", "Whisperwind", "the Forgotten", "Moonless"],
       "skills": ["Survival", "Herbalism", "Ancient Knowledge", "Meditation"],
@@ -155,9 +173,9 @@
         "You seek something... I can tell."
       ],
       "description_templates": [
-        "A {trait} {title} living in isolation, with a {tactile_adjective} presence.",
-        "This {trait} recluse has {visual_adjective} features weathered by solitude.",
-        "A {trait} {title} who observes with {tactile_adjective} intensity."
+        "A {trait} {race} {title} living in isolation, with a {tactile_adjective} presence.",
+        "This {trait} {race} recluse has {visual_adjective} features weathered by solitude.",
+        "A {trait} {race} {title} who observes with {tactile_adjective} intensity."
       ],
       "inventory_set": "mage_inventory",
       "typical_locations": ["forest_clearing", "cave", "mountain_peak"]

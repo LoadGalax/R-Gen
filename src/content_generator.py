@@ -38,6 +38,11 @@ class ContentGenerator:
         self.npcs_config = self._load_json("npcs.json")
         self.locations_config = self._load_json("locations.json")
 
+        # Load new configuration files
+        self.biomes_config = self._load_json("biomes.json")
+        self.factions_config = self._load_json("factions.json")
+        self.races_config = self._load_json("races.json")
+
         # Cache for generated locations to support cross-referencing
         self.generated_locations = {}
 
@@ -340,7 +345,9 @@ class ContentGenerator:
         return items
 
     def generate_npc(self, archetype_name: Optional[str] = None,
-                    location_id: Optional[str] = None) -> Dict[str, Any]:
+                    location_id: Optional[str] = None,
+                    race: Optional[str] = None,
+                    faction: Optional[str] = None) -> Dict[str, Any]:
         """
         Generate a random NPC based on an archetype.
 
@@ -348,12 +355,16 @@ class ContentGenerator:
             archetype_name: Specific archetype to use (e.g., "blacksmith").
                            If None, selects random archetype.
             location_id: ID of the location where this NPC resides.
+            race: Specific race to use. If None, selects from archetype's possible_races.
+            faction: Specific faction to use. If None, selects from archetype's possible_factions.
 
         Returns:
             Dictionary containing NPC properties including:
             - name: Full NPC name
             - title: NPC title/role
             - archetype: Base archetype
+            - race: NPC race
+            - faction: NPC faction
             - stats: Stat values
             - skills: List of skills
             - dialogue: Random dialogue hook
@@ -367,13 +378,52 @@ class ContentGenerator:
 
         archetype = self.npcs_config["archetypes"][archetype_name]
 
-        # Generate name
-        first_name = self.rng.choice(archetype["first_names"])
-        last_name = self.rng.choice(archetype["last_names"])
+        # Select race
+        if race is None and "possible_races" in archetype:
+            race = self.rng.choice(archetype["possible_races"])
+        elif race is None:
+            race = "human"  # Default fallback
+
+        # Select faction
+        if faction is None and "possible_factions" in archetype:
+            faction = self.rng.choice(archetype["possible_factions"])
+
+        # Get race data
+        race_data = self.races_config["races"].get(race, self.races_config["races"]["human"])
+
+        # Generate name (use race-specific names if archetype requests it)
+        if archetype.get("use_race_names", False) and race in self.races_config["races"]:
+            # Use race-specific names
+            gender = self.rng.choice(["male", "female"])
+            if gender == "male" and "first_names_male" in race_data:
+                first_name = self.rng.choice(race_data["first_names_male"])
+            elif gender == "female" and "first_names_female" in race_data:
+                first_name = self.rng.choice(race_data["first_names_female"])
+            else:
+                first_name = self.rng.choice(archetype["first_names"])
+
+            if "last_names" in race_data:
+                last_name = self.rng.choice(race_data["last_names"])
+            else:
+                last_name = self.rng.choice(archetype["last_names"])
+        else:
+            # Use archetype names
+            first_name = self.rng.choice(archetype["first_names"])
+            last_name = self.rng.choice(archetype["last_names"])
+
         full_name = f"{first_name} {last_name}"
 
-        # Get base stats (could add random variation)
+        # Get base stats from archetype
         stats = archetype["base_stats"].copy()
+
+        # Apply racial stat modifiers
+        if "stat_modifiers" in race_data:
+            for stat, modifier in race_data["stat_modifiers"].items():
+                if stat != "any_two":  # Handle general modifiers
+                    if stat in stats:
+                        stats[stat] += modifier
+                    else:
+                        stats[stat] = modifier
 
         # Add some random variation to stats (-1 to +1)
         for stat in stats:
@@ -388,6 +438,7 @@ class ContentGenerator:
         description_values = {
             "trait": self.rng.choice(self.attributes["npc_traits"]),
             "title": archetype["title"].lower(),
+            "race": race_data["name"],
             "tactile_adjective": self.rng.choice(self.attributes["tactile_adjectives"]),
             "visual_adjective": self.rng.choice(self.attributes["visual_adjectives"])
         }
@@ -406,12 +457,17 @@ class ContentGenerator:
             "name": full_name,
             "title": archetype["title"],
             "archetype": archetype_name,
+            "race": race,
             "stats": stats,
             "skills": archetype["skills"].copy(),
             "dialogue": dialogue,
             "description": description,
             "inventory": inventory
         }
+
+        # Add faction if assigned
+        if faction:
+            npc["faction"] = faction
 
         # Add location reference if provided
         if location_id:
@@ -421,7 +477,8 @@ class ContentGenerator:
 
     def generate_location(self, template_name: Optional[str] = None,
                          generate_connections: bool = True,
-                         max_connections: int = 3) -> Dict[str, Any]:
+                         max_connections: int = 3,
+                         biome: Optional[str] = None) -> Dict[str, Any]:
         """
         Generate a random location based on a template.
 
@@ -430,12 +487,14 @@ class ContentGenerator:
                           If None, selects random template.
             generate_connections: Whether to generate connected locations.
             max_connections: Maximum number of connections to generate.
+            biome: Specific biome for this location. If None, selects random suitable biome.
 
         Returns:
             Dictionary containing location properties including:
             - id: Unique location identifier
             - name: Location name
             - type: Location type
+            - biome: Biome type
             - environment_tags: List of environment descriptors
             - description: Dynamic description
             - connections: Map of connected location IDs
@@ -447,6 +506,12 @@ class ContentGenerator:
             template_name = self.rng.choice(list(self.locations_config["templates"].keys()))
 
         template = self.locations_config["templates"][template_name]
+
+        # Select biome
+        if biome is None and "suitable_biomes" in template:
+            biome = self.rng.choice(template["suitable_biomes"])
+        elif biome is None:
+            biome = "temperate_forest"  # Default fallback
 
         # Generate unique ID
         location_id = f"{template_name}_{self.rng.randint(1000, 9999)}"
@@ -507,6 +572,7 @@ class ContentGenerator:
             "id": location_id,
             "name": template["name"],
             "type": template["type"],
+            "biome": biome,
             "environment_tags": environment_tags,
             "description": description,
             "npcs": npcs,
