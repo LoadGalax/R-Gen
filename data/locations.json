@@ -3,291 +3,748 @@
     "forest_clearing": {
       "name": "Forest Clearing",
       "type": "outdoor",
-      "suitable_biomes": ["temperate_forest", "jungle"],
-      "base_environment_tags": ["Traversable", "Overgrown"],
-      "additional_tags_count": {"min": 1, "max": 3},
+      "spawn_weight": 0.2,
+      "suitable_biomes": [
+        "temperate_forest",
+        "jungle"
+      ],
+      "base_environment_tags": [
+        "Traversable",
+        "Overgrown"
+      ],
+      "additional_tags_count": {
+        "min": 1,
+        "max": 3
+      },
       "description_templates": [
         "A {visual_adjective} clearing in the forest, {environment_tag_1} and {environment_tag_2}.",
         "This {environment_tag_1} forest glade is {visual_adjective}, with {tactile_adjective} undergrowth.",
         "A clearing surrounded by ancient trees, {environment_tag_1} and unusually {environment_tag_2}."
       ],
-      "can_connect_to": ["forest_path", "cave", "shrine", "ruins"],
-      "spawnable_npcs": ["hermit", "mage"],
-      "spawnable_items": ["potion", "scroll"],
-      "item_spawn_count": {"min": 0, "max": 2},
-      "npc_spawn_count": {"min": 0, "max": 1}
+      "can_connect_to": [
+        "forest_path",
+        "cave",
+        "shrine",
+        "ruins"
+      ],
+      "spawnable_npcs": [
+        "hermit",
+        "mage"
+      ],
+      "spawnable_items": [
+        "potion",
+        "scroll"
+      ],
+      "item_spawn_count": {
+        "min": 0,
+        "max": 2
+      },
+      "npc_spawn_count": {
+        "min": 0,
+        "max": 1
+      }
     },
     "cave": {
       "name": "Cave",
       "type": "underground",
-      "suitable_biomes": ["underground", "mountains", "temperate_forest", "swamp", "volcanic"],
-      "base_environment_tags": ["Dark", "Dangerous"],
-      "additional_tags_count": {"min": 1, "max": 2},
+      "spawn_weight": 0.25,
+      "suitable_biomes": [
+        "underground",
+        "mountains",
+        "temperate_forest",
+        "swamp",
+        "volcanic"
+      ],
+      "base_environment_tags": [
+        "Dark",
+        "Dangerous"
+      ],
+      "additional_tags_count": {
+        "min": 1,
+        "max": 2
+      },
       "description_templates": [
         "A {environment_tag_1} cave with {visual_adjective} walls and a {tactile_adjective} atmosphere.",
         "This {visual_adjective} cavern is {environment_tag_1}, echoing with {tactile_adjective} sounds.",
         "A dark cave system, {environment_tag_1} and {environment_tag_2}, with {visual_adjective} formations."
       ],
-      "can_connect_to": ["forest_clearing", "mountain_peak", "dwarven_mine"],
-      "spawnable_npcs": ["hermit"],
-      "spawnable_items": ["weapon_melee", "armor", "jewelry"],
-      "item_spawn_count": {"min": 1, "max": 4},
-      "npc_spawn_count": {"min": 0, "max": 1}
+      "can_connect_to": [
+        "forest_clearing",
+        "mountain_peak",
+        "dwarven_mine"
+      ],
+      "spawnable_npcs": [
+        "hermit"
+      ],
+      "spawnable_items": [
+        "weapon_melee",
+        "armor",
+        "jewelry"
+      ],
+      "item_spawn_count": {
+        "min": 1,
+        "max": 4
+      },
+      "npc_spawn_count": {
+        "min": 0,
+        "max": 1
+      }
     },
     "tavern": {
       "name": "Tavern",
       "type": "building",
-      "suitable_biomes": ["urban", "plains", "coastal"],
-      "base_environment_tags": ["Bright", "Peaceful"],
-      "additional_tags_count": {"min": 0, "max": 2},
+      "spawn_weight": 0.35,
+      "suitable_biomes": [
+        "urban",
+        "plains",
+        "coastal"
+      ],
+      "base_environment_tags": [
+        "Bright",
+        "Peaceful"
+      ],
+      "additional_tags_count": {
+        "min": 0,
+        "max": 2
+      },
       "description_templates": [
         "A {visual_adjective} tavern, {environment_tag_1} and filled with {tactile_adjective} chatter.",
         "This {environment_tag_1} establishment has {visual_adjective} furnishings and a {tactile_adjective} ambiance.",
         "A tavern with a {tactile_adjective} atmosphere, {visual_adjective} and {environment_tag_1}."
       ],
-      "can_connect_to": ["city_square", "market", "inn"],
-      "spawnable_npcs": ["innkeeper", "merchant", "guard"],
-      "spawnable_items": ["potion"],
-      "item_spawn_count": {"min": 0, "max": 3},
-      "npc_spawn_count": {"min": 1, "max": 3}
+      "can_connect_to": [
+        "city_square",
+        "market",
+        "inn"
+      ],
+      "spawnable_npcs": [
+        "innkeeper",
+        "merchant",
+        "guard"
+      ],
+      "spawnable_items": [
+        "potion"
+      ],
+      "item_spawn_count": {
+        "min": 0,
+        "max": 3
+      },
+      "npc_spawn_count": {
+        "min": 1,
+        "max": 3
+      }
     },
     "market": {
       "name": "Market Square",
       "type": "outdoor",
-      "suitable_biomes": ["urban", "plains", "coastal"],
-      "base_environment_tags": ["Bright", "Traversable"],
-      "additional_tags_count": {"min": 0, "max": 2},
+      "suitable_biomes": [
+        "urban",
+        "plains",
+        "coastal"
+      ],
+      "base_environment_tags": [
+        "Bright",
+        "Traversable"
+      ],
+      "additional_tags_count": {
+        "min": 0,
+        "max": 2
+      },
       "description_templates": [
         "A {visual_adjective} market square, bustling and {environment_tag_1}.",
         "This {environment_tag_1} marketplace is {visual_adjective}, with {tactile_adjective} energy.",
         "A lively market, {environment_tag_1} and filled with {visual_adjective} stalls."
       ],
-      "can_connect_to": ["city_square", "tavern", "forge", "gate"],
-      "spawnable_npcs": ["merchant", "guard", "blacksmith"],
-      "spawnable_items": ["weapon_melee", "armor", "potion", "jewelry"],
-      "item_spawn_count": {"min": 2, "max": 5},
-      "npc_spawn_count": {"min": 2, "max": 4}
+      "can_connect_to": [
+        "city_square",
+        "tavern",
+        "forge",
+        "gate"
+      ],
+      "spawnable_npcs": [
+        "merchant",
+        "guard",
+        "blacksmith"
+      ],
+      "spawnable_items": [
+        "weapon_melee",
+        "armor",
+        "potion",
+        "jewelry"
+      ],
+      "item_spawn_count": {
+        "min": 2,
+        "max": 5
+      },
+      "npc_spawn_count": {
+        "min": 2,
+        "max": 4
+      },
+      "spawn_weight": 0.35
     },
     "forge": {
       "name": "Blacksmith's Forge",
       "type": "building",
-      "suitable_biomes": ["urban", "mountains", "volcanic", "underground"],
-      "base_environment_tags": ["Hot", "Bright"],
-      "additional_tags_count": {"min": 0, "max": 1},
+      "suitable_biomes": [
+        "urban",
+        "mountains",
+        "volcanic",
+        "underground"
+      ],
+      "base_environment_tags": [
+        "Hot",
+        "Bright"
+      ],
+      "additional_tags_count": {
+        "min": 0,
+        "max": 1
+      },
       "description_templates": [
         "A {visual_adjective} forge, {environment_tag_1} with the heat of the furnace.",
         "This {environment_tag_1} smithy has {visual_adjective} tools and a {tactile_adjective} atmosphere.",
         "A working forge, {tactile_adjective} and {environment_tag_1}, with the ring of hammer on anvil."
       ],
-      "can_connect_to": ["market", "workshop", "city_square"],
-      "spawnable_npcs": ["blacksmith"],
-      "spawnable_items": ["weapon_melee", "armor"],
-      "item_spawn_count": {"min": 3, "max": 8},
-      "npc_spawn_count": {"min": 1, "max": 2}
+      "can_connect_to": [
+        "market",
+        "workshop",
+        "city_square"
+      ],
+      "spawnable_npcs": [
+        "blacksmith"
+      ],
+      "spawnable_items": [
+        "weapon_melee",
+        "armor"
+      ],
+      "item_spawn_count": {
+        "min": 3,
+        "max": 8
+      },
+      "npc_spawn_count": {
+        "min": 1,
+        "max": 2
+      },
+      "spawn_weight": 0.15
     },
     "city_square": {
       "name": "City Square",
       "type": "outdoor",
-      "suitable_biomes": ["urban"],
-      "base_environment_tags": ["Bright", "Traversable", "Pristine"],
-      "additional_tags_count": {"min": 0, "max": 1},
+      "suitable_biomes": [
+        "urban"
+      ],
+      "base_environment_tags": [
+        "Bright",
+        "Traversable",
+        "Pristine"
+      ],
+      "additional_tags_count": {
+        "min": 0,
+        "max": 1
+      },
       "description_templates": [
         "A {visual_adjective} city square, {environment_tag_1} and well-maintained.",
         "This {environment_tag_1} plaza is {visual_adjective}, the heart of the settlement.",
         "A grand square, {tactile_adjective} and {environment_tag_1}, where people gather."
       ],
-      "can_connect_to": ["market", "tavern", "gate", "barracks", "forge"],
-      "spawnable_npcs": ["guard", "merchant"],
-      "spawnable_items": ["scroll"],
-      "item_spawn_count": {"min": 0, "max": 1},
-      "npc_spawn_count": {"min": 2, "max": 4}
+      "can_connect_to": [
+        "market",
+        "tavern",
+        "gate",
+        "barracks",
+        "forge"
+      ],
+      "spawnable_npcs": [
+        "guard",
+        "merchant"
+      ],
+      "spawnable_items": [
+        "scroll"
+      ],
+      "item_spawn_count": {
+        "min": 0,
+        "max": 1
+      },
+      "npc_spawn_count": {
+        "min": 2,
+        "max": 4
+      },
+      "spawn_weight": 0.15
     },
     "tower": {
       "name": "Wizard's Tower",
       "type": "building",
-      "suitable_biomes": ["magical", "urban", "mountains"],
-      "base_environment_tags": ["Ancient", "Mysterious"],
-      "additional_tags_count": {"min": 1, "max": 2},
+      "suitable_biomes": [
+        "magical",
+        "urban",
+        "mountains"
+      ],
+      "base_environment_tags": [
+        "Ancient",
+        "Mysterious"
+      ],
+      "additional_tags_count": {
+        "min": 1,
+        "max": 2
+      },
       "description_templates": [
         "A {visual_adjective} tower reaching skyward, {environment_tag_1} and emanating {tactile_adjective} power.",
         "This {environment_tag_1} spire is {visual_adjective}, crackling with arcane energy.",
         "An ancient tower, {environment_tag_1} and {environment_tag_2}, with {visual_adjective} runes."
       ],
-      "can_connect_to": ["library", "shrine", "city_square"],
-      "spawnable_npcs": ["mage"],
-      "spawnable_items": ["scroll", "jewelry"],
-      "item_spawn_count": {"min": 2, "max": 6},
-      "npc_spawn_count": {"min": 1, "max": 2}
+      "can_connect_to": [
+        "library",
+        "shrine",
+        "city_square"
+      ],
+      "spawnable_npcs": [
+        "mage"
+      ],
+      "spawnable_items": [
+        "scroll",
+        "jewelry"
+      ],
+      "item_spawn_count": {
+        "min": 2,
+        "max": 6
+      },
+      "npc_spawn_count": {
+        "min": 1,
+        "max": 2
+      },
+      "spawn_weight": 0.1
     },
     "ruins": {
       "name": "Ancient Ruins",
       "type": "outdoor",
-      "suitable_biomes": ["desert", "jungle", "temperate_forest", "swamp", "magical"],
-      "base_environment_tags": ["Ancient", "Ruined", "Dangerous"],
-      "additional_tags_count": {"min": 1, "max": 2},
+      "suitable_biomes": [
+        "desert",
+        "jungle",
+        "temperate_forest",
+        "swamp",
+        "magical"
+      ],
+      "base_environment_tags": [
+        "Ancient",
+        "Ruined",
+        "Dangerous"
+      ],
+      "additional_tags_count": {
+        "min": 1,
+        "max": 2
+      },
       "description_templates": [
         "{visual_adjective} ruins of a bygone era, {environment_tag_1} and {environment_tag_2}.",
         "These {environment_tag_1} ruins are {visual_adjective}, whispering with {tactile_adjective} memories.",
         "Ancient ruins, {environment_tag_1} and {environment_tag_2}, their {visual_adjective} stones crumbling."
       ],
-      "can_connect_to": ["forest_clearing", "shrine", "dwarven_mine"],
-      "spawnable_npcs": ["hermit", "mage"],
-      "spawnable_items": ["weapon_melee", "jewelry", "scroll"],
-      "item_spawn_count": {"min": 1, "max": 5},
-      "npc_spawn_count": {"min": 0, "max": 1}
+      "can_connect_to": [
+        "forest_clearing",
+        "shrine",
+        "dwarven_mine"
+      ],
+      "spawnable_npcs": [
+        "hermit",
+        "mage"
+      ],
+      "spawnable_items": [
+        "weapon_melee",
+        "jewelry",
+        "scroll"
+      ],
+      "item_spawn_count": {
+        "min": 1,
+        "max": 5
+      },
+      "npc_spawn_count": {
+        "min": 0,
+        "max": 1
+      },
+      "spawn_weight": 0.1
     },
     "dwarven_mine": {
       "name": "Dwarven Mine",
       "type": "underground",
-      "suitable_biomes": ["underground", "mountains"],
-      "base_environment_tags": ["Dark", "Ancient"],
-      "additional_tags_count": {"min": 1, "max": 3},
+      "suitable_biomes": [
+        "underground",
+        "mountains"
+      ],
+      "base_environment_tags": [
+        "Dark",
+        "Ancient"
+      ],
+      "additional_tags_count": {
+        "min": 1,
+        "max": 3
+      },
       "description_templates": [
         "A {visual_adjective} dwarven mine, {environment_tag_1} and echoing with {tactile_adjective} history.",
         "This {environment_tag_1} mine shaft is {visual_adjective}, carved by master craftsmen.",
         "An ancient mine, {environment_tag_1} and {environment_tag_2}, with {visual_adjective} stonework."
       ],
-      "can_connect_to": ["cave", "ruins", "mountain_peak"],
-      "spawnable_npcs": ["blacksmith", "hermit"],
-      "spawnable_items": ["weapon_melee", "armor", "jewelry"],
-      "item_spawn_count": {"min": 2, "max": 7},
-      "npc_spawn_count": {"min": 0, "max": 2}
+      "can_connect_to": [
+        "cave",
+        "ruins",
+        "mountain_peak"
+      ],
+      "spawnable_npcs": [
+        "blacksmith",
+        "hermit"
+      ],
+      "spawnable_items": [
+        "weapon_melee",
+        "armor",
+        "jewelry"
+      ],
+      "item_spawn_count": {
+        "min": 2,
+        "max": 7
+      },
+      "npc_spawn_count": {
+        "min": 0,
+        "max": 2
+      },
+      "spawn_weight": 0.15
     },
     "mountain_peak": {
       "name": "Mountain Peak",
       "type": "outdoor",
-      "suitable_biomes": ["mountains", "tundra"],
-      "base_environment_tags": ["Cold", "Dangerous", "Pristine"],
-      "additional_tags_count": {"min": 0, "max": 2},
+      "suitable_biomes": [
+        "mountains",
+        "tundra"
+      ],
+      "base_environment_tags": [
+        "Cold",
+        "Dangerous",
+        "Pristine"
+      ],
+      "additional_tags_count": {
+        "min": 0,
+        "max": 2
+      },
       "description_templates": [
         "A {visual_adjective} mountain peak, {environment_tag_1} and breathtakingly {environment_tag_2}.",
         "This {environment_tag_1} summit is {visual_adjective}, with a {tactile_adjective} wind.",
         "A towering peak, {environment_tag_1} and {environment_tag_2}, {visual_adjective} in its majesty."
       ],
-      "can_connect_to": ["cave", "dwarven_mine", "shrine"],
-      "spawnable_npcs": ["hermit", "mage"],
-      "spawnable_items": ["scroll", "jewelry"],
-      "item_spawn_count": {"min": 0, "max": 3},
-      "npc_spawn_count": {"min": 0, "max": 1}
+      "can_connect_to": [
+        "cave",
+        "dwarven_mine",
+        "shrine"
+      ],
+      "spawnable_npcs": [
+        "hermit",
+        "mage"
+      ],
+      "spawnable_items": [
+        "scroll",
+        "jewelry"
+      ],
+      "item_spawn_count": {
+        "min": 0,
+        "max": 3
+      },
+      "npc_spawn_count": {
+        "min": 0,
+        "max": 1
+      },
+      "spawn_weight": 0.15
     },
     "inn": {
       "name": "Inn",
       "type": "building",
-      "suitable_biomes": ["urban", "plains", "coastal"],
-      "base_environment_tags": ["Bright", "Peaceful"],
-      "additional_tags_count": {"min": 0, "max": 2},
+      "suitable_biomes": [
+        "urban",
+        "plains",
+        "coastal"
+      ],
+      "base_environment_tags": [
+        "Bright",
+        "Peaceful"
+      ],
+      "additional_tags_count": {
+        "min": 0,
+        "max": 2
+      },
       "description_templates": [
         "A {visual_adjective} inn, {environment_tag_1} and welcoming to travelers.",
         "This {environment_tag_1} lodging house has {visual_adjective} rooms and a {tactile_adjective} atmosphere.",
         "A cozy inn, {tactile_adjective} and {environment_tag_1}, with the smell of food wafting from within."
       ],
-      "can_connect_to": ["tavern", "city_square", "market"],
-      "spawnable_npcs": ["innkeeper", "merchant"],
-      "spawnable_items": ["potion"],
-      "item_spawn_count": {"min": 0, "max": 2},
-      "npc_spawn_count": {"min": 1, "max": 2}
+      "can_connect_to": [
+        "tavern",
+        "city_square",
+        "market"
+      ],
+      "spawnable_npcs": [
+        "innkeeper",
+        "merchant"
+      ],
+      "spawnable_items": [
+        "potion"
+      ],
+      "item_spawn_count": {
+        "min": 0,
+        "max": 2
+      },
+      "npc_spawn_count": {
+        "min": 1,
+        "max": 2
+      },
+      "spawn_weight": 0.15
     },
     "gate": {
       "name": "City Gate",
       "type": "outdoor",
-      "suitable_biomes": ["urban", "plains"],
-      "base_environment_tags": ["Traversable", "Pristine"],
-      "additional_tags_count": {"min": 0, "max": 2},
+      "suitable_biomes": [
+        "urban",
+        "plains"
+      ],
+      "base_environment_tags": [
+        "Traversable",
+        "Pristine"
+      ],
+      "additional_tags_count": {
+        "min": 0,
+        "max": 2
+      },
       "description_templates": [
         "A {visual_adjective} city gate, {environment_tag_1} and heavily guarded.",
         "This {environment_tag_1} entrance is {visual_adjective}, with a {tactile_adjective} presence.",
         "A fortified gate, {tactile_adjective} and {environment_tag_1}, marking the city boundary."
       ],
-      "can_connect_to": ["city_square", "market", "forest_path"],
-      "spawnable_npcs": ["guard"],
-      "spawnable_items": ["weapon_melee"],
-      "item_spawn_count": {"min": 0, "max": 2},
-      "npc_spawn_count": {"min": 2, "max": 4}
+      "can_connect_to": [
+        "city_square",
+        "market",
+        "forest_path"
+      ],
+      "spawnable_npcs": [
+        "guard"
+      ],
+      "spawnable_items": [
+        "weapon_melee"
+      ],
+      "item_spawn_count": {
+        "min": 0,
+        "max": 2
+      },
+      "npc_spawn_count": {
+        "min": 2,
+        "max": 4
+      },
+      "spawn_weight": 0.15
     },
     "barracks": {
       "name": "Barracks",
       "type": "building",
-      "suitable_biomes": ["urban", "plains"],
-      "base_environment_tags": ["Pristine", "Bright"],
-      "additional_tags_count": {"min": 0, "max": 1},
+      "suitable_biomes": [
+        "urban",
+        "plains"
+      ],
+      "base_environment_tags": [
+        "Pristine",
+        "Bright"
+      ],
+      "additional_tags_count": {
+        "min": 0,
+        "max": 1
+      },
       "description_templates": [
         "A {visual_adjective} barracks, {environment_tag_1} and orderly.",
         "This {environment_tag_1} military quarters is {visual_adjective}, with a {tactile_adjective} discipline.",
         "Well-maintained barracks, {tactile_adjective} and {environment_tag_1}, home to the city guard."
       ],
-      "can_connect_to": ["city_square", "gate"],
-      "spawnable_npcs": ["guard"],
-      "spawnable_items": ["weapon_melee", "armor"],
-      "item_spawn_count": {"min": 5, "max": 12},
-      "npc_spawn_count": {"min": 3, "max": 6}
+      "can_connect_to": [
+        "city_square",
+        "gate"
+      ],
+      "spawnable_npcs": [
+        "guard"
+      ],
+      "spawnable_items": [
+        "weapon_melee",
+        "armor"
+      ],
+      "item_spawn_count": {
+        "min": 5,
+        "max": 12
+      },
+      "npc_spawn_count": {
+        "min": 3,
+        "max": 6
+      },
+      "spawn_weight": 0.15
     },
     "workshop": {
       "name": "Workshop",
       "type": "building",
-      "suitable_biomes": ["urban", "plains"],
-      "base_environment_tags": ["Bright", "Traversable"],
-      "additional_tags_count": {"min": 0, "max": 1},
+      "suitable_biomes": [
+        "urban",
+        "plains"
+      ],
+      "base_environment_tags": [
+        "Bright",
+        "Traversable"
+      ],
+      "additional_tags_count": {
+        "min": 0,
+        "max": 1
+      },
       "description_templates": [
         "A {visual_adjective} workshop, {environment_tag_1} and filled with tools.",
         "This {environment_tag_1} craftsman's space is {visual_adjective}, with a {tactile_adjective} atmosphere.",
         "A busy workshop, {tactile_adjective} and {environment_tag_1}, cluttered with projects."
       ],
-      "can_connect_to": ["forge", "market", "city_square"],
-      "spawnable_npcs": ["blacksmith", "merchant"],
-      "spawnable_items": ["weapon_melee", "armor", "jewelry"],
-      "item_spawn_count": {"min": 2, "max": 6},
-      "npc_spawn_count": {"min": 1, "max": 2}
+      "can_connect_to": [
+        "forge",
+        "market",
+        "city_square"
+      ],
+      "spawnable_npcs": [
+        "blacksmith",
+        "merchant"
+      ],
+      "spawnable_items": [
+        "weapon_melee",
+        "armor",
+        "jewelry"
+      ],
+      "item_spawn_count": {
+        "min": 2,
+        "max": 6
+      },
+      "npc_spawn_count": {
+        "min": 1,
+        "max": 2
+      },
+      "spawn_weight": 0.35
     },
     "library": {
       "name": "Library",
       "type": "building",
-      "suitable_biomes": ["urban", "magical"],
-      "base_environment_tags": ["Peaceful", "Ancient"],
-      "additional_tags_count": {"min": 0, "max": 2},
+      "suitable_biomes": [
+        "urban",
+        "magical"
+      ],
+      "base_environment_tags": [
+        "Peaceful",
+        "Ancient"
+      ],
+      "additional_tags_count": {
+        "min": 0,
+        "max": 2
+      },
       "description_templates": [
         "A {visual_adjective} library, {environment_tag_1} and filled with ancient tomes.",
         "This {environment_tag_1} repository of knowledge is {visual_adjective}, with a {tactile_adjective} silence.",
         "An expansive library, {tactile_adjective} and {environment_tag_1}, shelves reaching to the ceiling."
       ],
-      "can_connect_to": ["tower", "city_square"],
-      "spawnable_npcs": ["mage"],
-      "spawnable_items": ["scroll"],
-      "item_spawn_count": {"min": 3, "max": 10},
-      "npc_spawn_count": {"min": 0, "max": 2}
+      "can_connect_to": [
+        "tower",
+        "city_square"
+      ],
+      "spawnable_npcs": [
+        "mage"
+      ],
+      "spawnable_items": [
+        "scroll"
+      ],
+      "item_spawn_count": {
+        "min": 3,
+        "max": 10
+      },
+      "npc_spawn_count": {
+        "min": 0,
+        "max": 2
+      },
+      "spawn_weight": 0.15
     },
     "shrine": {
       "name": "Shrine",
       "type": "building",
-      "suitable_biomes": ["temperate_forest", "mountains", "magical", "jungle"],
-      "base_environment_tags": ["Peaceful", "Ancient"],
-      "additional_tags_count": {"min": 1, "max": 2},
+      "suitable_biomes": [
+        "temperate_forest",
+        "mountains",
+        "magical",
+        "jungle"
+      ],
+      "base_environment_tags": [
+        "Peaceful",
+        "Ancient"
+      ],
+      "additional_tags_count": {
+        "min": 1,
+        "max": 2
+      },
       "description_templates": [
         "A {visual_adjective} shrine, {environment_tag_1} and sacred.",
         "This {environment_tag_1} holy place is {visual_adjective}, with a {tactile_adjective} aura.",
         "An ancient shrine, {tactile_adjective} and {environment_tag_1}, devoted to forgotten gods."
       ],
-      "can_connect_to": ["forest_clearing", "ruins", "mountain_peak", "tower"],
-      "spawnable_npcs": ["mage", "hermit"],
-      "spawnable_items": ["scroll", "jewelry"],
-      "item_spawn_count": {"min": 1, "max": 4},
-      "npc_spawn_count": {"min": 0, "max": 1}
+      "can_connect_to": [
+        "forest_clearing",
+        "ruins",
+        "mountain_peak",
+        "tower"
+      ],
+      "spawnable_npcs": [
+        "mage",
+        "hermit"
+      ],
+      "spawnable_items": [
+        "scroll",
+        "jewelry"
+      ],
+      "item_spawn_count": {
+        "min": 1,
+        "max": 4
+      },
+      "npc_spawn_count": {
+        "min": 0,
+        "max": 1
+      },
+      "spawn_weight": 0.25
     },
     "forest_path": {
       "name": "Forest Path",
       "type": "outdoor",
-      "suitable_biomes": ["temperate_forest", "jungle"],
-      "base_environment_tags": ["Traversable", "Overgrown"],
-      "additional_tags_count": {"min": 1, "max": 2},
+      "suitable_biomes": [
+        "temperate_forest",
+        "jungle"
+      ],
+      "base_environment_tags": [
+        "Traversable",
+        "Overgrown"
+      ],
+      "additional_tags_count": {
+        "min": 1,
+        "max": 2
+      },
       "description_templates": [
         "A {visual_adjective} forest path, {environment_tag_1} and winding through trees.",
         "This {environment_tag_1} trail is {visual_adjective}, with {tactile_adjective} foliage.",
         "A narrow path, {tactile_adjective} and {environment_tag_1}, cutting through the forest."
       ],
-      "can_connect_to": ["forest_clearing", "gate", "ruins"],
-      "spawnable_npcs": ["hermit", "merchant"],
-      "spawnable_items": ["potion"],
-      "item_spawn_count": {"min": 0, "max": 2},
-      "npc_spawn_count": {"min": 0, "max": 1}
+      "can_connect_to": [
+        "forest_clearing",
+        "gate",
+        "ruins"
+      ],
+      "spawnable_npcs": [
+        "hermit",
+        "merchant"
+      ],
+      "spawnable_items": [
+        "potion"
+      ],
+      "item_spawn_count": {
+        "min": 0,
+        "max": 2
+      },
+      "npc_spawn_count": {
+        "min": 0,
+        "max": 1
+      },
+      "spawn_weight": 0.25
     }
   }
 }
