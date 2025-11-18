@@ -62,7 +62,17 @@ def format_npc(npc, indent=0):
     if npc.get('title'):
         lines.append(f"{prefix}   Title: {npc['title']}")
 
-    lines.append(f"{prefix}   Profession: {npc['archetype']}")
+    # Support both old 'archetype' (single) and new 'professions' (list)
+    if npc.get('professions') is not None:
+        if len(npc['professions']) == 0:
+            lines.append(f"{prefix}   Professions: None")
+        elif len(npc['professions']) == 1:
+            lines.append(f"{prefix}   Profession: {npc['professions'][0]}")
+        else:
+            lines.append(f"{prefix}   Professions: {', '.join(npc['professions'])}")
+    elif npc.get('archetype'):
+        # Backward compatibility
+        lines.append(f"{prefix}   Profession: {npc['archetype']}")
 
     if npc.get('race'):
         lines.append(f"{prefix}   Race: {npc['race']}")
@@ -155,7 +165,8 @@ def output_data(data, format_type, output_file=None):
         # Human-readable format
         if isinstance(data, list):
             if len(data) > 0:
-                if 'archetype' in data[0]:
+                # Check for NPC (either old 'archetype' or new 'professions')
+                if 'archetype' in data[0] or 'professions' in data[0]:
                     output = "\n\n".join([format_npc(npc) for npc in data])
                 elif 'environment_tags' in data[0] or 'id' in data[0] and data[0].get('id', '').startswith(('tavern_', 'forge_', 'cave_', 'market_')):
                     output = "\n\n".join([format_location(loc) for loc in data])
@@ -164,7 +175,8 @@ def output_data(data, format_type, output_file=None):
             else:
                 output = "No items generated"
         elif isinstance(data, dict):
-            if 'archetype' in data:
+            # Check for NPC (either old 'archetype' or new 'professions')
+            if 'archetype' in data or 'professions' in data:
                 output = format_npc(data)
             elif 'environment_tags' in data or ('id' in data and isinstance(data.get('id'), str) and '_' in data.get('id', '')):
                 output = format_location(data)
@@ -237,16 +249,21 @@ def cmd_generate_npc(args, generator, db=None):
     """Generate NPC(s)"""
     count = args.count if args.count else 1
 
+    # Handle professions argument (can be None, empty list, or list of professions)
+    profession_names = args.professions if hasattr(args, 'professions') else None
+
     if count == 1:
         npc = generator.generate_npc(
-            archetype_name=args.archetype,
+            profession_names=profession_names,
             race=args.race,
             faction=args.faction
         )
 
         # Save to database if requested
         if args.save and db:
-            npc_id = db.save_npc(npc, args.archetype, args.seed)
+            # Store professions as comma-separated string for archetype field
+            archetype_str = ','.join(npc.get('professions', [])) if npc.get('professions') else None
+            npc_id = db.save_npc(npc, archetype_str, args.seed)
             print(f"💾 Saved to database with ID: {npc_id}")
 
         output_data(npc, args.format, args.output)
@@ -254,7 +271,7 @@ def cmd_generate_npc(args, generator, db=None):
         npcs = []
         for _ in range(count):
             npc = generator.generate_npc(
-                archetype_name=args.archetype,
+                profession_names=profession_names,
                 race=args.race,
                 faction=args.faction
             )
@@ -262,7 +279,8 @@ def cmd_generate_npc(args, generator, db=None):
 
             # Save to database if requested
             if args.save and db:
-                db.save_npc(npc, args.archetype, args.seed)
+                archetype_str = ','.join(npc.get('professions', [])) if npc.get('professions') else None
+                db.save_npc(npc, archetype_str, args.seed)
 
         if args.save and db:
             print(f"💾 Saved {len(npcs)} NPCs to database")
@@ -531,7 +549,9 @@ Examples:
 
     # Generate NPC command
     npc_parser = subparsers.add_parser('generate-npc', help='Generate random NPC(s)')
-    npc_parser.add_argument('--profession', '--archetype', dest='archetype', help='NPC profession (e.g., blacksmith, merchant, guard)')
+    npc_parser.add_argument('--profession', '--professions', '--archetype', dest='professions',
+                            nargs='*',
+                            help='NPC profession(s) (e.g., blacksmith, merchant). Can specify multiple. Use empty list for no professions.')
     npc_parser.add_argument('--race', help='Specific race (e.g., human, dwarf, elf)')
     npc_parser.add_argument('--faction', help='Specific faction (e.g., kingdom_of_valor, merchants_guild)')
     npc_parser.add_argument('--count', type=int, help='Number of NPCs to generate')
