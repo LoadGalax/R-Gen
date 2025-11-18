@@ -1,6 +1,17 @@
-# ContentGenerator
+# R-Gen: Random Game Content Generator
 
-A Python-based dynamic game content generation engine that creates Items, NPCs, and Locations by reading and interpreting structured JSON configuration files.
+A powerful Python-based dynamic game content generation engine that creates Items, NPCs, Locations, and Worlds with advanced features including weighted probabilities, constraints, database integration, and a web interface.
+
+## ✨ What's New
+
+### Advanced Features
+- 🎯 **Seed-based Generation**: Reproducible content generation with random seeds
+- ⚖️ **Weighted Probabilities**: Realistic rarity distribution (legendary items are actually rare!)
+- 🎛️ **Generation Constraints**: Filter by quality, rarity, value, materials, and more
+- 💾 **Database Integration**: SQLite and PostgreSQL support with full history tracking
+- 🌐 **Web Interface**: Beautiful Flask-powered web UI for easy content generation
+- 🔧 **Config-Driven Multipliers**: All value calculations now configurable via JSON
+- 🔄 **Bidirectional Connections**: Fixed location connections (now work both ways!)
 
 ## Features
 
@@ -70,18 +81,25 @@ A Python-based dynamic game content generation engine that creates Items, NPCs, 
 ```
 R-Gen/
 ├── data/                    # JSON configuration files
-│   ├── attributes.json      # Global properties (quality, rarity, etc.)
+│   ├── attributes.json      # Global properties (quality, rarity, weighted probabilities)
 │   ├── items.json          # Item templates and definitions
 │   ├── npcs.json           # NPC archetypes and properties
 │   └── locations.json      # Location templates
 ├── src/
-│   └── content_generator.py # Main ContentGenerator class
+│   ├── content_generator.py # Main ContentGenerator class
+│   └── database.py          # Database integration layer
+├── templates/
+│   └── index.html          # Web interface template
 ├── cli.py                  # Command-line interface
+├── web_app.py              # Flask web application
 ├── example.py              # Demo script showing all features
+├── requirements.txt        # Optional dependencies
 └── README.md              # This file
 ```
 
 ## Installation
+
+### Basic Installation (Core Features Only)
 
 1. Clone the repository:
 ```bash
@@ -94,9 +112,81 @@ cd R-Gen
 python --version
 ```
 
-3. No external dependencies required - uses only Python standard library!
+3. No external dependencies required for core features - uses only Python standard library!
+
+### Full Installation (With Web Interface & Database)
+
+For web interface and database features, install optional dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+Optional dependencies:
+- `flask` and `flask-cors` - For web interface
+- `psycopg2-binary` - For PostgreSQL support (SQLite works out of the box)
 
 ## Quick Start
+
+### Option 1: Web Interface (Recommended)
+
+Launch the web interface for the easiest experience:
+
+```bash
+python web_app.py
+```
+
+Then open your browser to `http://localhost:5000`
+
+Features:
+- Interactive content generation
+- Real-time preview
+- Constraint configuration
+- Database integration
+- History tracking
+- Bulk generation
+
+### Option 2: Command Line
+
+Generate content quickly from the terminal:
+
+```bash
+# Generate a weapon with seed for reproducibility
+python cli.py generate-item --template weapon_melee --seed 42
+
+# Generate 10 high-quality items
+python cli.py generate-item --count 10
+
+# Generate an NPC merchant
+python cli.py generate-npc --archetype merchant
+
+# Generate a complete world
+python cli.py generate-world --size 10
+```
+
+### Option 3: Python API
+
+Use R-Gen in your own Python code:
+
+```python
+from src.content_generator import ContentGenerator
+
+# Initialize with seed for reproducible generation
+generator = ContentGenerator(seed=42)
+
+# Generate item with constraints
+item = generator.generate_item(
+    template="weapon_melee",
+    constraints={
+        "min_quality": "Excellent",
+        "min_rarity": "Rare",
+        "min_value": 500,
+        "required_stats": ["Strength"]
+    }
+)
+
+print(f"Generated: {item['name']} - {item['value']} gold")
+```
 
 ### Run the Demo
 
@@ -686,21 +776,219 @@ def generate_world_event():
 generate_world_event()
 ```
 
+## Advanced Features
+
+### Seed-Based Generation
+
+Generate reproducible content using seeds:
+
+```python
+from src.content_generator import ContentGenerator
+
+# Create generator with fixed seed
+generator = ContentGenerator(seed=12345)
+
+# Generate items - will always be the same with this seed
+item1 = generator.generate_item("weapon_melee")
+item2 = generator.generate_item("armor")
+
+# Reset to regenerate the same sequence
+generator.reset_seed(12345)
+item3 = generator.generate_item("weapon_melee")
+# item1 and item3 are identical!
+```
+
+### Generation Constraints
+
+Filter generated content to meet specific requirements:
+
+```python
+# Generate only high-quality legendary weapons
+legendary_weapon = generator.generate_item(
+    template="weapon_melee",
+    constraints={
+        "min_quality": "Masterwork",
+        "min_rarity": "Legendary",
+        "min_value": 1000,
+        "required_stats": ["Strength", "Dexterity"]
+    }
+)
+
+# Generate items excluding certain materials
+no_wood_items = generator.generate_item(
+    template="weapon_melee",
+    constraints={
+        "exclude_materials": ["wood", "bone"]
+    }
+)
+```
+
+### Database Integration
+
+Store and retrieve generated content with full history tracking:
+
+```python
+from src.database import DatabaseManager
+from src.content_generator import ContentGenerator
+
+# Initialize database (SQLite)
+db = DatabaseManager("my_game.db")
+
+# Or use PostgreSQL
+# db = DatabaseManager("postgresql://user:password@localhost/dbname", db_type="postgresql")
+
+generator = ContentGenerator(seed=42)
+
+# Generate and save
+item = generator.generate_item("weapon_melee")
+item_id = db.save_item(item, template="weapon_melee", seed=42)
+
+# Retrieve later
+retrieved_item = db.get_item(item_id)
+
+# Search items
+legendary_items = db.search_items(filters={
+    "rarity": "Legendary",
+    "min_value": 1000
+}, limit=50)
+
+# View generation history
+history = db.get_history(content_type="item", limit=100)
+```
+
+### Weighted Probabilities
+
+R-Gen now uses realistic probability distributions. In `data/attributes.json`:
+
+```json
+{
+  "quality": {
+    "Poor": {"weight": 0.25, "multiplier": 0.5},
+    "Standard": {"weight": 0.35, "multiplier": 1.0},
+    "Fine": {"weight": 0.20, "multiplier": 1.5},
+    "Excellent": {"weight": 0.12, "multiplier": 2.0},
+    "Masterwork": {"weight": 0.06, "multiplier": 3.0},
+    "Legendary": {"weight": 0.02, "multiplier": 5.0}
+  }
+}
+```
+
+This means:
+- 25% of items are Poor quality
+- 35% are Standard
+- Only 2% are Legendary (actually rare!)
+- Value multipliers are configurable
+
+### Web API Endpoints
+
+When running the web interface (`python web_app.py`), the following REST API endpoints are available:
+
+#### GET `/api/templates`
+List all available templates
+
+#### GET `/api/attributes`
+Get all filterable attributes (quality levels, rarities, materials, etc.)
+
+#### POST `/api/generate/item`
+Generate an item
+```json
+{
+  "template": "weapon_melee",
+  "seed": 42,
+  "save": true,
+  "min_quality": "Excellent",
+  "min_rarity": "Rare",
+  "min_value": 500
+}
+```
+
+#### POST `/api/generate/npc`
+Generate an NPC
+```json
+{
+  "archetype": "blacksmith",
+  "seed": 42,
+  "save": true
+}
+```
+
+#### POST `/api/generate/location`
+Generate a location
+```json
+{
+  "template": "tavern",
+  "connections": true,
+  "seed": 42,
+  "save": true
+}
+```
+
+#### POST `/api/generate/world`
+Generate a world
+```json
+{
+  "size": 10,
+  "seed": 42,
+  "save": true,
+  "name": "My Fantasy World"
+}
+```
+
+#### POST `/api/generate/bulk`
+Generate multiple items in bulk
+```json
+{
+  "type": "item",
+  "count": 100,
+  "template": "weapon_melee",
+  "seed": 42,
+  "save": true
+}
+```
+
+#### GET `/api/history?type=item&limit=50`
+Get generation history
+
+#### GET `/api/search/items?quality=Legendary&min_value=1000`
+Search saved items
+
 ## API Reference
 
 ### ContentGenerator Class
 
-#### `__init__(data_dir="data")`
+#### `__init__(data_dir="data", seed=None)`
 Initialize the content generator.
 
 **Parameters:**
 - `data_dir` (str): Path to directory containing JSON configuration files
+- `seed` (int, optional): Random seed for reproducible generation
 
-#### `generate_item(template_name=None)`
-Generate a random item.
+**Example:**
+```python
+# Create generator with seed for reproducible results
+generator = ContentGenerator(seed=42)
+item1 = generator.generate_item("weapon_melee")
+
+# Reset with same seed to get identical results
+generator.reset_seed(42)
+item2 = generator.generate_item("weapon_melee")
+# item1 and item2 will be identical
+```
+
+#### `generate_item(template_name=None, constraints=None)`
+Generate a random item with optional constraints.
 
 **Parameters:**
 - `template_name` (str, optional): Specific item template to use (e.g., "weapon_melee", "potion")
+- `constraints` (dict, optional): Generation constraints:
+  - `min_quality`: Minimum quality level (e.g., "Fine", "Excellent")
+  - `max_quality`: Maximum quality level
+  - `min_rarity`: Minimum rarity level (e.g., "Rare", "Epic")
+  - `max_rarity`: Maximum rarity level
+  - `min_value`: Minimum gold value
+  - `max_value`: Maximum gold value
+  - `exclude_materials`: List of materials to exclude
+  - `required_stats`: List of required stat names
 
 **Returns:**
 - dict: Item object with properties:

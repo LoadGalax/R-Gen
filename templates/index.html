@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>R-Gen - Random Game Content Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 20px;
+        }
+
+        .sidebar {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            height: fit-content;
+        }
+
+        .main {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            min-height: 600px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        select, input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        select:focus, input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background 0.3s;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            background: #5568d3;
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 16px;
+            color: #666;
+            transition: color 0.3s;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+            font-weight: 600;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .result {
+            background: #f5f5f5;
+            border-radius: 5px;
+            padding: 20px;
+            margin-top: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .result pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .item-card, .npc-card, .location-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .item-card h3, .npc-card h3, .location-card h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+
+        .badge-quality { background: #ffd700; color: #333; }
+        .badge-rarity { background: #9c27b0; color: white; }
+        .badge-type { background: #2196f3; color: white; }
+        .badge-stat { background: #4caf50; color: white; }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            border-left: 4px solid #c62828;
+        }
+
+        .success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            border-left: 4px solid #2e7d32;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            font-size: 18px;
+        }
+
+        .constraints {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        .constraints h4 {
+            margin-bottom: 10px;
+            color: #667eea;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin-right: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎲 R-Gen</h1>
+            <p>Random Game Content Generator - Web Interface</p>
+        </div>
+
+        <div class="content">
+            <div class="sidebar">
+                <div class="form-group">
+                    <label>Content Type</label>
+                    <select id="contentType" onchange="switchContentType()">
+                        <option value="item">Item</option>
+                        <option value="npc">NPC</option>
+                        <option value="location">Location</option>
+                        <option value="world">World</option>
+                        <option value="bulk">Bulk Generation</option>
+                    </select>
+                </div>
+
+                <div id="templateSelect" class="form-group">
+                    <label>Template</label>
+                    <select id="template">
+                        <option value="">Random</option>
+                    </select>
+                </div>
+
+                <div id="archetypeSelect" class="form-group" style="display: none;">
+                    <label>Archetype</label>
+                    <select id="archetype">
+                        <option value="">Random</option>
+                    </select>
+                </div>
+
+                <div id="sizeInput" class="form-group" style="display: none;">
+                    <label>World Size</label>
+                    <input type="number" id="worldSize" value="5" min="1" max="50">
+                </div>
+
+                <div id="countInput" class="form-group" style="display: none;">
+                    <label>Count</label>
+                    <input type="number" id="bulkCount" value="10" min="1" max="100">
+                </div>
+
+                <div class="form-group">
+                    <label>Seed (optional)</label>
+                    <input type="number" id="seed" placeholder="Random seed for reproducibility">
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="saveToDb">
+                    <label for="saveToDb" style="margin-bottom: 0;">Save to Database</label>
+                </div>
+
+                <div class="checkbox-group" id="connectionsCheckbox" style="display: none;">
+                    <input type="checkbox" id="generateConnections" checked>
+                    <label for="generateConnections" style="margin-bottom: 0;">Generate Connections</label>
+                </div>
+
+                <div id="constraintsPanel" class="constraints" style="display: none;">
+                    <h4>Constraints</h4>
+
+                    <div class="form-group">
+                        <label>Min Quality</label>
+                        <select id="minQuality">
+                            <option value="">Any</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Max Quality</label>
+                        <select id="maxQuality">
+                            <option value="">Any</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Min Rarity</label>
+                        <select id="minRarity">
+                            <option value="">Any</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Max Rarity</label>
+                        <select id="maxRarity">
+                            <option value="">Any</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Min Value</label>
+                        <input type="number" id="minValue" placeholder="Minimum gold value">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Max Value</label>
+                        <input type="number" id="maxValue" placeholder="Maximum gold value">
+                    </div>
+                </div>
+
+                <button class="btn" onclick="generate()">Generate</button>
+                <button class="btn" style="background: #e91e63; margin-top: 5px;" onclick="viewHistory()">View History</button>
+            </div>
+
+            <div class="main">
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('output')">Output</button>
+                    <button class="tab" onclick="switchTab('json')">JSON</button>
+                    <button class="tab" onclick="switchTab('history')">History</button>
+                </div>
+
+                <div id="outputTab" class="tab-content active">
+                    <div id="result"></div>
+                </div>
+
+                <div id="jsonTab" class="tab-content">
+                    <div class="result">
+                        <pre id="jsonOutput">Generate content to see JSON output</pre>
+                    </div>
+                </div>
+
+                <div id="historyTab" class="tab-content">
+                    <div id="historyContent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let templates = {};
+        let attributes = {};
+        let lastGenerated = null;
+
+        // Load templates and attributes on page load
+        window.onload = async function() {
+            await loadTemplates();
+            await loadAttributes();
+            switchContentType();
+        };
+
+        async function loadTemplates() {
+            try {
+                const response = await fetch('/api/templates');
+                templates = await response.json();
+                updateTemplateSelect();
+            } catch (error) {
+                console.error('Error loading templates:', error);
+            }
+        }
+
+        async function loadAttributes() {
+            try {
+                const response = await fetch('/api/attributes');
+                attributes = await response.json();
+                populateConstraints();
+            } catch (error) {
+                console.error('Error loading attributes:', error);
+            }
+        }
+
+        function populateConstraints() {
+            const qualitySelects = ['minQuality', 'maxQuality'];
+            const raritySelects = ['minRarity', 'maxRarity'];
+
+            qualitySelects.forEach(id => {
+                const select = document.getElementById(id);
+                select.innerHTML = '<option value="">Any</option>';
+                attributes.quality.forEach(q => {
+                    select.innerHTML += `<option value="${q}">${q}</option>`;
+                });
+            });
+
+            raritySelects.forEach(id => {
+                const select = document.getElementById(id);
+                select.innerHTML = '<option value="">Any</option>';
+                attributes.rarity.forEach(r => {
+                    select.innerHTML += `<option value="${r}">${r}</option>`;
+                });
+            });
+        }
+
+        function updateTemplateSelect() {
+            const type = document.getElementById('contentType').value;
+            const templateSelect = document.getElementById('template');
+            const archetypeSelect = document.getElementById('archetype');
+
+            if (type === 'item' || type === 'bulk') {
+                templateSelect.innerHTML = '<option value="">Random</option>';
+                templates.items.forEach(t => {
+                    templateSelect.innerHTML += `<option value="${t}">${t}</option>`;
+                });
+            } else if (type === 'location') {
+                templateSelect.innerHTML = '<option value="">Random</option>';
+                templates.locations.forEach(t => {
+                    templateSelect.innerHTML += `<option value="${t}">${t}</option>`;
+                });
+            }
+
+            archetypeSelect.innerHTML = '<option value="">Random</option>';
+            templates.npcs.forEach(t => {
+                archetypeSelect.innerHTML += `<option value="${t}">${t}</option>`;
+            });
+        }
+
+        function switchContentType() {
+            const type = document.getElementById('contentType').value;
+
+            document.getElementById('templateSelect').style.display = (type === 'item' || type === 'location') ? 'block' : 'none';
+            document.getElementById('archetypeSelect').style.display = (type === 'npc' || (type === 'bulk' && document.getElementById('bulkType'))) ? 'block' : 'none';
+            document.getElementById('sizeInput').style.display = (type === 'world') ? 'block' : 'none';
+            document.getElementById('countInput').style.display = (type === 'bulk') ? 'block' : 'none';
+            document.getElementById('constraintsPanel').style.display = (type === 'item') ? 'block' : 'none';
+            document.getElementById('connectionsCheckbox').style.display = (type === 'location') ? 'flex' : 'none';
+
+            updateTemplateSelect();
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            event.target.classList.add('active');
+            document.getElementById(tab + 'Tab').classList.add('active');
+
+            if (tab === 'history') {
+                loadHistory();
+            }
+        }
+
+        async function generate() {
+            const type = document.getElementById('contentType').value;
+            const resultDiv = document.getElementById('result');
+            const jsonOutput = document.getElementById('jsonOutput');
+
+            resultDiv.innerHTML = '<div class="loading">Generating...</div>';
+
+            try {
+                let endpoint = `/api/generate/${type}`;
+                let data = {
+                    seed: document.getElementById('seed').value || null,
+                    save: document.getElementById('saveToDb').checked
+                };
+
+                if (type === 'item') {
+                    data.template = document.getElementById('template').value || null;
+                    data.min_quality = document.getElementById('minQuality').value || null;
+                    data.max_quality = document.getElementById('maxQuality').value || null;
+                    data.min_rarity = document.getElementById('minRarity').value || null;
+                    data.max_rarity = document.getElementById('maxRarity').value || null;
+                    data.min_value = document.getElementById('minValue').value || null;
+                    data.max_value = document.getElementById('maxValue').value || null;
+                } else if (type === 'npc') {
+                    data.archetype = document.getElementById('archetype').value || null;
+                } else if (type === 'location') {
+                    data.template = document.getElementById('template').value || null;
+                    data.connections = document.getElementById('generateConnections').checked;
+                } else if (type === 'world') {
+                    data.size = document.getElementById('worldSize').value;
+                } else if (type === 'bulk') {
+                    data.count = document.getElementById('bulkCount').value;
+                    data.template = document.getElementById('template').value || null;
+                    data.type = 'item';
+                }
+
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    lastGenerated = result;
+                    displayResult(result, type);
+                    jsonOutput.textContent = JSON.stringify(result, null, 2);
+                } else {
+                    resultDiv.innerHTML = `<div class="error">Error: ${result.error}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+
+        function displayResult(result, type) {
+            const resultDiv = document.getElementById('result');
+
+            if (type === 'item') {
+                resultDiv.innerHTML = formatItem(result.item) +
+                    (result.db_id ? `<div class="success">Saved to database with ID: ${result.db_id}</div>` : '');
+            } else if (type === 'npc') {
+                resultDiv.innerHTML = formatNPC(result.npc) +
+                    (result.db_id ? `<div class="success">Saved to database with ID: ${result.db_id}</div>` : '');
+            } else if (type === 'location') {
+                resultDiv.innerHTML = formatLocation(result.location) +
+                    (result.db_id ? `<div class="success">Saved to database with ID: ${result.db_id}</div>` : '');
+            } else if (type === 'world') {
+                resultDiv.innerHTML = formatWorld(result.world) +
+                    (result.db_id ? `<div class="success">Saved to database with ID: ${result.db_id}</div>` : '');
+            } else if (type === 'bulk') {
+                let html = `<h3>Generated ${result.count} items</h3>`;
+                result.results.forEach((item, i) => {
+                    html += formatItem(item);
+                });
+                if (result.db_ids) {
+                    html += `<div class="success">Saved ${result.db_ids.length} items to database</div>`;
+                }
+                resultDiv.innerHTML = html;
+            }
+        }
+
+        function formatItem(item) {
+            let html = '<div class="item-card">';
+            html += `<h3>${item.name}</h3>`;
+            html += `<div><span class="badge badge-type">${item.type}</span>`;
+            if (item.quality) html += `<span class="badge badge-quality">${item.quality}</span>`;
+            if (item.rarity) html += `<span class="badge badge-rarity">${item.rarity}</span>`;
+            html += `</div>`;
+            if (item.material) html += `<p><strong>Material:</strong> ${item.material}</p>`;
+            html += `<p><strong>Value:</strong> ${item.value} gold</p>`;
+            if (item.stats && Object.keys(item.stats).length > 0) {
+                html += '<p><strong>Stats:</strong> ';
+                for (let [stat, value] of Object.entries(item.stats)) {
+                    html += `<span class="badge badge-stat">${stat} +${value}</span>`;
+                }
+                html += '</p>';
+            }
+            if (item.description) html += `<p><em>${item.description}</em></p>`;
+            html += '</div>';
+            return html;
+        }
+
+        function formatNPC(npc) {
+            let html = '<div class="npc-card">';
+            html += `<h3>${npc.name}</h3>`;
+            html += `<p><strong>${npc.title}</strong> (${npc.archetype})</p>`;
+            if (npc.stats) {
+                html += '<p><strong>Stats:</strong> ';
+                for (let [stat, value] of Object.entries(npc.stats)) {
+                    html += `${stat}: ${value} `;
+                }
+                html += '</p>';
+            }
+            if (npc.skills) html += `<p><strong>Skills:</strong> ${npc.skills.join(', ')}</p>`;
+            if (npc.description) html += `<p><em>${npc.description}</em></p>`;
+            if (npc.dialogue) html += `<p><strong>Dialogue:</strong> "${npc.dialogue}"</p>`;
+            if (npc.inventory && npc.inventory.length > 0) {
+                html += `<h4>Inventory (${npc.inventory.length} items)</h4>`;
+                npc.inventory.forEach(item => {
+                    html += formatItem(item);
+                });
+            }
+            html += '</div>';
+            return html;
+        }
+
+        function formatLocation(loc) {
+            let html = '<div class="location-card">';
+            html += `<h3>${loc.name}</h3>`;
+            html += `<p><strong>Type:</strong> ${loc.type} | <strong>ID:</strong> ${loc.id}</p>`;
+            if (loc.environment_tags) html += `<p><strong>Environment:</strong> ${loc.environment_tags.join(', ')}</p>`;
+            if (loc.description) html += `<p><em>${loc.description}</em></p>`;
+
+            if (loc.npcs && loc.npcs.length > 0) {
+                html += `<h4>NPCs (${loc.npcs.length})</h4>`;
+                loc.npcs.forEach(npc => html += formatNPC(npc));
+            }
+
+            if (loc.items && loc.items.length > 0) {
+                html += `<h4>Items (${loc.items.length})</h4>`;
+                loc.items.forEach(item => html += formatItem(item));
+            }
+
+            if (loc.connections && Object.keys(loc.connections).length > 0) {
+                html += `<p><strong>Connections:</strong> ${Object.values(loc.connections).join(', ')}</p>`;
+            }
+
+            html += '</div>';
+            return html;
+        }
+
+        function formatWorld(world) {
+            let html = '<h2>Generated World</h2>';
+            html += `<p><strong>Total Locations:</strong> ${Object.keys(world.locations).length}</p>`;
+            for (let [id, loc] of Object.entries(world.locations)) {
+                html += formatLocation(loc);
+            }
+            return html;
+        }
+
+        async function loadHistory() {
+            const historyContent = document.getElementById('historyContent');
+            historyContent.innerHTML = '<div class="loading">Loading history...</div>';
+
+            try {
+                const response = await fetch('/api/history?limit=50');
+                const result = await response.json();
+
+                if (result.success && result.history.length > 0) {
+                    let html = '<h3>Recent Generations</h3>';
+                    result.history.forEach(h => {
+                        html += '<div class="item-card">';
+                        html += `<p><strong>Type:</strong> ${h.content_type} | <strong>ID:</strong> ${h.content_id}</p>`;
+                        if (h.template_name) html += `<p><strong>Template:</strong> ${h.template_name}</p>`;
+                        if (h.seed) html += `<p><strong>Seed:</strong> ${h.seed}</p>`;
+                        html += `<p><strong>Created:</strong> ${h.created_at}</p>`;
+                        html += '</div>';
+                    });
+                    historyContent.innerHTML = html;
+                } else {
+                    historyContent.innerHTML = '<p>No history found</p>';
+                }
+            } catch (error) {
+                historyContent.innerHTML = `<div class="error">Error loading history: ${error.message}</div>`;
+            }
+        }
+
+        function viewHistory() {
+            switchTab('history');
+            loadHistory();
+        }
+    </script>
+</body>
+</html>
