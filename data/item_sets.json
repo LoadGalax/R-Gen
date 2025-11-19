@@ -53,5 +53,88 @@
     "scroll",
     "jewelry",
     "weapon_melee"
+  ],
+  "warrior_equipment": [
+    "helmet",
+    "chest",
+    "gloves",
+    "legs",
+    "boots",
+    "belt",
+    "ring",
+    "earring",
+    "collar"
+  ],
+  "mage_equipment": [
+    "helmet",
+    "chest",
+    "gloves",
+    "legs",
+    "boots",
+    "belt",
+    "ring",
+    "earring",
+    "collar"
+  ],
+  "rogue_equipment": [
+    "helmet",
+    "chest",
+    "gloves",
+    "legs",
+    "boots",
+    "belt",
+    "ring",
+    "earring",
+    "collar"
+  ],
+  "cleric_equipment": [
+    "helmet",
+    "chest",
+    "gloves",
+    "legs",
+    "boots",
+    "belt",
+    "ring",
+    "earring",
+    "collar"
+  ],
+  "heavy_armor_equipment": [
+    "helmet",
+    "chest",
+    "gloves",
+    "legs",
+    "boots",
+    "belt",
+    "ring",
+    "earring",
+    "collar"
+  ],
+  "light_armor_equipment": [
+    "helmet",
+    "chest",
+    "gloves",
+    "legs",
+    "boots",
+    "belt",
+    "ring",
+    "earring",
+    "collar"
+  ],
+  "jewelry_equipment": [
+    "belt",
+    "ring",
+    "earring",
+    "collar"
+  ],
+  "basic_equipment": [
+    "helmet",
+    "chest",
+    "gloves",
+    "legs",
+    "boots",
+    "belt",
+    "ring",
+    "earring",
+    "collar"
   ]
 }
