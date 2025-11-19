@@ -43,8 +43,22 @@ class ContentGenerator:
         self.factions_config = self._load_json("factions.json")
         self.races_config = self._load_json("races.json")
 
+        # Load enhanced feature configuration files
+        self.spells_config = self._load_json("spells.json")
+        self.organizations_config = self._load_json("organizations.json")
+        self.weather_config = self._load_json("weather.json")
+        self.economy_config = self._load_json("economy.json")
+        self.quests_config = self._load_json("quests.json")
+        self.description_styles_config = self._load_json("description_styles.json")
+
         # Cache for generated locations to support cross-referencing
         self.generated_locations = {}
+
+        # Cache for generated NPCs to support relationship building
+        self.generated_npcs = []
+
+        # Cache for generated organizations
+        self.generated_organizations = []
 
     def reset_seed(self, seed: Optional[int] = None):
         """
@@ -1661,4 +1675,761 @@ class ContentGenerator:
                 "experience": difficulty * 50,
                 "possible_treasure": self.rng.random() > 0.5
             }
+        }
+
+    # ========== NEW FEATURES: Spell Generation ==========
+
+    def generate_spell(self, spell_level: Optional[int] = None, school: Optional[str] = None,
+                      spell_template: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Generate a spell with components, effects, and flavor.
+
+        Args:
+            spell_level: Spell level (0-9, where 0 is cantrip)
+            school: Magic school (Evocation, Necromancy, etc.)
+            spell_template: Specific spell template (damage_single, damage_area, healing, etc.)
+
+        Returns:
+            Dict containing spell properties
+        """
+        # Select spell level
+        if spell_level is None:
+            # Weighted toward lower levels
+            level_weights = [0.2, 0.18, 0.15, 0.12, 0.10, 0.08, 0.07, 0.05, 0.03, 0.02]
+            spell_level = self.rng.choices(range(10), weights=level_weights, k=1)[0]
+
+        level_name = "cantrip" if spell_level == 0 else f"{spell_level}{'st' if spell_level == 1 else 'nd' if spell_level == 2 else 'rd' if spell_level == 3 else 'th'}"
+        level_data = self.spells_config["spell_levels"][level_name]
+
+        # Select school
+        if school is None:
+            school = self.rng.choice(list(self.spells_config["magic_schools"].keys()))
+
+        school_data = self.spells_config["magic_schools"][school]
+
+        # Select template
+        if spell_template is None:
+            spell_template = self.rng.choice(list(self.spells_config["spell_templates"].keys()))
+
+        template = self.spells_config["spell_templates"][spell_template]
+
+        # Generate spell name
+        name_pattern = self.rng.choice(template["name_patterns"])
+        spell_variables = self.spells_config["spell_variables"]
+        name_values = {
+            "element": self.rng.choice(spell_variables.get("element", ["Energy"])),
+            "intensity": self.rng.choice(spell_variables.get("intensity", ["Lesser"])),
+            "adjective": self.rng.choice(spell_variables.get("adjective", ["Arcane"])),
+            "shape": self.rng.choice(spell_variables.get("shape", ["Blast"])),
+            "quality": self.rng.choice(spell_variables.get("quality", ["Power"])),
+            "severity": self.rng.choice(spell_variables.get("severity", ["Wounds"])),
+            "affliction": self.rng.choice(spell_variables.get("affliction", ["Weakness"])),
+            "creature": self.rng.choice(spell_variables.get("creature", ["Elemental"])),
+            "action": self.rng.choice(spell_variables.get("action", ["Flight"])),
+            "stat": self.rng.choice(["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"])
+        }
+        spell_name = self._fill_template(name_pattern, name_values)
+
+        # Calculate power based on level
+        power_multiplier = level_data["power_multiplier"]
+
+        # Generate effect values
+        effect_data = {}
+        if template["effect_type"] == "damage":
+            base_damage = self.rng.randint(template["base_damage_range"]["min"], template["base_damage_range"]["max"])
+            scaling = self.rng.randint(template["scaling_per_level"]["min"], template["scaling_per_level"]["max"])
+            effect_data["damage"] = int(base_damage * power_multiplier)
+            effect_data["scaling_per_level"] = scaling
+            if template["target"] == "area":
+                effect_data["area_size"] = self.rng.randint(template["area_size"]["min"], template["area_size"]["max"])
+
+        elif template["effect_type"] == "healing":
+            base_healing = self.rng.randint(template["base_healing_range"]["min"], template["base_healing_range"]["max"])
+            scaling = self.rng.randint(template["scaling_per_level"]["min"], template["scaling_per_level"]["max"])
+            effect_data["healing"] = int(base_healing * power_multiplier)
+            effect_data["scaling_per_level"] = scaling
+
+        elif template["effect_type"] in ["buff", "debuff"]:
+            if template["effect_type"] == "buff":
+                bonus = self.rng.randint(template["stat_bonus_range"]["min"], template["stat_bonus_range"]["max"])
+                effect_data["bonus"] = int(bonus * power_multiplier)
+            else:
+                penalty = self.rng.randint(template["stat_penalty_range"]["min"], template["stat_penalty_range"]["max"])
+                effect_data["penalty"] = int(penalty * power_multiplier)
+
+            effect_data["duration"] = self.rng.randint(template["duration_range"]["min"], template["duration_range"]["max"])
+            effect_data["stat"] = name_values["stat"]
+
+        elif template["effect_type"] == "summon":
+            duration = self.rng.randint(template["summon_duration_range"]["min"], template["summon_duration_range"]["max"])
+            power = self.rng.randint(template["summon_power_range"]["min"], template["summon_power_range"]["max"])
+            effect_data["duration"] = duration
+            effect_data["power"] = int(power * power_multiplier)
+            effect_data["creature"] = name_values["creature"]
+            effect_data["plane"] = self.rng.choice(spell_variables.get("plane", ["Astral Plane"]))
+
+        elif template["effect_type"] == "utility":
+            duration = self.rng.randint(template["duration_range"]["min"], template["duration_range"]["max"])
+            effect_data["duration"] = duration
+            effect_data["utility_effect"] = self.rng.choice(spell_variables.get("utility_effect", ["see in darkness"]))
+
+        # Mana cost
+        base_cost = self.rng.randint(template["mana_cost_range"]["min"], template["mana_cost_range"]["max"])
+        mana_cost = int(base_cost * level_data["mana_cost_multiplier"]) if spell_level > 0 else 0
+
+        # Components
+        components = []
+        if self.spells_config["spell_components"]["verbal"]["required"]:
+            components.append("Verbal")
+        if self.spells_config["spell_components"]["somatic"]["required"]:
+            components.append("Somatic")
+        if self.rng.random() < 0.3:  # 30% chance of material component
+            material_component = self.rng.choice(self.spells_config["spell_components"]["material"]["component_examples"])
+            components.append(f"Material ({material_component})")
+
+        # Casting time and range
+        casting_time = self.rng.choice(template["casting_time"])
+        spell_range = self.rng.choice(template["range"])
+
+        # Generate description
+        description_template = self.rng.choice(template["description_templates"])
+        desc_values = {**name_values, **effect_data}
+        description = self._fill_template(description_template, desc_values)
+
+        # Rarity
+        rarity = self._weighted_choice(self.spells_config["spell_rarity"])
+
+        # Value (for scrolls/spellbooks)
+        base_value = (spell_level + 1) * 100
+        rarity_mult = self.spells_config["spell_rarity"][rarity]["value_multiplier"]
+        value = int(base_value * rarity_mult)
+
+        spell = {
+            "name": spell_name,
+            "level": spell_level,
+            "school": school,
+            "effect_type": template["effect_type"],
+            "target": template["target"],
+            "casting_time": casting_time,
+            "range": spell_range,
+            "components": components,
+            "mana_cost": mana_cost,
+            "description": description,
+            "effect_data": effect_data,
+            "rarity": rarity,
+            "value": value
+        }
+
+        return spell
+
+    def generate_spellbook(self, caster_level: int = 1, school_preference: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Generate a spellbook with multiple spells.
+
+        Args:
+            caster_level: Caster's level (determines max spell level)
+            school_preference: Preferred school of magic
+
+        Returns:
+            Spellbook with collection of spells
+        """
+        max_spell_level = min(9, (caster_level + 1) // 2)
+        spell_count = self.rng.randint(caster_level, caster_level * 2 + 5)
+
+        spells = []
+        for _ in range(spell_count):
+            spell_level = self.rng.randint(0, max_spell_level)
+            school = school_preference if school_preference and self.rng.random() < 0.6 else None
+            spell = self.generate_spell(spell_level=spell_level, school=school)
+            spells.append(spell)
+
+        total_value = sum(s.get("value", 0) for s in spells)
+
+        return {
+            "type": "spellbook",
+            "caster_level": caster_level,
+            "school_preference": school_preference,
+            "spell_count": len(spells),
+            "spells": spells,
+            "total_value": total_value + 500  # Add book value
+        }
+
+    # ========== NEW FEATURES: Organization & Guild Generation ==========
+
+    def generate_organization(self, org_type: Optional[str] = None, faction: Optional[str] = None,
+                             size: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Generate an organization or guild.
+
+        Args:
+            org_type: Type of organization (guild, thieves_guild, mages_circle, etc.)
+            faction: Associated faction
+            size: Organization size (small, medium, large)
+
+        Returns:
+            Organization data with structure, resources, and members
+        """
+        # Select organization type
+        if org_type is None:
+            org_type = self.rng.choice(list(self.organizations_config["organization_types"].keys()))
+
+        org_template = self.organizations_config["organization_types"][org_type]
+
+        # Generate organization name
+        name_pattern = self.rng.choice(self.organizations_config["organization_templates"][0]["name_patterns"])
+        org_variables = self.organizations_config["organization_variables"]
+        name_values = {
+            "adjective": self.rng.choice(org_variables["adjective"]),
+            "type": self.rng.choice(org_variables["type"]),
+            "symbol": self.rng.choice(org_variables["symbol"]),
+            "city": self.rng.choice(org_variables["city"]),
+            "founder": self.rng.choice(["Aldric", "Morgana", "Thalion", "Ravenna", "Godric"])
+        }
+        org_name = self._fill_template(name_pattern, name_values)
+
+        # Determine size
+        if size is None:
+            size_options = ["small", "medium", "large"]
+            size = self.rng.choices(size_options, weights=[0.4, 0.4, 0.2], k=1)[0]
+
+        size_multipliers = {"small": 0.5, "medium": 1.0, "large": 2.0}
+        member_count = int(self.rng.randint(org_template["typical_size"]["min"],
+                                           org_template["typical_size"]["max"]) * size_multipliers[size])
+
+        # Wealth
+        wealth_level = org_template.get("wealth_level", "moderate")
+        if wealth_level in self.organizations_config["organization_resources"]["wealth"]:
+            wealth_range = self.organizations_config["organization_resources"]["wealth"][wealth_level]
+            wealth = self.rng.randint(wealth_range["min"], wealth_range["max"])
+        else:
+            wealth = 10000
+
+        # Generate leadership NPCs
+        hierarchy = org_template["hierarchy_levels"]
+        leaders = []
+        for rank in hierarchy[-2:]:  # Top 2 ranks
+            leader = self.generate_npc(faction=faction)
+            leader["org_rank"] = rank
+            leaders.append(leader)
+
+        # Benefits
+        benefits = self.organizations_config["organization_templates"][0]["benefits"].get(org_type, [])
+
+        # Relationships with other organizations
+        relationship_type = self.rng.choice(["allied", "neutral", "rival", "enemy"])
+        relationships = {
+            "type": relationship_type,
+            "description": self.organizations_config["organization_relationships"][relationship_type]["description"]
+        }
+
+        organization = {
+            "name": org_name,
+            "type": org_type,
+            "description": org_template["description"],
+            "size": size,
+            "member_count": member_count,
+            "hierarchy": hierarchy,
+            "leaders": leaders,
+            "wealth": wealth,
+            "faction": faction,
+            "activities": org_template["common_activities"],
+            "benefits": benefits,
+            "relationships": relationships,
+            "secrecy": org_template.get("secrecy", "none"),
+            "requirements": org_template.get("requirements", [])
+        }
+
+        self.generated_organizations.append(organization)
+        return organization
+
+    # ========== NEW FEATURES: Enhanced Weather & Environment ==========
+
+    def generate_weather_detailed(self, biome: Optional[str] = None, season: Optional[str] = None,
+                                  time_of_day: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Generate detailed weather with natural disasters and moon phases.
+
+        Args:
+            biome: Biome type
+            season: Season (spring, summer, autumn, winter)
+            time_of_day: Specific time (dawn, morning, noon, afternoon, dusk, night)
+
+        Returns:
+            Detailed weather data with all environmental factors
+        """
+        # Select season
+        if season is None:
+            season = self.rng.choice(list(self.weather_config["seasons"].keys()))
+
+        season_data = self.weather_config["seasons"][season]
+
+        # Select time of day
+        if time_of_day is None:
+            time_of_day = self.rng.choice(list(self.weather_config["time_of_day"].keys()))
+
+        time_data = self.weather_config["time_of_day"][time_of_day]
+
+        # Select weather pattern
+        if season in ["winter"]:
+            available_weather = [w for w, data in self.weather_config["weather_patterns"].items()
+                               if data.get("season_required") in [None, season]]
+        else:
+            available_weather = [w for w, data in self.weather_config["weather_patterns"].items()
+                               if data.get("season_required") is None or data.get("season_required") == season]
+
+        # Weighted selection
+        weather_weights = [self.weather_config["weather_patterns"][w]["weight"] for w in available_weather]
+        weather_type = self.rng.choices(available_weather, weights=weather_weights, k=1)[0]
+        weather_data = self.weather_config["weather_patterns"][weather_type]
+
+        # Calculate temperature
+        base_temp = season_data["base_temperature"] + weather_data["temperature_modifier"]
+        variation = self.rng.randint(-season_data["temperature_variation"], season_data["temperature_variation"])
+        temperature = base_temp + variation
+
+        # Moon phase
+        moon_phase = self.rng.choice(list(self.weather_config["moon_phases"].keys()))
+        moon_data = self.weather_config["moon_phases"][moon_phase]
+
+        # Calculate combined visibility
+        base_visibility = time_data["visibility_modifier"]
+        moon_bonus = moon_data["light_bonus"] if time_of_day == "night" else 0
+        final_visibility = min(1.0, base_visibility + moon_bonus)
+
+        # Natural disaster chance (very rare)
+        disaster = None
+        if self.rng.random() < 0.01:  # 1% chance
+            disaster_type = self.rng.choice(list(self.weather_config["natural_disasters"].keys()))
+            disaster_info = self.weather_config["natural_disasters"][disaster_type]
+            severity = self.rng.choice(list(disaster_info["severity_levels"].keys()))
+            disaster = {
+                "type": disaster_type,
+                "severity": severity,
+                "description": disaster_info["description"],
+                "effects": disaster_info["severity_levels"][severity]["effects"]
+            }
+
+        return {
+            "season": season,
+            "time_of_day": time_of_day,
+            "weather_type": weather_type,
+            "temperature": temperature,
+            "visibility": final_visibility,
+            "mood": weather_data["mood"],
+            "effects": weather_data["effects"],
+            "travel_speed_modifier": weather_data["travel_speed_modifier"],
+            "combat_modifier": weather_data["combat_modifier"],
+            "moon_phase": moon_phase,
+            "moon_effects": moon_data["effects"],
+            "natural_disaster": disaster,
+            "description": f"{season.capitalize()}, {time_of_day}, {weather_data['description'].lower()}. Temperature: {temperature}°C. {moon_phase.replace('_', ' ').title()}"
+        }
+
+    # ========== NEW FEATURES: Economic System ==========
+
+    def calculate_item_price(self, item: Dict[str, Any], location: Optional[Dict[str, Any]] = None,
+                            supply: str = "normal", demand: str = "normal") -> Dict[str, Any]:
+        """
+        Calculate dynamic item price based on economic factors.
+
+        Args:
+            item: Item to price
+            location: Location where item is sold (affects distance modifiers)
+            supply: Supply level (abundant, normal, scarce, rare)
+            demand: Demand level (low, normal, high, desperate)
+
+        Returns:
+            Pricing information with modifiers
+        """
+        base_value = item.get("value", 100)
+
+        # Get economic modifiers
+        supply_modifier = self.economy_config["price_factors"]["supply"][supply]["modifier"]
+        demand_modifier = self.economy_config["price_factors"]["demand"][demand]["modifier"]
+
+        # Location modifier (simplified - could use actual trade routes)
+        location_modifier = 1.0
+        if location:
+            location_type = location.get("type", "")
+            if "market" in location_type.lower():
+                location_modifier = 0.9  # Markets have better prices
+            elif "remote" in location_type.lower():
+                location_modifier = 1.5
+
+        # Quality and condition modifiers already in base_value
+        # Calculate final price
+        final_price = int(base_value * supply_modifier * demand_modifier * location_modifier)
+
+        return {
+            "base_value": base_value,
+            "final_price": final_price,
+            "modifiers": {
+                "supply": supply_modifier,
+                "demand": demand_modifier,
+                "location": location_modifier
+            },
+            "supply_status": supply,
+            "demand_status": demand
+        }
+
+    def generate_market(self, location: Optional[Dict[str, Any]] = None, wealth_level: str = "modest") -> Dict[str, Any]:
+        """
+        Generate a market with goods, services, and dynamic pricing.
+
+        Args:
+            location: Location of market
+            wealth_level: Economic level (destitute, poor, modest, comfortable, wealthy, aristocratic)
+
+        Returns:
+            Market data with available goods and services
+        """
+        # Number of merchants based on wealth
+        merchant_count = {"destitute": 2, "poor": 5, "modest": 10, "comfortable": 15,
+                         "wealthy": 25, "aristocratic": 40}.get(wealth_level, 10)
+
+        merchants = []
+        for _ in range(merchant_count):
+            merchant = self.generate_npc(archetype_name="merchant", location_id=location.get("id") if location else None)
+            merchants.append(merchant)
+
+        # Available goods (mix of item types)
+        goods = []
+        for _ in range(merchant_count * 3):
+            item = self.generate_item()
+            supply = self.rng.choice(["abundant", "normal", "normal", "scarce"])
+            demand = self.rng.choice(["low", "normal", "normal", "high"])
+            pricing = self.calculate_item_price(item, location, supply, demand)
+
+            goods.append({
+                "item": item,
+                "pricing": pricing,
+                "merchant_index": self.rng.randint(0, merchant_count - 1)
+            })
+
+        # Services
+        services = []
+        service_types = ["lodging", "meals", "transport", "professional"]
+        for stype in service_types:
+            if stype in self.economy_config["services"]:
+                for service_name, service_data in self.economy_config["services"][stype].items():
+                    services.append({
+                        "type": stype,
+                        "name": service_name.replace("_", " ").title(),
+                        "base_price": service_data.get("price", service_data.get("price_per_night", service_data.get("price_per_service", 10))),
+                        "description": service_data.get("description", "")
+                    })
+
+        return {
+            "location": location.get("name") if location else "Generic Market",
+            "wealth_level": wealth_level,
+            "merchant_count": merchant_count,
+            "merchants": merchants,
+            "available_goods": goods,
+            "available_services": services,
+            "market_conditions": "normal",  # Could be dynamic
+            "taxes": {
+                "sales_tax": self.economy_config["taxation"]["sales_tax"]["typical_rate"],
+                "tariff": self.economy_config["taxation"]["tariff"]["typical_rate"]
+            }
+        }
+
+    # ========== NEW FEATURES: Enhanced Quest System ==========
+
+    def generate_quest_advanced(self, quest_type: Optional[str] = None, difficulty: int = 1,
+                               faction: Optional[str] = None, create_chain: bool = False) -> Dict[str, Any]:
+        """
+        Generate advanced quest with branching objectives and complications.
+
+        Args:
+            quest_type: Quest type from quests.json
+            difficulty: Difficulty (1-10)
+            faction: Faction offering quest
+            create_chain: Whether to create a quest chain
+
+        Returns:
+            Advanced quest data
+        """
+        # Select quest type
+        if quest_type is None:
+            quest_type = self.rng.choice(list(self.quests_config["quest_types"].keys()))
+
+        quest_template = self.quests_config["quest_types"][quest_type]
+
+        # Generate quest name and objective
+        objective_template = self.rng.choice(quest_template["common_objectives"])
+        quest_variables = self.quests_config["quest_variables"]
+
+        obj_values = {key: self.rng.choice(values) for key, values in quest_variables.items()}
+        obj_values["number"] = str(self.rng.randint(3, 10))
+
+        objective = self._fill_template(objective_template, obj_values)
+
+        # Quest giver
+        giver_type = self.rng.choice(list(self.quests_config["quest_givers"].keys()))
+        giver_data = self.quests_config["quest_givers"][giver_type]
+        giver_profession = self.rng.choice(giver_data["types"])
+        quest_giver = self.generate_npc(faction=faction)
+
+        # Generate rewards
+        reward_gold_data = self.quests_config["quest_rewards"]["gold"]["base_by_difficulty"][str(difficulty)]
+        reward_gold = self.rng.randint(reward_gold_data["min"], reward_gold_data["max"])
+
+        reward_items = []
+        for _ in range(min(3, max(1, difficulty // 3))):
+            reward_items.append(self.generate_item())
+
+        reputation_points = self.quests_config["quest_rewards"]["reputation"]["points_by_difficulty"][str(difficulty)]
+        experience_points = self.quests_config["quest_rewards"]["experience"]["points_by_difficulty"][str(difficulty)]
+
+        # Complications
+        complication = self.rng.choice(quest_template["complications"]) if self.rng.random() < 0.4 else None
+
+        # Secondary objectives
+        secondary_objectives = []
+        if self.rng.random() < 0.5:
+            secondary_obj = self.rng.choice(self.quests_config["quest_objectives"]["secondary"]["examples"])
+            secondary_objectives.append(secondary_obj)
+
+        # Quest chain (if requested)
+        next_quest = None
+        if create_chain and self.rng.random() < 0.7:
+            next_quest = self.generate_quest_advanced(difficulty=difficulty + 1, faction=faction, create_chain=False)
+
+        quest = {
+            "name": f"The {self.rng.choice(['Ancient', 'Forgotten', 'Lost', 'Hidden', 'Dangerous'])} {quest_type.title()}",
+            "type": quest_type,
+            "difficulty": difficulty,
+            "primary_objective": objective,
+            "secondary_objectives": secondary_objectives,
+            "quest_giver": quest_giver,
+            "quest_giver_type": giver_type,
+            "complication": complication,
+            "rewards": {
+                "gold": reward_gold,
+                "items": reward_items,
+                "reputation": reputation_points,
+                "experience": experience_points,
+                "faction": faction
+            },
+            "failure_consequences": quest_template["failure_consequences"],
+            "status": "available",
+            "next_in_chain": next_quest
+        }
+
+        return quest
+
+    # ========== NEW FEATURES: Relationship System ==========
+
+    def add_relationship(self, npc1: Dict[str, Any], npc2: Dict[str, Any],
+                        relationship_type: str = "neutral") -> None:
+        """
+        Add a relationship between two NPCs.
+
+        Args:
+            npc1: First NPC
+            npc2: Second NPC
+            relationship_type: Type (friend, rival, enemy, family, romantic, mentor)
+        """
+        if "relationships" not in npc1:
+            npc1["relationships"] = []
+        if "relationships" not in npc2:
+            npc2["relationships"] = []
+
+        npc1["relationships"].append({
+            "npc_name": npc2["name"],
+            "type": relationship_type,
+            "reputation": self._get_relationship_reputation(relationship_type)
+        })
+
+        npc2["relationships"].append({
+            "npc_name": npc1["name"],
+            "type": relationship_type,
+            "reputation": self._get_relationship_reputation(relationship_type)
+        })
+
+    def _get_relationship_reputation(self, rel_type: str) -> int:
+        """Get reputation value for relationship type."""
+        values = {
+            "enemy": -100,
+            "rival": -50,
+            "neutral": 0,
+            "acquaintance": 25,
+            "friend": 75,
+            "close_friend": 100,
+            "family": 150,
+            "romantic": 125,
+            "mentor": 80,
+            "apprentice": 60
+        }
+        return values.get(rel_type, 0)
+
+    def generate_npc_network(self, central_npc: Dict[str, Any], network_size: int = 5) -> List[Dict[str, Any]]:
+        """
+        Generate a social network around an NPC.
+
+        Args:
+            central_npc: NPC at center of network
+            network_size: Number of connected NPCs
+
+        Returns:
+            List of NPCs with relationships
+        """
+        network = [central_npc]
+
+        for _ in range(network_size):
+            new_npc = self.generate_npc(faction=central_npc.get("faction"))
+
+            # Determine relationship
+            rel_types = ["friend", "rival", "acquaintance", "family", "colleague"]
+            rel_type = self.rng.choice(rel_types)
+
+            self.add_relationship(central_npc, new_npc, rel_type)
+            network.append(new_npc)
+
+        return network
+
+    # ========== NEW FEATURES: Enhanced Description System ==========
+
+    def generate_description(self, content: Dict[str, Any], content_type: str = "item",
+                           style: str = "detailed", context: Optional[Dict[str, str]] = None) -> str:
+        """
+        Generate context-aware description with multiple styles.
+
+        Args:
+            content: Content to describe (item, npc, location, spell)
+            content_type: Type of content
+            style: Description style (technical, poetic, brief, detailed, historical, dramatic, mysterious, etc.)
+            context: Context dict with keys like location, weather, time_of_day, mood
+
+        Returns:
+            Generated description
+        """
+        if style not in self.description_styles_config["description_styles"]:
+            style = "detailed"
+
+        style_data = self.description_styles_config["description_styles"][style]
+
+        # Get template for content type
+        if content_type not in style_data["templates"]:
+            # Fallback to brief description
+            return content.get("description", f"A {content_type}")
+
+        template = style_data["templates"][content_type]
+
+        # Build values dict from content
+        values = dict(content)
+
+        # Add style-specific vocabulary
+        if "vocabulary" in style_data:
+            values["adjective"] = self.rng.choice(style_data["vocabulary"][:3])
+
+        # Add context-aware modifiers
+        if context:
+            context_mods = self.description_styles_config.get("context_aware_modifiers", {})
+
+            if "location" in context and "location_based" in context_mods:
+                if context["location"] in context_mods["location_based"]:
+                    loc_mods = context_mods["location_based"][context["location"]]
+                    values["imagery"] = self.rng.choice(loc_mods.get("imagery", ["the surrounding area"]))
+                    values["atmosphere"] = loc_mods.get("atmosphere", "")
+
+            if "weather" in context and "weather_based" in context_mods:
+                if context["weather"] in context_mods["weather_based"]:
+                    weather_mods = context_mods["weather_based"][context["weather"]]
+                    values.update(weather_mods.get("sensory", {}))
+
+        # Fill template
+        description = self._fill_template(template, values)
+
+        return description
+
+    # ========== NEW FEATURES: Export Formats ==========
+
+    def export_to_markdown(self, data: Any, filename: str, title: str = "Generated Content") -> None:
+        """
+        Export content to Markdown format.
+
+        Args:
+            data: Data to export
+            filename: Output filename
+            title: Document title
+        """
+        output_path = Path(filename)
+
+        with open(output_path, 'w', encoding='utf-8') as f:
+            f.write(f"# {title}\n\n")
+
+            if isinstance(data, dict):
+                self._write_dict_to_markdown(f, data)
+            elif isinstance(data, list):
+                for idx, item in enumerate(data, 1):
+                    f.write(f"## Entry {idx}\n\n")
+                    if isinstance(item, dict):
+                        self._write_dict_to_markdown(f, item)
+                    else:
+                        f.write(f"{item}\n\n")
+            else:
+                f.write(f"{data}\n\n")
+
+        print(f"Exported to {output_path}")
+
+    def _write_dict_to_markdown(self, f, d: Dict, level: int = 3) -> None:
+        """Helper to write dict to markdown."""
+        for key, value in d.items():
+            heading = "#" * level
+            key_formatted = key.replace("_", " ").title()
+
+            if isinstance(value, dict):
+                f.write(f"{heading} {key_formatted}\n\n")
+                self._write_dict_to_markdown(f, value, level + 1)
+            elif isinstance(value, list):
+                f.write(f"{heading} {key_formatted}\n\n")
+                for item in value:
+                    if isinstance(item, dict):
+                        f.write(f"- ")
+                        for k, v in item.items():
+                            f.write(f"**{k}**: {v}, ")
+                        f.write("\n")
+                    else:
+                        f.write(f"- {item}\n")
+                f.write("\n")
+            else:
+                f.write(f"**{key_formatted}**: {value}\n\n")
+
+    # ========== NEW FEATURES: Validation & Error Handling ==========
+
+    def validate_item_constraints(self, constraints: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Validate item generation constraints.
+
+        Args:
+            constraints: Constraints dict to validate
+
+        Returns:
+            Validation result with any errors
+        """
+        errors = []
+        warnings = []
+
+        valid_qualities = list(self.attributes["quality"].keys())
+        valid_rarities = list(self.attributes["rarity"].keys())
+
+        if "min_quality" in constraints and constraints["min_quality"] not in valid_qualities:
+            errors.append(f"Invalid min_quality: {constraints['min_quality']}. Valid: {valid_qualities}")
+
+        if "max_quality" in constraints and constraints["max_quality"] not in valid_qualities:
+            errors.append(f"Invalid max_quality: {constraints['max_quality']}. Valid: {valid_qualities}")
+
+        if "min_rarity" in constraints and constraints["min_rarity"] not in valid_rarities:
+            errors.append(f"Invalid min_rarity: {constraints['min_rarity']}. Valid: {valid_rarities}")
+
+        if "exclude_materials" in constraints:
+            invalid_mats = [m for m in constraints["exclude_materials"] if m not in self.attributes["materials"]]
+            if invalid_mats:
+                warnings.append(f"Unknown materials in exclude list: {invalid_mats}")
+
+        return {
+            "valid": len(errors) == 0,
+            "errors": errors,
+            "warnings": warnings
         }
