@@ -1,0 +1,26 @@
+{
+  "tactile": [
+    "rough",
+    "smooth",
+    "cold",
+    "warm",
+    "heavy",
+    "light",
+    "balanced",
+    "awkward",
+    "comfortable",
+    "mysterious"
+  ],
+  "visual": [
+    "weathered",
+    "pristine",
+    "ornate",
+    "simple",
+    "decorated",
+    "plain",
+    "scarred",
+    "polished",
+    "tarnished",
+    "gleaming"
+  ]
+}
