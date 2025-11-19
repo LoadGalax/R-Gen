@@ -1,39 +1,62 @@
-# R-Gen Web Game UI Examples
+# R-Gen Web Game UI - Dark Grimoire Style
 
-This folder contains 4 different TUI (Text User Interface) style mockups for the R-Gen RPG web game.
+This folder contains the web-based user interface for the R-Gen RPG game, designed with a **Dark Book/Grimoire** aesthetic.
 
-## How to View the Examples
+## Design Theme
 
-Simply open any of the HTML files in your web browser:
+The interface is styled like an ancient, mysterious grimoire or dark spellbook:
+- Deep blacks and dark browns for the background
+- Aged, textured pages with dark edges
+- Golden accents and ethereal glows
+- Gothic medieval typography
+- Shadowy, mysterious atmosphere
 
-1. **example1_classic_terminal.html** - Classic terminal style (green on black, hacker aesthetic)
-2. **example2_retro_dos.html** - Retro DOS style (blue/cyan, 90s computer vibes)
-3. **example3_modern_dark.html** - Modern dark theme (like VSCode, sleek and polished)
-4. **example4_fantasy_parchment.html** - Fantasy parchment style (warm medieval theme)
+## Files
+
+- **index.html** - Main game interface (Dark Grimoire theme)
+
+## How to View
+
+Simply open `index.html` in your web browser to see the interface.
+
+```bash
+cd Client
+# Open index.html in your browser
+```
 
 ## Features Demonstrated
 
-Each example shows:
-- Character stats (Health, Mana, Energy, Hunger, Mood)
-- Current location with description
-- NPCs present in the location
-- Inventory system with rarity colors (Legendary, Rare, Common)
-- Action buttons (Talk, Travel, Rest, Market, Quests, Items)
-- Real-time events feed
+The current mockup shows:
+- Character stats (Health, Mana, Experience, Energy, Hunger, Mood)
+- Current location with atmospheric description
+- NPCs present in the location with hover effects
+- Inventory system with rarity colors:
+  - **Legendary items** - Gold glow
+  - **Rare items** - Blue glow
+  - **Common items** - Standard appearance
+- Action buttons (Converse, Journey, Rest, Market, Quests, Items)
+- Real-time events chronicle feed
 - Day/time/weather information
+- Animated hover effects and glowing accents
 
 ## Next Steps
 
-1. Choose your favorite style
-2. I'll implement the full interactive version with:
-   - Real backend integration with your Flask API
-   - WebSocket support for real-time updates
-   - Functional buttons and navigation
-   - Dynamic content from your R-Gen engine
+This is currently a static mockup. The next phase will add:
+- JavaScript interactivity
+- Backend integration with Flask API
+- WebSocket support for real-time simulation updates
+- Functional navigation and actions
+- Dynamic content loading from R-Gen engine
+- Game state management
+- NPC dialogue system
+- Inventory management
+- Quest tracking
+- Travel and exploration mechanics
 
 ## Technical Details
 
 - Pure HTML/CSS (no dependencies yet)
-- Responsive layouts
-- Hover effects and animations
-- Ready to add JavaScript for interactivity
+- Responsive layout with CSS Grid
+- Smooth transitions and hover effects
+- Dark theme optimized for extended play sessions
+- Ready for JavaScript integration
