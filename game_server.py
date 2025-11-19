@@ -17,13 +17,10 @@ from datetime import datetime
 
 # Add engines to path
 project_root = Path(__file__).parent
-sys.path.insert(0, str(project_root / "GenerationEngine"))
-sys.path.insert(0, str(project_root / "SimulationEngine"))
+sys.path.insert(0, str(project_root))
 
-from src.content_generator import ContentGenerator
-from src.database import DatabaseManager
-from SimulationEngine.src.core.world import World
-from SimulationEngine.src.simulation.simulator import WorldSimulator
+from GenerationEngine import ContentGenerator, DatabaseManager
+from SimulationEngine import World, WorldSimulator
 
 app = Flask(__name__, static_folder='Client', static_url_path='')
 CORS(app)
