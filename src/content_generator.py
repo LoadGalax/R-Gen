@@ -33,12 +33,26 @@ class ContentGenerator:
         self.seed = seed
         self.rng = random.Random(seed)  # Dedicated random number generator
 
-        self.attributes = self._load_json("attributes.json")
-        self.items_config = self._load_json("items.json")
-        self.npcs_config = self._load_json("npcs.json")
-        self.locations_config = self._load_json("locations.json")
+        # Load separated attribute configuration files
+        self.quality = self._load_json("quality.json")
+        self.rarity = self._load_json("rarity.json")
+        self.materials = self._load_json("materials.json")
+        self.damage_types = self._load_json("damage_types.json")
+        self.environment_tags = self._load_json("environment_tags.json")
+        self.stats = self._load_json("stats.json")
+        self.npc_traits = self._load_json("npc_traits.json")
+        self.adjectives = self._load_json("adjectives.json")
 
-        # Load new configuration files
+        # Load separated item configuration files
+        self.item_templates = self._load_json("item_templates.json")
+        self.item_sets = self._load_json("item_sets.json")
+
+        # Load separated NPC configuration files
+        self.professions = self._load_json("professions.json")
+        self.profession_levels = self._load_json("profession_levels.json")
+
+        # Load other configuration files
+        self.locations_config = self._load_json("locations.json")
         self.biomes_config = self._load_json("biomes.json")
         self.factions_config = self._load_json("factions.json")
         self.races_config = self._load_json("races.json")
@@ -134,11 +148,11 @@ class ContentGenerator:
             Dictionary of stat names to values
         """
         stats = {}
-        available_stats = list(self.attributes["stats"].keys())
+        available_stats = list(self.stats.keys())
         selected_stats = self.rng.sample(available_stats, min(count, len(available_stats)))
 
         for stat_name in selected_stats:
-            stat_range = self.attributes["stats"][stat_name]
+            stat_range = self.stats[stat_name]
             value = self.rng.randint(stat_range["min"], stat_range["max"])
             if value != 0:  # Only include non-zero stats
                 stats[stat_name] = value
@@ -180,28 +194,28 @@ class ContentGenerator:
         for attempt in range(max_attempts):
             # Select template
             if template_name is None:
-                template_name = self.rng.choice(list(self.items_config["templates"].keys()))
+                template_name = self.rng.choice(list(self.item_templates.keys()))
 
-            template = self.items_config["templates"][template_name]
+            template = self.item_templates[template_name]
 
             # Generate basic properties with constraints
             base_name = self.rng.choice(template["base_names"])
 
             # Generate quality with weighted probability
             if template["has_quality"]:
-                quality = self._weighted_choice(self.attributes["quality"])
+                quality = self._weighted_choice(self.quality)
             else:
                 quality = None
 
             # Generate rarity with weighted probability
             if template["has_rarity"]:
-                rarity = self._weighted_choice(self.attributes["rarity"])
+                rarity = self._weighted_choice(self.rarity)
             else:
                 rarity = None
 
             # Generate material with constraints
             if template.get("has_material", False):
-                available_materials = [m for m in self.attributes["materials"]
+                available_materials = [m for m in self.materials
                                      if m not in constraints.get("exclude_materials", [])]
                 if available_materials:
                     material = self.rng.choice(available_materials)
@@ -220,8 +234,8 @@ class ContentGenerator:
             # Add required stats if specified
             if "required_stats" in constraints:
                 for req_stat in constraints["required_stats"]:
-                    if req_stat not in stats and req_stat in self.attributes["stats"]:
-                        stat_range = self.attributes["stats"][req_stat]
+                    if req_stat not in stats and req_stat in self.stats:
+                        stat_range = self.stats[req_stat]
                         stats[req_stat] = self.rng.randint(stat_range["min"], stat_range["max"])
 
             # Generate value (influenced by quality and rarity)
@@ -231,14 +245,14 @@ class ContentGenerator:
             )
 
             # Get multipliers from config
-            quality_multiplier = self.attributes["quality"].get(quality, {}).get("multiplier", 1.0) if quality else 1.0
-            rarity_multiplier = self.attributes["rarity"].get(rarity, {}).get("multiplier", 1.0) if rarity else 1.0
+            quality_multiplier = self.quality.get(quality, {}).get("multiplier", 1.0) if quality else 1.0
+            rarity_multiplier = self.rarity.get(rarity, {}).get("multiplier", 1.0) if rarity else 1.0
 
             value = int(base_value * quality_multiplier * rarity_multiplier)
 
             # Check constraints
-            quality_order = list(self.attributes["quality"].keys())
-            rarity_order = list(self.attributes["rarity"].keys())
+            quality_order = list(self.quality.keys())
+            rarity_order = list(self.rarity.keys())
 
             # Check quality constraints
             if "min_quality" in constraints:
@@ -286,8 +300,8 @@ class ContentGenerator:
                     template["damage_type_count"]["max"]
                 )
                 damage_types = self.rng.sample(
-                    self.attributes["damage_types"],
-                    min(damage_count, len(self.attributes["damage_types"]))
+                    self.damage_types,
+                    min(damage_count, len(self.damage_types))
                 )
 
             # Generate dynamic description
@@ -297,8 +311,8 @@ class ContentGenerator:
                 "rarity": rarity.lower() if rarity else "",
                 "material": material if material else "",
                 "base_name": base_name.lower(),
-                "tactile_adjective": self.rng.choice(self.attributes["tactile_adjectives"]),
-                "visual_adjective": self.rng.choice(self.attributes["visual_adjectives"])
+                "tactile_adjective": self.rng.choice(self.adjectives["tactile"]),
+                "visual_adjective": self.rng.choice(self.adjectives["visual"])
             }
             description = self._fill_template(description_template, description_values)
 
@@ -344,10 +358,10 @@ class ContentGenerator:
         Returns:
             List of generated item dictionaries
         """
-        if set_name not in self.items_config["item_sets"]:
+        if set_name not in self.item_sets:
             raise ValueError(f"Unknown item set: {set_name}")
 
-        template_list = self.items_config["item_sets"][set_name]
+        template_list = self.item_sets[set_name]
         if count is None:
             count = self.rng.randint(1, 5)
 
@@ -400,13 +414,13 @@ class ContentGenerator:
                 profession_names = [archetype_name]
             else:
                 # Random single profession by default
-                profession_names = [self.rng.choice(list(self.npcs_config["archetypes"].keys()))]
+                profession_names = [self.rng.choice(list(self.professions.keys()))]
 
         # profession_names can be an empty list for NPCs with no profession
         professions = []
         for prof_name in profession_names:
-            if prof_name in self.npcs_config["archetypes"]:
-                professions.append(self.npcs_config["archetypes"][prof_name])
+            if prof_name in self.professions:
+                professions.append(self.professions[prof_name])
             else:
                 raise ValueError(f"Unknown profession: {prof_name}")
 
@@ -479,7 +493,7 @@ class ContentGenerator:
                 k=1
             )[0]
 
-        level_data = self.npcs_config["profession_levels"][profession_level]
+        level_data = self.profession_levels[profession_level]
 
         # Combine stats from all professions (average them)
         combined_stats = {}
@@ -530,11 +544,11 @@ class ContentGenerator:
         # Generate description
         description_template = self.rng.choice(primary_profession["description_templates"])
         description_values = {
-            "trait": self.rng.choice(self.attributes["npc_traits"]),
+            "trait": self.rng.choice(self.npc_traits),
             "title": title.lower(),
             "race": race_data["name"],
-            "tactile_adjective": self.rng.choice(self.attributes["tactile_adjectives"]),
-            "visual_adjective": self.rng.choice(self.attributes["visual_adjectives"])
+            "tactile_adjective": self.rng.choice(self.adjectives["tactile"]),
+            "visual_adjective": self.rng.choice(self.adjectives["visual"])
         }
         description = self._fill_template(description_template, description_values)
 
@@ -653,9 +667,9 @@ class ContentGenerator:
         dialogue = self.rng.choice(generic_dialogues)
 
         # Generic description
-        trait = self.rng.choice(self.attributes["npc_traits"])
-        tactile = self.rng.choice(self.attributes["tactile_adjectives"])
-        visual = self.rng.choice(self.attributes["visual_adjectives"])
+        trait = self.rng.choice(self.npc_traits)
+        tactile = self.rng.choice(self.adjectives["tactile"])
+        visual = self.rng.choice(self.adjectives["visual"])
         description = f"A {trait} {race_data['name']} with {tactile} features and a {visual} appearance."
 
         # Minimal inventory
@@ -733,7 +747,7 @@ class ContentGenerator:
         )
 
         # Add random additional tags
-        available_tags = [tag for tag in self.attributes["environment_tags"]
+        available_tags = [tag for tag in self.environment_tags
                          if tag not in environment_tags]
         additional_tags = self.rng.sample(
             available_tags,
@@ -744,8 +758,8 @@ class ContentGenerator:
         # Generate description
         description_template = self.rng.choice(template["description_templates"])
         description_values = {
-            "visual_adjective": self.rng.choice(self.attributes["visual_adjectives"]),
-            "tactile_adjective": self.rng.choice(self.attributes["tactile_adjectives"]),
+            "visual_adjective": self.rng.choice(self.adjectives["visual"]),
+            "tactile_adjective": self.rng.choice(self.adjectives["tactile"]),
         }
 
         # Add indexed environment tags for template
@@ -918,7 +932,7 @@ class ContentGenerator:
         # Generate items
         items = []
         for _ in range(item_count):
-            template = self.rng.choice(list(self.items_config["templates"].keys()))
+            template = self.rng.choice(list(self.item_templates.keys()))
 
             # Filter materials by biome if provided
             constraints = quality_constraints.copy()
@@ -1036,7 +1050,7 @@ class ContentGenerator:
         # Add additional materials
         additional_count = min(difficulty // 2, 4)
         for _ in range(additional_count):
-            mat = self.rng.choice(self.attributes["materials"])
+            mat = self.rng.choice(self.materials)
             materials_needed.append({
                 "material": mat,
                 "quantity": self.rng.randint(1, 3)
@@ -2411,8 +2425,8 @@ class ContentGenerator:
         errors = []
         warnings = []
 
-        valid_qualities = list(self.attributes["quality"].keys())
-        valid_rarities = list(self.attributes["rarity"].keys())
+        valid_qualities = list(self.quality.keys())
+        valid_rarities = list(self.rarity.keys())
 
         if "min_quality" in constraints and constraints["min_quality"] not in valid_qualities:
             errors.append(f"Invalid min_quality: {constraints['min_quality']}. Valid: {valid_qualities}")
@@ -2424,7 +2438,7 @@ class ContentGenerator:
             errors.append(f"Invalid min_rarity: {constraints['min_rarity']}. Valid: {valid_rarities}")
 
         if "exclude_materials" in constraints:
-            invalid_mats = [m for m in constraints["exclude_materials"] if m not in self.attributes["materials"]]
+            invalid_mats = [m for m in constraints["exclude_materials"] if m not in self.materials]
             if invalid_mats:
                 warnings.append(f"Unknown materials in exclude list: {invalid_mats}")
 
