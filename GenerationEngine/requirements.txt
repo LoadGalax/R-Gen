@@ -1,0 +1,15 @@
+# Core dependencies - none required for basic usage
+# R-Gen uses only Python standard library for core functionality
+
+# Optional dependencies for extended features:
+
+# Database support
+# psycopg2-binary==2.9.9  # PostgreSQL support (uncomment if needed)
+
+# Web interface
+flask==3.0.0
+flask-cors==4.0.0
+
+# Development dependencies (for testing)
+pytest==7.4.3
+pytest-cov==4.1.0

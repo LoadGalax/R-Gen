@@ -1,0 +1,327 @@
+{
+  "magic_schools": {
+    "Evocation": {
+      "description": "Magic that creates powerful elemental effects",
+      "primary_stat": "Intelligence",
+      "damage_types": ["Fire", "Lightning", "Ice", "Force"],
+      "typical_effects": ["damage", "area_damage", "elemental_burst"]
+    },
+    "Necromancy": {
+      "description": "Magic dealing with life, death, and undeath",
+      "primary_stat": "Intelligence",
+      "damage_types": ["Necrotic", "Poison"],
+      "typical_effects": ["drain_life", "summon_undead", "debuff", "fear"]
+    },
+    "Illusion": {
+      "description": "Magic that deceives the senses and mind",
+      "primary_stat": "Charisma",
+      "damage_types": ["Psychic"],
+      "typical_effects": ["invisibility", "disguise", "charm", "fear", "confusion"]
+    },
+    "Abjuration": {
+      "description": "Protective and defensive magic",
+      "primary_stat": "Wisdom",
+      "damage_types": [],
+      "typical_effects": ["shield", "ward", "dispel", "protection", "banish"]
+    },
+    "Conjuration": {
+      "description": "Magic that summons creatures and objects",
+      "primary_stat": "Intelligence",
+      "damage_types": [],
+      "typical_effects": ["summon_creature", "teleport", "create_object", "dimensional_travel"]
+    },
+    "Transmutation": {
+      "description": "Magic that transforms and alters",
+      "primary_stat": "Intelligence",
+      "damage_types": [],
+      "typical_effects": ["enhance_ability", "polymorph", "alter_size", "haste", "slow"]
+    },
+    "Divination": {
+      "description": "Magic that reveals information and sees the future",
+      "primary_stat": "Wisdom",
+      "damage_types": [],
+      "typical_effects": ["detect_magic", "scrying", "foresight", "identify", "true_seeing"]
+    },
+    "Enchantment": {
+      "description": "Magic that influences minds and emotions",
+      "primary_stat": "Charisma",
+      "damage_types": ["Psychic"],
+      "typical_effects": ["charm", "dominate", "sleep", "suggestion", "command"]
+    }
+  },
+  "spell_templates": {
+    "damage_single": {
+      "effect_type": "damage",
+      "target": "single",
+      "name_patterns": [
+        "{element} {intensity}",
+        "{intensity} {element}",
+        "{adjective} {element} Strike"
+      ],
+      "base_damage_range": {"min": 10, "max": 100},
+      "scaling_per_level": {"min": 5, "max": 15},
+      "mana_cost_range": {"min": 10, "max": 50},
+      "casting_time": ["instant", "short", "medium"],
+      "range": ["touch", "short", "medium", "long"],
+      "description_templates": [
+        "Unleashes a {intensity} blast of {element} energy at a single target, dealing {damage} damage.",
+        "A focused beam of {element} strikes your enemy with {intensity} force.",
+        "Channel {adjective} {element} magic to burn through your foe's defenses."
+      ]
+    },
+    "damage_area": {
+      "effect_type": "damage",
+      "target": "area",
+      "name_patterns": [
+        "{element} {shape}",
+        "{intensity} {element} {shape}",
+        "{adjective} {shape} of {element}"
+      ],
+      "base_damage_range": {"min": 20, "max": 150},
+      "scaling_per_level": {"min": 10, "max": 25},
+      "mana_cost_range": {"min": 25, "max": 100},
+      "area_size": {"min": 10, "max": 50},
+      "casting_time": ["short", "medium", "long"],
+      "range": ["short", "medium", "long"],
+      "description_templates": [
+        "Creates a {shape} of {element} that engulfs all enemies within {area_size} feet.",
+        "A devastating {intensity} {element} explosion erupts in a {area_size}-foot {shape}.",
+        "Summon a {adjective} {shape} of pure {element}, scorching all within."
+      ]
+    },
+    "healing": {
+      "effect_type": "healing",
+      "target": "single",
+      "name_patterns": [
+        "{intensity} Healing",
+        "Cure {severity}",
+        "{adjective} Restoration"
+      ],
+      "base_healing_range": {"min": 15, "max": 120},
+      "scaling_per_level": {"min": 8, "max": 20},
+      "mana_cost_range": {"min": 15, "max": 60},
+      "casting_time": ["instant", "short"],
+      "range": ["touch", "short", "medium"],
+      "description_templates": [
+        "Channel healing energy to restore {healing} health to your target.",
+        "A {intensity} wave of restorative magic mends wounds and revitalizes.",
+        "Touch an ally to grant {adjective} healing, restoring {healing} health."
+      ]
+    },
+    "buff": {
+      "effect_type": "buff",
+      "target": "single",
+      "name_patterns": [
+        "{stat} Enhancement",
+        "{adjective} {stat}",
+        "Blessing of {quality}"
+      ],
+      "stat_bonus_range": {"min": 2, "max": 10},
+      "duration_range": {"min": 60, "max": 600},
+      "mana_cost_range": {"min": 20, "max": 80},
+      "casting_time": ["instant", "short"],
+      "range": ["touch", "short"],
+      "description_templates": [
+        "Grants a bonus of +{bonus} to {stat} for {duration} seconds.",
+        "Empower an ally with {adjective} magic, increasing their {stat}.",
+        "A blessing that enhances {stat} by {bonus} for {duration} seconds."
+      ]
+    },
+    "debuff": {
+      "effect_type": "debuff",
+      "target": "single",
+      "name_patterns": [
+        "{stat} Drain",
+        "Curse of {affliction}",
+        "{adjective} {affliction}"
+      ],
+      "stat_penalty_range": {"min": -10, "max": -2},
+      "duration_range": {"min": 30, "max": 300},
+      "mana_cost_range": {"min": 15, "max": 70},
+      "casting_time": ["instant", "short"],
+      "range": ["short", "medium"],
+      "description_templates": [
+        "Inflicts a penalty of {penalty} to {stat} for {duration} seconds.",
+        "A {adjective} curse that weakens your enemy's {stat}.",
+        "Drain your foe's {stat}, reducing it by {penalty} for {duration} seconds."
+      ]
+    },
+    "summon": {
+      "effect_type": "summon",
+      "target": "special",
+      "name_patterns": [
+        "Summon {creature}",
+        "Call {adjective} {creature}",
+        "Conjure {creature}"
+      ],
+      "summon_duration_range": {"min": 60, "max": 600},
+      "summon_power_range": {"min": 1, "max": 10},
+      "mana_cost_range": {"min": 40, "max": 150},
+      "casting_time": ["medium", "long"],
+      "range": ["short", "medium"],
+      "description_templates": [
+        "Summons a {adjective} {creature} to fight by your side for {duration} seconds.",
+        "Call forth a {creature} from the {plane} to serve you.",
+        "Conjure a powerful {creature} with {power} combat rating for {duration} seconds."
+      ]
+    },
+    "utility": {
+      "effect_type": "utility",
+      "target": "special",
+      "name_patterns": [
+        "{action}",
+        "{adjective} {action}",
+        "{action} of {quality}"
+      ],
+      "duration_range": {"min": 60, "max": 1800},
+      "mana_cost_range": {"min": 10, "max": 100},
+      "casting_time": ["instant", "short", "medium"],
+      "range": ["self", "touch", "short", "medium"],
+      "description_templates": [
+        "A spell that allows you to {utility_effect}.",
+        "Use {adjective} magic to {utility_effect} for {duration} seconds.",
+        "Channel arcane power to {utility_effect}."
+      ]
+    }
+  },
+  "spell_components": {
+    "verbal": {
+      "required": true,
+      "description": "Requires spoken incantation",
+      "silenced_prevents": true
+    },
+    "somatic": {
+      "required": true,
+      "description": "Requires hand gestures",
+      "restrained_prevents": true
+    },
+    "material": {
+      "required": false,
+      "description": "Requires material components",
+      "component_examples": [
+        "A pinch of sulfur",
+        "A crystal worth 50 gold",
+        "A feather from an eagle",
+        "A drop of blood",
+        "A piece of amber",
+        "A bit of bat fur",
+        "A small piece of phosphorus"
+      ],
+      "consumed": false
+    },
+    "focus": {
+      "required": false,
+      "description": "Requires a magical focus",
+      "focus_types": ["wand", "staff", "orb", "amulet", "ring"],
+      "consumed": false
+    }
+  },
+  "spell_levels": {
+    "cantrip": {
+      "level": 0,
+      "description": "Basic spells that can be cast at will",
+      "mana_cost_multiplier": 0.0,
+      "power_multiplier": 0.3,
+      "unlimited_uses": true
+    },
+    "1st": {
+      "level": 1,
+      "description": "Entry-level spells",
+      "mana_cost_multiplier": 1.0,
+      "power_multiplier": 1.0
+    },
+    "2nd": {
+      "level": 2,
+      "description": "Apprentice spells",
+      "mana_cost_multiplier": 1.5,
+      "power_multiplier": 1.5
+    },
+    "3rd": {
+      "level": 3,
+      "description": "Journeyman spells",
+      "mana_cost_multiplier": 2.0,
+      "power_multiplier": 2.0
+    },
+    "4th": {
+      "level": 4,
+      "description": "Advanced spells",
+      "mana_cost_multiplier": 2.5,
+      "power_multiplier": 2.5
+    },
+    "5th": {
+      "level": 5,
+      "description": "Expert spells",
+      "mana_cost_multiplier": 3.0,
+      "power_multiplier": 3.0
+    },
+    "6th": {
+      "level": 6,
+      "description": "Master spells",
+      "mana_cost_multiplier": 4.0,
+      "power_multiplier": 4.0
+    },
+    "7th": {
+      "level": 7,
+      "description": "Legendary spells",
+      "mana_cost_multiplier": 5.0,
+      "power_multiplier": 5.0
+    },
+    "8th": {
+      "level": 8,
+      "description": "Mythic spells",
+      "mana_cost_multiplier": 6.5,
+      "power_multiplier": 6.5
+    },
+    "9th": {
+      "level": 9,
+      "description": "Reality-altering spells",
+      "mana_cost_multiplier": 8.0,
+      "power_multiplier": 8.0
+    }
+  },
+  "spell_variables": {
+    "element": ["Fire", "Ice", "Lightning", "Acid", "Poison", "Radiant", "Necrotic", "Force", "Thunder", "Psychic"],
+    "intensity": ["Minor", "Lesser", "Moderate", "Greater", "Major", "Supreme", "Ultimate"],
+    "shape": ["Bolt", "Blast", "Wave", "Storm", "Nova", "Sphere", "Cone", "Ray", "Burst"],
+    "adjective": ["Arcane", "Mystical", "Ancient", "Forbidden", "Divine", "Infernal", "Primal", "Celestial", "Eldritch", "Ethereal"],
+    "quality": ["Power", "Wisdom", "Vitality", "Swiftness", "Protection", "Fortitude", "Clarity", "Might"],
+    "severity": ["Light Wounds", "Wounds", "Serious Wounds", "Critical Wounds"],
+    "affliction": ["Weakness", "Slowness", "Fragility", "Stupor", "Decay", "Exhaustion"],
+    "creature": ["Elemental", "Demon", "Angel", "Beast", "Construct", "Spirit", "Imp", "Familiar", "Guardian"],
+    "plane": ["Elemental Plane", "Abyss", "Celestial Realm", "Shadow Realm", "Ethereal Plane", "Astral Plane"],
+    "action": ["Invisibility", "Flight", "Teleportation", "Levitation", "Water Breathing", "Darkvision", "Detect Magic", "Identify"],
+    "utility_effect": ["become invisible", "fly through the air", "breathe underwater", "see in darkness", "detect magical auras", "read any language"]
+  },
+  "spell_rarity": {
+    "Common": {
+      "weight": 40,
+      "availability": "Widely known",
+      "value_multiplier": 1.0
+    },
+    "Uncommon": {
+      "weight": 30,
+      "availability": "Known by most practitioners",
+      "value_multiplier": 2.0
+    },
+    "Rare": {
+      "weight": 15,
+      "availability": "Specialized knowledge",
+      "value_multiplier": 5.0
+    },
+    "Epic": {
+      "weight": 10,
+      "availability": "Guarded secrets",
+      "value_multiplier": 10.0
+    },
+    "Legendary": {
+      "weight": 4,
+      "availability": "Lost knowledge",
+      "value_multiplier": 25.0
+    },
+    "Mythic": {
+      "weight": 1,
+      "availability": "Forbidden or unique",
+      "value_multiplier": 100.0
+    }
+  }
+}
