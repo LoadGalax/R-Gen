@@ -164,6 +164,84 @@ def format_location(location, indent=0):
     return "\n".join(lines)
 
 
+def format_animal(animal, indent=0):
+    """Format an animal for human-readable output"""
+    prefix = "  " * indent
+    lines = []
+
+    # Icon based on category
+    icon = "🦁" if animal.get('category') == 'wild_fauna' else "🐾"
+    lines.append(f"{prefix}{icon} {animal['name']}")
+    lines.append(f"{prefix}   Species: {animal['species']}")
+    lines.append(f"{prefix}   Category: {animal['category'].replace('_', ' ').title()}")
+    lines.append(f"{prefix}   Size: {animal.get('size', 'medium').title()}")
+
+    if animal.get('danger_level'):
+        lines.append(f"{prefix}   Danger Level: {animal['danger_level'].replace('_', ' ').title()}")
+
+    if animal.get('stats'):
+        stat_str = ', '.join([f"{k}: {v}" for k, v in animal['stats'].items()])
+        lines.append(f"{prefix}   Stats: {stat_str}")
+
+    if animal.get('loyalty') is not None:
+        lines.append(f"{prefix}   Loyalty: {animal['loyalty']}")
+
+    if animal.get('owner'):
+        owner_info = f"{animal['owner'].get('name', 'Unknown')}"
+        if animal['owner'].get('profession'):
+            owner_info += f" ({animal['owner']['profession']})"
+        lines.append(f"{prefix}   Owner: {owner_info}")
+
+    if animal.get('habitat'):
+        if isinstance(animal['habitat'], list):
+            lines.append(f"{prefix}   Habitat: {', '.join(animal['habitat'])}")
+        else:
+            lines.append(f"{prefix}   Habitat: {animal['habitat']}")
+
+    if animal.get('description'):
+        lines.append(f"{prefix}   Description: {animal['description']}")
+
+    return "\n".join(lines)
+
+
+def format_flora(flora, indent=0):
+    """Format flora for human-readable output"""
+    prefix = "  " * indent
+    lines = []
+
+    # Icon based on category
+    icon_map = {
+        'trees': '🌳',
+        'plants': '🌿',
+        'mushrooms': '🍄',
+        'crops': '🌾',
+        'vines': '🌱'
+    }
+    icon = icon_map.get(flora.get('category'), '🌿')
+
+    lines.append(f"{prefix}{icon} {flora['name']}")
+    lines.append(f"{prefix}   Category: {flora.get('category', 'unknown').title()}")
+    lines.append(f"{prefix}   Size: {flora.get('size', 'medium').title()}")
+    lines.append(f"{prefix}   Rarity: {flora.get('rarity', 'common').title()}")
+
+    if flora.get('magical'):
+        lines.append(f"{prefix}   Magical: Yes ✨")
+
+    if flora.get('uses'):
+        lines.append(f"{prefix}   Uses: {', '.join(flora['uses'])}")
+
+    if flora.get('habitat'):
+        if isinstance(flora['habitat'], list):
+            lines.append(f"{prefix}   Habitat: {', '.join(flora['habitat'])}")
+        else:
+            lines.append(f"{prefix}   Habitat: {flora['habitat']}")
+
+    if flora.get('description'):
+        lines.append(f"{prefix}   Description: {flora['description']}")
+
+    return "\n".join(lines)
+
+
 def format_market(market, indent=0):
     """Format a market for human-readable output"""
     prefix = "  " * indent
@@ -234,8 +312,14 @@ def output_data(data, format_type, output_file=None):
         # Human-readable format
         if isinstance(data, list):
             if len(data) > 0:
+                # Check for Animal
+                if 'species' in data[0] and ('danger_level' in data[0] or 'loyalty' in data[0]):
+                    output = "\n\n".join([format_animal(animal) for animal in data])
+                # Check for Flora
+                elif 'species' in data[0] and 'uses' in data[0]:
+                    output = "\n\n".join([format_flora(flora) for flora in data])
                 # Check for NPC (either old 'archetype' or new 'professions')
-                if 'archetype' in data[0] or 'professions' in data[0]:
+                elif 'archetype' in data[0] or 'professions' in data[0]:
                     output = "\n\n".join([format_npc(npc) for npc in data])
                 elif 'environment_tags' in data[0] or 'id' in data[0] and data[0].get('id', '').startswith(('tavern_', 'forge_', 'cave_', 'market_')):
                     output = "\n\n".join([format_location(loc) for loc in data])
@@ -244,8 +328,14 @@ def output_data(data, format_type, output_file=None):
             else:
                 output = "No items generated"
         elif isinstance(data, dict):
+            # Check for Animal
+            if 'species' in data and ('danger_level' in data or 'loyalty' in data):
+                output = format_animal(data)
+            # Check for Flora
+            elif 'species' in data and 'uses' in data:
+                output = format_flora(data)
             # Check for NPC (either old 'archetype' or new 'professions')
-            if 'archetype' in data or 'professions' in data:
+            elif 'archetype' in data or 'professions' in data:
                 output = format_npc(data)
             elif 'environment_tags' in data or ('id' in data and isinstance(data.get('id'), str) and '_' in data.get('id', '')):
                 output = format_location(data)
@@ -373,6 +463,80 @@ def cmd_generate_location(args, generator, db=None):
         print(f"💾 Saved to database with ID: {location_id}")
 
     output_data(location, args.format, args.output)
+
+
+def cmd_generate_animal(args, generator, db=None):
+    """Generate animal(s)"""
+    count = args.count if args.count else 1
+
+    if count == 1:
+        animal = generator.generate_animal(
+            category=args.category,
+            species=args.species,
+            habitat=args.habitat
+        )
+
+        # Save to database if requested
+        if args.save and db:
+            animal_id = db.save_animal(animal, args.seed)
+            print(f"💾 Saved to database with ID: {animal_id}")
+
+        output_data(animal, args.format, args.output)
+    else:
+        animals = []
+        for _ in range(count):
+            animal = generator.generate_animal(
+                category=args.category,
+                species=args.species,
+                habitat=args.habitat
+            )
+            animals.append(animal)
+
+            # Save to database if requested
+            if args.save and db:
+                db.save_animal(animal, args.seed)
+
+        if args.save and db:
+            print(f"💾 Saved {len(animals)} animals to database")
+
+        output_data(animals, args.format, args.output)
+
+
+def cmd_generate_flora(args, generator, db=None):
+    """Generate flora"""
+    count = args.count if args.count else 1
+
+    if count == 1:
+        flora = generator.generate_flora(
+            category=args.category,
+            species=args.species,
+            habitat=args.habitat
+        )
+
+        # Save to database if requested
+        if args.save and db:
+            flora_id = db.save_flora(flora, args.seed)
+            print(f"💾 Saved to database with ID: {flora_id}")
+
+        output_data(flora, args.format, args.output)
+    else:
+        flora_list = []
+        for _ in range(count):
+            flora = generator.generate_flora(
+                category=args.category,
+                species=args.species,
+                habitat=args.habitat
+            )
+            flora_list.append(flora)
+
+            # Save to database if requested
+            if args.save and db:
+                db.save_flora(flora, args.seed)
+
+        if args.save and db:
+            print(f"💾 Saved {len(flora_list)} flora to database")
+
+        output_data(flora_list, args.format, args.output)
 
 
 def cmd_generate_world(args, generator, db=None):
@@ -858,6 +1022,32 @@ Examples:
                                  help='Output format (default: text)')
     location_parser.add_argument('--output', help='Output file path')
 
+    # Generate animal command
+    animal_parser = subparsers.add_parser('generate-animal', help='Generate random animal(s)')
+    animal_parser.add_argument('--category', choices=['wild_fauna', 'pet'],
+                               help='Animal category (wild_fauna or pet)')
+    animal_parser.add_argument('--species', help='Specific species (e.g., Wolf, Dog, Cat, Horse)')
+    animal_parser.add_argument('--habitat', help='Preferred habitat/biome')
+    animal_parser.add_argument('--count', type=int, help='Number of animals to generate')
+    animal_parser.add_argument('--seed', type=int, help='Random seed for reproducible generation')
+    animal_parser.add_argument('--save', action='store_true', help='Save to database')
+    animal_parser.add_argument('--format', choices=['json', 'pretty', 'text'], default='text',
+                               help='Output format (default: text)')
+    animal_parser.add_argument('--output', help='Output file path')
+
+    # Generate flora command
+    flora_parser = subparsers.add_parser('generate-flora', help='Generate random flora')
+    flora_parser.add_argument('--category', choices=['trees', 'plants', 'mushrooms', 'crops', 'vines'],
+                             help='Flora category')
+    flora_parser.add_argument('--species', help='Specific species (e.g., Oak, Pine, Moonflower)')
+    flora_parser.add_argument('--habitat', help='Preferred habitat/biome')
+    flora_parser.add_argument('--count', type=int, help='Number of flora to generate')
+    flora_parser.add_argument('--seed', type=int, help='Random seed for reproducible generation')
+    flora_parser.add_argument('--save', action='store_true', help='Save to database')
+    flora_parser.add_argument('--format', choices=['json', 'pretty', 'text'], default='text',
+                             help='Output format (default: text)')
+    flora_parser.add_argument('--output', help='Output file path')
+
     # Generate world command
     world_parser = subparsers.add_parser('generate-world', help='Generate complete world')
     world_parser.add_argument('--size', type=int, required=True,
@@ -1142,6 +1332,10 @@ Examples:
             cmd_generate_npc(args, generator, db)
         elif args.command == 'generate-location':
             cmd_generate_location(args, generator, db)
+        elif args.command == 'generate-animal':
+            cmd_generate_animal(args, generator, db)
+        elif args.command == 'generate-flora':
+            cmd_generate_flora(args, generator, db)
         elif args.command == 'generate-world':
             cmd_generate_world(args, generator, db)
         elif args.command == 'search-items':

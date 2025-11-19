@@ -65,6 +65,10 @@ class ContentGenerator:
         self.quests_config = self._load_json("quests.json")
         self.description_styles_config = self._load_json("description_styles.json")
 
+        # Load animal and flora configuration files
+        self.animal_species = self._load_json("animal_species.json")
+        self.flora_species = self._load_json("flora_species.json")
+
         # Cache for generated locations to support cross-referencing
         self.generated_locations = {}
 
@@ -2525,3 +2529,209 @@ class ContentGenerator:
             "errors": errors,
             "warnings": warnings
         }
+
+    def generate_animal(self, category: Optional[str] = None, species: Optional[str] = None,
+                       owner: Optional[Dict[str, Any]] = None, habitat: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Generate a random animal (wild fauna or pet).
+
+        Args:
+            category: Animal category ("wild_fauna" or "pet"). If None, selects randomly.
+            species: Specific species to generate. If None, selects randomly.
+            owner: Optional NPC owner (for pets). Includes {"name": str, "profession": str}
+            habitat: Preferred habitat/biome for wild fauna
+
+        Returns:
+            Dictionary containing animal properties including:
+            - name: Animal's individual name (for pets) or species name
+            - species: Species type
+            - category: "wild_fauna" or "pet"
+            - size: Size category
+            - stats: Physical stats
+            - description: Dynamic description
+            - owner: Owner info (for pets)
+            - habitat: Natural habitat
+        """
+        # Map "pet" to "pets" for consistency
+        if category == "pet":
+            category = "pets"
+
+        # If species is specified but category is not, search all categories
+        if species and category is None:
+            selected = None
+            for cat in ["wild_fauna", "pets"]:
+                species_list = self.animal_species.get(cat, [])
+                selected = next((s for s in species_list if s["species"].lower() == species.lower()), None)
+                if selected:
+                    category = cat
+                    break
+            if not selected:
+                raise ValueError(f"Species '{species}' not found in any category")
+        else:
+            # Select category if not specified
+            if category is None:
+                category = self.rng.choice(["wild_fauna", "pets"])
+
+            # Get species list for the category
+            species_list = self.animal_species.get(category, [])
+            if not species_list:
+                raise ValueError(f"No species found for category: {category}")
+
+            # Select species
+            if species is None:
+                # Use weighted selection
+                weights = [s.get("weight", 1) for s in species_list]
+                selected = self.rng.choices(species_list, weights=weights, k=1)[0]
+            else:
+                # Find specific species
+                selected = next((s for s in species_list if s["species"].lower() == species.lower()), None)
+                if not selected:
+                    raise ValueError(f"Species '{species}' not found in category '{category}'")
+
+        # Generate stats
+        stats = {}
+        if "stats" in selected:
+            for stat_name, stat_range in selected["stats"].items():
+                stats[stat_name] = self.rng.randint(stat_range["min"], stat_range["max"])
+
+        # Generate loyalty for pets
+        loyalty = None
+        if category == "pets" and "loyalty" in selected:
+            loyalty = self.rng.randint(selected["loyalty"]["min"], selected["loyalty"]["max"])
+
+        # Generate individual name for pets
+        if category == "pets":
+            # Common pet names
+            pet_names = {
+                "Dog": ["Rex", "Buddy", "Max", "Shadow", "Duke", "Lady", "Scout", "Hunter"],
+                "Cat": ["Whiskers", "Shadow", "Mittens", "Luna", "Felix", "Smokey", "Tiger"],
+                "Horse": ["Thunder", "Lightning", "Spirit", "Storm", "Star", "Midnight", "Blaze"],
+                "Hawk": ["Talon", "Swift", "Sky", "Hunter", "Keen"],
+                "Pig": ["Hamlet", "Truffle", "Bacon", "Snort"],
+                "Raven": ["Nevermore", "Shadow", "Corvus", "Midnight", "Omen"]
+            }
+            individual_name = self.rng.choice(pet_names.get(selected["species"], ["Companion"]))
+        else:
+            individual_name = None
+
+        # Generate description
+        description_template = self.rng.choice(selected["description_templates"])
+
+        # Prepare description values
+        description_values = {
+            "adjective": self.rng.choice(selected.get("adjectives", ["wild"])),
+            "feature": self.rng.choice(selected.get("features", ["distinctive markings"])),
+            "trait": self.rng.choice(selected.get("traits", ["alert appearance"])),
+            "behavior": self.rng.choice(selected.get("behaviors", selected.get("behavior", ["behaving normally"]))),
+            "state": self.rng.choice(["calm", "alert", "wary", "relaxed", "vigilant"]),
+            "breed": self.rng.choice(selected.get("breeds", [selected["species"]])),
+            "habitat": habitat or self.rng.choice(selected.get("habitat", ["wilderness"]))
+        }
+
+        description = self._fill_template(description_template, description_values)
+
+        # Build animal object
+        animal = {
+            "name": individual_name or selected["species"],
+            "species": selected["species"],
+            "category": category,
+            "size": selected.get("size", "medium"),
+            "danger_level": selected.get("danger_level", "low"),
+            "stats": stats,
+            "description": description,
+            "habitat": selected.get("habitat", []),
+            "behavior": selected.get("behavior", [])
+        }
+
+        # Add pet-specific properties
+        if category == "pets":
+            animal["loyalty"] = loyalty
+            animal["commonality"] = selected.get("commonality", "common")
+            if owner:
+                animal["owner"] = owner
+
+        return animal
+
+    def generate_flora(self, category: Optional[str] = None, species: Optional[str] = None,
+                      habitat: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Generate random flora (trees, plants, mushrooms, crops, vines).
+
+        Args:
+            category: Flora category ("trees", "plants", "mushrooms", "crops", "vines").
+                     If None, selects randomly.
+            species: Specific species to generate. If None, selects randomly.
+            habitat: Preferred habitat/biome
+
+        Returns:
+            Dictionary containing flora properties including:
+            - name: Species name
+            - species: Species type
+            - category: Flora category
+            - size: Size category
+            - rarity: Rarity level
+            - uses: List of uses
+            - magical: Whether it's magical
+            - description: Dynamic description
+            - habitat: Natural habitat
+        """
+        # If species is specified but category is not, search all categories
+        if species and category is None:
+            selected = None
+            for cat in ["trees", "plants", "mushrooms", "crops", "vines"]:
+                species_list = self.flora_species.get(cat, [])
+                selected = next((s for s in species_list if s["species"].lower() == species.lower()), None)
+                if selected:
+                    category = cat
+                    break
+            if not selected:
+                raise ValueError(f"Species '{species}' not found in any category")
+        else:
+            # Select category if not specified
+            if category is None:
+                category = self.rng.choice(["trees", "plants", "mushrooms", "crops", "vines"])
+
+            # Get species list for the category
+            species_list = self.flora_species.get(category, [])
+            if not species_list:
+                raise ValueError(f"No species found for category: {category}")
+
+            # Select species
+            if species is None:
+                # Use weighted selection
+                weights = [s.get("weight", 1) for s in species_list]
+                selected = self.rng.choices(species_list, weights=weights, k=1)[0]
+            else:
+                # Find specific species
+                selected = next((s for s in species_list if s["species"].lower() == species.lower()), None)
+                if not selected:
+                    raise ValueError(f"Species '{species}' not found in category '{category}'")
+
+        # Generate description
+        description_template = self.rng.choice(selected["description_templates"])
+
+        # Prepare description values
+        description_values = {
+            "adjective": self.rng.choice(selected.get("adjectives", ["common"])),
+            "feature": self.rng.choice(selected.get("features", ["distinctive appearance"])),
+            "trait": self.rng.choice(selected.get("traits", ["healthy"])),
+            "state": self.rng.choice(["thriving", "healthy", "growing", "flourishing", "mature"]),
+            "habitat": habitat or self.rng.choice(selected.get("habitat", ["wilderness"]))
+        }
+
+        description = self._fill_template(description_template, description_values)
+
+        # Build flora object
+        flora = {
+            "name": selected["species"],
+            "species": selected["species"],
+            "category": category,
+            "size": selected.get("size", "medium"),
+            "rarity": selected.get("rarity", "common"),
+            "uses": selected.get("uses", []),
+            "magical": selected.get("magical", False),
+            "description": description,
+            "habitat": selected.get("habitat", [])
+        }
+
+        return flora
