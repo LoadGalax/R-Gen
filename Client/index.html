@@ -18,28 +18,179 @@
                 radial-gradient(circle at 80% 70%, rgba(30, 15, 5, 0.4) 0%, transparent 50%);
             color: #d4c5a9;
             font-family: 'Georgia', 'Times New Roman', serif;
-            padding: 30px;
+            padding: 40px 20px;
             line-height: 1.7;
             min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        .container {
-            max-width: 1300px;
+        .grimoire-container {
+            position: relative;
+            max-width: 1600px;
+            width: 100%;
             margin: 0 auto;
+        }
+
+        /* Bookmark markers on the left */
+        .bookmarks {
+            position: absolute;
+            left: -60px;
+            top: 100px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 100;
+        }
+
+        .bookmark {
+            width: 80px;
+            height: 60px;
+            background: linear-gradient(135deg, #8b4513 0%, #654321 100%);
+            border: 2px solid #3d2f1f;
+            border-right: none;
+            border-radius: 8px 0 0 8px;
+            padding: 8px 12px 8px 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow:
+                -4px 4px 8px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(212, 175, 55, 0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bookmark::before {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.5), transparent);
+        }
+
+        .bookmark:hover {
+            transform: translateX(10px);
+            box-shadow:
+                -6px 6px 12px rgba(0, 0, 0, 0.7),
+                inset 0 1px 0 rgba(212, 175, 55, 0.3);
+        }
+
+        .bookmark.active {
+            background: linear-gradient(135deg, #d4af37 0%, #b8941f 100%);
+            transform: translateX(15px);
+            box-shadow:
+                -6px 6px 15px rgba(0, 0, 0, 0.8),
+                0 0 20px rgba(212, 175, 55, 0.4);
+            border-color: #d4af37;
+        }
+
+        .bookmark .icon {
+            font-size: 24px;
+            filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5));
+        }
+
+        .bookmark .label {
+            font-size: 10px;
+            font-weight: bold;
+            color: #f4e4c1;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            text-align: center;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+        }
+
+        .bookmark.active .label {
+            color: #1a1410;
+        }
+
+        /* Individual bookmark colors */
+        .bookmark[data-page="world"] {
+            background: linear-gradient(135deg, #2e8b57 0%, #1d5a3a 100%);
+        }
+
+        .bookmark[data-page="character"] {
+            background: linear-gradient(135deg, #dc143c 0%, #8b0000 100%);
+        }
+
+        .bookmark[data-page="inventory"] {
+            background: linear-gradient(135deg, #daa520 0%, #8b6914 100%);
+        }
+
+        .bookmark[data-page="map"] {
+            background: linear-gradient(135deg, #4169e1 0%, #191970 100%);
+        }
+
+        .bookmark[data-page="quests"] {
+            background: linear-gradient(135deg, #9370db 0%, #4b0082 100%);
+        }
+
+        .bookmark[data-page="events"] {
+            background: linear-gradient(135deg, #708090 0%, #2f4f4f 100%);
+        }
+
+        /* Open book container */
+        .book {
             background: linear-gradient(135deg, #1a1612 0%, #211c17 100%);
-            border-radius: 8px;
+            border-radius: 12px;
             box-shadow:
                 0 0 0 3px #3d2f1f,
                 0 0 0 6px #1a1410,
-                0 0 20px rgba(212, 175, 55, 0.1),
-                0 30px 60px rgba(0, 0, 0, 0.8);
+                0 0 30px rgba(212, 175, 55, 0.15),
+                0 40px 80px rgba(0, 0, 0, 0.9);
             position: relative;
             overflow: hidden;
-            border: 1px solid #4a3a2a;
+            display: grid;
+            grid-template-columns: 1fr 20px 1fr;
+            min-height: 900px;
+        }
+
+        /* Book spine in the middle */
+        .spine {
+            background: linear-gradient(90deg,
+                rgba(0, 0, 0, 0.5) 0%,
+                rgba(30, 20, 10, 0.8) 20%,
+                rgba(40, 30, 20, 0.9) 50%,
+                rgba(30, 20, 10, 0.8) 80%,
+                rgba(0, 0, 0, 0.5) 100%
+            );
+            position: relative;
+            box-shadow:
+                inset 4px 0 8px rgba(0, 0, 0, 0.5),
+                inset -4px 0 8px rgba(0, 0, 0, 0.5);
+        }
+
+        .spine::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 100%;
+            background: linear-gradient(180deg, transparent, rgba(212, 175, 55, 0.3) 20%, rgba(212, 175, 55, 0.3) 80%, transparent);
+        }
+
+        /* Left and right pages */
+        .page {
+            padding: 40px;
+            position: relative;
+            background:
+                radial-gradient(circle at 5% 5%, rgba(60, 40, 20, 0.2) 0%, transparent 10%),
+                radial-gradient(circle at 95% 5%, rgba(60, 40, 20, 0.2) 0%, transparent 10%),
+                radial-gradient(circle at 5% 95%, rgba(60, 40, 20, 0.2) 0%, transparent 10%),
+                radial-gradient(circle at 95% 95%, rgba(60, 40, 20, 0.2) 0%, transparent 10%);
         }
 
         /* Paper texture overlay */
-        .container::before {
+        .page::before {
             content: '';
             position: absolute;
             top: 0;
@@ -47,223 +198,187 @@
             right: 0;
             bottom: 0;
             background-image:
-                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 0, 0, 0.03) 2px, rgba(0, 0, 0, 0.03) 4px),
-                repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0, 0, 0, 0.02) 2px, rgba(0, 0, 0, 0.02) 4px);
+                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 0, 0, 0.03) 2px, rgba(0, 0, 0, 0.03) 4px);
             pointer-events: none;
             opacity: 0.5;
         }
 
-        /* Aged corners effect */
-        .container::after {
+        /* Page shadow effect */
+        .page-left::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 40px;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.2));
+            pointer-events: none;
+        }
+
+        .page-right::after {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
-            background:
-                radial-gradient(circle at 0% 0%, rgba(60, 40, 20, 0.3) 0%, transparent 15%),
-                radial-gradient(circle at 100% 0%, rgba(60, 40, 20, 0.3) 0%, transparent 15%),
-                radial-gradient(circle at 0% 100%, rgba(60, 40, 20, 0.3) 0%, transparent 15%),
-                radial-gradient(circle at 100% 100%, rgba(60, 40, 20, 0.3) 0%, transparent 15%);
+            width: 40px;
+            height: 100%;
+            background: linear-gradient(270deg, transparent, rgba(0, 0, 0, 0.2));
             pointer-events: none;
         }
 
-        .header {
-            background: linear-gradient(135deg, #2a1f15 0%, #1f1710 100%);
-            padding: 25px 35px;
-            border-bottom: 2px solid #4a3a2a;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: relative;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-        }
-
-        .header::after {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: repeating-linear-gradient(90deg, #d4af37 0px, #d4af37 15px, #3d2f1f 15px, #3d2f1f 30px);
-            opacity: 0.5;
-        }
-
-        .title {
-            font-size: 28px;
-            font-weight: bold;
-            color: #d4af37;
-            text-shadow:
-                0 0 10px rgba(212, 175, 55, 0.3),
-                2px 2px 4px rgba(0, 0, 0, 0.8);
-            font-family: 'Georgia', serif;
-            letter-spacing: 3px;
-        }
-
-        .stats {
-            display: flex;
-            gap: 20px;
-            font-size: 14px;
-            color: #c9b896;
-        }
-
-        .stat-item {
-            background: rgba(0, 0, 0, 0.4);
-            padding: 6px 12px;
-            border-radius: 15px;
-            border: 1px solid #4a3a2a;
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
-        }
-
-        .info-ribbon {
-            background: linear-gradient(135deg, #2d2419 0%, #251f16 100%);
-            padding: 12px 35px;
-            display: flex;
-            justify-content: space-between;
-            border-bottom: 1px solid #3d2f1f;
-            color: #b8a485;
-            font-weight: 600;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-        }
-
-        .content-area {
-            padding: 30px 35px;
+        /* Page content */
+        .page-content {
             position: relative;
             z-index: 1;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
         }
 
-        .main-content {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 25px;
+        .page-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #3d2f1f;
+        }
+
+        .page-title {
+            font-size: 28px;
+            color: #d4af37;
+            text-shadow:
+                0 0 15px rgba(212, 175, 55, 0.4),
+                2px 2px 4px rgba(0, 0, 0, 0.8);
+            letter-spacing: 3px;
+            margin-bottom: 8px;
+            font-variant: small-caps;
+        }
+
+        .page-subtitle {
+            font-size: 14px;
+            color: #b8a485;
+            font-style: italic;
+            letter-spacing: 1px;
+        }
+
+        /* Section styling */
+        .section {
             margin-bottom: 25px;
         }
 
-        .panel {
-            background: rgba(30, 25, 20, 0.7);
-            border: 2px solid #4a3a2a;
-            border-radius: 6px;
-            padding: 20px;
-            box-shadow:
-                0 4px 15px rgba(0, 0, 0, 0.5),
-                inset 0 1px 0 rgba(100, 80, 60, 0.1);
-            position: relative;
-            backdrop-filter: blur(5px);
-        }
-
-        .panel::before {
-            content: '✦';
-            position: absolute;
-            top: -13px;
-            left: 20px;
-            background: linear-gradient(135deg, #2a1f15 0%, #1f1710 100%);
-            padding: 5px 12px;
-            color: #d4af37;
-            font-size: 18px;
-            border: 2px solid #4a3a2a;
-            border-radius: 4px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-        }
-
-        .panel-title {
+        .section-title {
             font-size: 16px;
-            font-weight: bold;
             color: #d4af37;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #3d2f1f;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #3d2f1f;
             text-transform: uppercase;
             letter-spacing: 2px;
-            text-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .location-header {
-            font-size: 22px;
-            color: #d4af37;
-            margin-bottom: 15px;
-            font-weight: bold;
-            text-align: center;
-            padding: 12px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 4px;
-            border: 1px solid #4a3a2a;
-            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
-            text-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+        .section-title::before {
+            content: '✦';
+            font-size: 14px;
+            text-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
         }
 
+        /* Location description */
         .description {
-            margin-bottom: 20px;
-            text-align: justify;
+            color: #c9b896;
             font-size: 15px;
             line-height: 1.9;
+            text-align: justify;
             text-indent: 30px;
-            color: #c9b896;
+            margin-bottom: 20px;
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
         }
 
+        /* Info box */
+        .info-box {
+            background: rgba(40, 30, 20, 0.3);
+            border: 1px solid #3d2f1f;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 12px;
+            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            font-size: 14px;
+            color: #b8a485;
+        }
+
+        .info-row .label {
+            color: #d4af37;
+            font-weight: 600;
+        }
+
+        /* NPC cards */
         .npc-list {
-            display: grid;
-            gap: 12px;
-            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
 
         .npc-card {
-            background: linear-gradient(135deg, rgba(40, 30, 20, 0.4) 0%, rgba(30, 22, 15, 0.4) 100%);
-            padding: 15px;
-            border-left: 4px solid #d4af37;
+            background: rgba(40, 30, 20, 0.4);
+            border-left: 3px solid #d4af37;
             border-radius: 4px;
+            padding: 12px;
             transition: all 0.3s;
             cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
         }
 
         .npc-card:hover {
             background: rgba(50, 40, 25, 0.6);
-            border-left-width: 6px;
-            transform: translateX(5px);
-            box-shadow:
-                0 4px 15px rgba(0, 0, 0, 0.5),
-                0 0 15px rgba(212, 175, 55, 0.1);
+            border-left-width: 5px;
+            transform: translateX(3px);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
         }
 
         .npc-name {
             font-weight: bold;
             color: #e6d5b8;
-            font-size: 16px;
-            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+            font-size: 15px;
+            margin-bottom: 4px;
         }
 
         .npc-detail {
-            font-size: 13px;
+            font-size: 12px;
             color: #b8a485;
-            margin-top: 5px;
             font-style: italic;
         }
 
-        .action-buttons {
+        /* Action buttons */
+        .action-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin-top: 20px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: auto;
         }
 
         .btn {
             background: linear-gradient(135deg, #2a1f15 0%, #1f1710 100%);
             color: #d4af37;
-            border: 2px solid #4a3a2a;
-            padding: 12px;
+            border: 2px solid #3d2f1f;
+            padding: 10px;
             border-radius: 6px;
             cursor: pointer;
             font-family: 'Georgia', serif;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
             transition: all 0.3s;
             box-shadow:
                 0 2px 6px rgba(0, 0, 0, 0.5),
                 inset 0 1px 0 rgba(100, 80, 60, 0.1);
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+            text-align: center;
         }
 
         .btn:hover {
@@ -280,310 +395,578 @@
             transform: translateY(0);
         }
 
-        .side-column {
+        /* Stat displays */
+        .stat-group {
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 12px;
         }
 
-        .character-info {
-            text-align: center;
-            margin-bottom: 15px;
-        }
-
-        .character-level {
-            font-size: 20px;
-            color: #d4af37;
-            font-weight: bold;
-            margin-bottom: 10px;
-            text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
-        }
-
-        .gold-display {
-            display: inline-block;
-            background: linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(184, 134, 11, 0.2) 100%);
-            color: #f4d03f;
-            padding: 8px 16px;
-            border-radius: 20px;
-            border: 2px solid #d4af37;
-            font-weight: bold;
-            box-shadow:
-                0 2px 8px rgba(0, 0, 0, 0.5),
-                inset 0 1px 3px rgba(212, 175, 55, 0.2),
-                0 0 15px rgba(212, 175, 55, 0.1);
-            text-shadow: 0 0 10px rgba(244, 208, 63, 0.5);
-        }
-
-        .stat-display {
-            margin: 15px 0;
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
         }
 
         .stat-label {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 6px;
+            font-size: 13px;
             color: #c9b896;
             font-weight: 600;
-            font-size: 14px;
         }
 
         .stat-bar {
             width: 100%;
-            height: 12px;
+            height: 10px;
             background: rgba(0, 0, 0, 0.5);
-            border: 2px solid #3d2f1f;
-            border-radius: 6px;
+            border: 1px solid #3d2f1f;
+            border-radius: 5px;
             overflow: hidden;
-            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
         }
 
         .stat-bar-fill {
             height: 100%;
             transition: width 0.5s ease;
-            background: linear-gradient(90deg, #d4af37 0%, #f4d03f 50%, #d4af37 100%);
-            box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+            box-shadow: 0 0 8px currentColor;
         }
 
         .stat-bar-fill.health {
-            background: linear-gradient(90deg, #8b0000 0%, #dc143c 50%, #b91d1d 100%);
-            box-shadow: 0 0 10px rgba(220, 20, 60, 0.4);
+            background: linear-gradient(90deg, #8b0000 0%, #dc143c 100%);
+            color: rgba(220, 20, 60, 0.5);
         }
 
         .stat-bar-fill.mana {
-            background: linear-gradient(90deg, #191970 0%, #4169e1 50%, #2f5fb3 100%);
-            box-shadow: 0 0 10px rgba(65, 105, 225, 0.4);
+            background: linear-gradient(90deg, #191970 0%, #4169e1 100%);
+            color: rgba(65, 105, 225, 0.5);
         }
 
-        .item-slot {
+        .stat-bar-fill.experience {
+            background: linear-gradient(90deg, #d4af37 0%, #f4d03f 100%);
+            color: rgba(212, 175, 55, 0.5);
+        }
+
+        .stat-bar-fill.energy {
+            background: linear-gradient(90deg, #228b22 0%, #32cd32 100%);
+            color: rgba(50, 205, 50, 0.5);
+        }
+
+        /* Inventory items */
+        .item-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .item {
             background: rgba(40, 30, 20, 0.3);
-            padding: 12px;
-            margin: 8px 0;
-            border-left: 3px solid #4a3a2a;
+            padding: 10px;
+            border-left: 3px solid #3d2f1f;
             border-radius: 4px;
-            font-size: 14px;
+            font-size: 13px;
             transition: all 0.2s;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
             color: #c9b896;
         }
 
-        .item-slot:hover {
+        .item:hover {
             background: rgba(50, 40, 25, 0.5);
-            cursor: pointer;
             transform: translateX(3px);
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
         }
 
-        .item-slot.legendary {
+        .item.legendary {
             border-left-color: #ffd700;
             color: #f4d03f;
             font-weight: bold;
-            background: rgba(212, 175, 55, 0.15);
-            box-shadow:
-                0 2px 8px rgba(0, 0, 0, 0.4),
-                0 0 10px rgba(255, 215, 0, 0.1);
+            background: rgba(212, 175, 55, 0.1);
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.1);
         }
 
-        .item-slot.rare {
+        .item.rare {
             border-left-color: #6495ed;
             color: #87ceeb;
             background: rgba(65, 105, 225, 0.1);
-            box-shadow:
-                0 2px 8px rgba(0, 0, 0, 0.4),
-                0 0 10px rgba(100, 149, 237, 0.1);
+            box-shadow: 0 0 10px rgba(100, 149, 237, 0.1);
         }
 
-        .events-scroll {
-            background: rgba(30, 25, 20, 0.7);
-            border: 2px solid #4a3a2a;
-            border-radius: 6px;
-            padding: 20px;
-            box-shadow:
-                0 4px 15px rgba(0, 0, 0, 0.5),
-                inset 0 1px 0 rgba(100, 80, 60, 0.1);
+        /* Event log */
+        .event-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 10px;
         }
 
-        .event-entry {
-            padding: 10px 10px 10px 15px;
-            margin: 8px 0;
+        .event-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .event-list::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 3px;
+        }
+
+        .event-list::-webkit-scrollbar-thumb {
+            background: #3d2f1f;
+            border-radius: 3px;
+        }
+
+        .event-list::-webkit-scrollbar-thumb:hover {
+            background: #4a3a2a;
+        }
+
+        .event {
+            padding: 8px 10px;
             background: rgba(40, 30, 20, 0.3);
-            border-radius: 4px;
-            font-size: 14px;
+            border-left: 2px solid #3d2f1f;
+            border-radius: 3px;
+            font-size: 13px;
             color: #b8a485;
-            border-left: 3px solid #3d2f1f;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
             transition: all 0.2s;
         }
 
-        .event-entry:hover {
+        .event:hover {
             background: rgba(50, 40, 25, 0.4);
             border-left-color: #d4af37;
         }
 
-        .event-entry::before {
+        .event::before {
             content: '▸ ';
             color: #d4af37;
+            margin-right: 6px;
+        }
+
+        /* Gold display */
+        .gold-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(184, 134, 11, 0.2) 100%);
+            color: #f4d03f;
+            padding: 6px 14px;
+            border-radius: 15px;
+            border: 2px solid #d4af37;
             font-weight: bold;
-            margin-right: 8px;
-            text-shadow: 0 0 5px rgba(212, 175, 55, 0.3);
+            font-size: 14px;
+            box-shadow:
+                0 2px 8px rgba(0, 0, 0, 0.5),
+                inset 0 1px 3px rgba(212, 175, 55, 0.2),
+                0 0 15px rgba(212, 175, 55, 0.1);
+            text-shadow: 0 0 10px rgba(244, 208, 63, 0.5);
+            margin: 8px 0;
         }
 
-        /* Decorative glowing accents */
-        @keyframes subtle-glow {
-            0%, 100% { opacity: 0.3; }
-            50% { opacity: 0.6; }
-        }
-
-        .panel::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.3) 50%, transparent);
-            animation: subtle-glow 4s infinite;
-        }
-
-        /* Inventory count styling */
-        .inventory-count {
-            text-align: center;
+        /* Status badges */
+        .status-badges {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
             margin-bottom: 15px;
-            color: #b8a485;
-            font-size: 13px;
-            font-style: italic;
         }
 
-        /* Location subtitle */
-        .location-subtitle {
-            font-size: 16px;
-            font-weight: normal;
+        .badge {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 4px 10px;
+            border-radius: 12px;
+            border: 1px solid #3d2f1f;
+            font-size: 12px;
             color: #b8a485;
-            font-style: italic;
+        }
+
+        /* Page hidden state */
+        .page-content.hidden {
+            display: none;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 1400px) {
+            .bookmarks {
+                left: -50px;
+            }
+
+            .bookmark {
+                width: 70px;
+                height: 55px;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .book {
+                grid-template-columns: 1fr;
+                min-height: auto;
+            }
+
+            .spine {
+                display: none;
+            }
+
+            .page-right {
+                display: none;
+            }
+
+            .bookmarks {
+                left: -45px;
+            }
+
+            .bookmark {
+                width: 60px;
+                height: 50px;
+            }
+
+            .bookmark .icon {
+                font-size: 20px;
+            }
+
+            .bookmark .label {
+                font-size: 9px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="title">⚔ R-GEN GRIMOIRE ⚔</div>
-            <div class="stats">
-                <div class="stat-item">⚡ Energy: 85%</div>
-                <div class="stat-item">🍖 Hunger: 60%</div>
-                <div class="stat-item">😊 Happy</div>
+    <div class="grimoire-container">
+        <!-- Bookmark markers -->
+        <div class="bookmarks">
+            <div class="bookmark active" data-page="world">
+                <div class="icon">🗺️</div>
+                <div class="label">World</div>
+            </div>
+            <div class="bookmark" data-page="character">
+                <div class="icon">👤</div>
+                <div class="label">Hero</div>
+            </div>
+            <div class="bookmark" data-page="inventory">
+                <div class="icon">🎒</div>
+                <div class="label">Items</div>
+            </div>
+            <div class="bookmark" data-page="map">
+                <div class="icon">🧭</div>
+                <div class="label">Map</div>
+            </div>
+            <div class="bookmark" data-page="quests">
+                <div class="icon">📜</div>
+                <div class="label">Quests</div>
+            </div>
+            <div class="bookmark" data-page="events">
+                <div class="icon">📖</div>
+                <div class="label">Log</div>
             </div>
         </div>
 
-        <div class="info-ribbon">
-            <div>📅 Day 5 of Spring • 🕐 14:30 (Afternoon)</div>
-            <div>☀️ Clear Skies • 🌡️ Pleasant Weather</div>
-        </div>
-
-        <div class="content-area">
-            <div class="main-content">
-                <div class="panel">
-                    <div class="location-header">
-                        📍 The Rusty Anvil Tavern<br>
-                        <span class="location-subtitle">~ Ironhaven ~</span>
+        <!-- Open book -->
+        <div class="book">
+            <!-- Left page -->
+            <div class="page page-left">
+                <div class="page-content" data-page="world">
+                    <div class="page-header">
+                        <div class="page-title">⚔ The Rusty Anvil Tavern ⚔</div>
+                        <div class="page-subtitle">~ Ironhaven, Day 5 of Spring ~</div>
                     </div>
 
-                    <div class="description">
-                        You stand in a cozy tavern filled with the warm glow of lanterns.
-                        The smell of roasted meat and ale fills the air. A crackling fireplace
-                        provides warmth against the evening chill. Wooden tables are scattered
-                        throughout, and you can hear the murmur of conversation and occasional
-                        laughter from the patrons. The atmosphere is welcoming and lively.
-                    </div>
+                    <div class="section">
+                        <div class="info-box">
+                            <div class="info-row">
+                                <span class="label">🕐 Time:</span>
+                                <span>14:30 (Afternoon)</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="label">☀️ Weather:</span>
+                                <span>Clear Skies</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="label">🌡️ Temperature:</span>
+                                <span>Pleasant</span>
+                            </div>
+                        </div>
 
-                    <div class="panel-title">✦ Persons of Interest ✦</div>
-                    <div class="npc-list">
-                        <div class="npc-card">
-                            <div class="npc-name">🧙‍♂️ Eldrin the Sage</div>
-                            <div class="npc-detail">Level 8 Wizard • Currently reading an ancient tome</div>
-                        </div>
-                        <div class="npc-card">
-                            <div class="npc-name">🍺 Garrick Stoneheart</div>
-                            <div class="npc-detail">Innkeeper • Wiping down the bar with care</div>
-                        </div>
-                        <div class="npc-card">
-                            <div class="npc-name">⚔️ Thora Ironheart</div>
-                            <div class="npc-detail">Level 10 Blacksmith • Enjoying well-earned rest</div>
-                        </div>
-                        <div class="npc-card">
-                            <div class="npc-name">🎵 Lyra Songweaver</div>
-                            <div class="npc-detail">Level 6 Bard • Preparing for evening performance</div>
+                        <div class="description">
+                            You stand in a cozy tavern filled with the warm glow of lanterns.
+                            The smell of roasted meat and ale fills the air. A crackling fireplace
+                            provides warmth against the evening chill. Wooden tables are scattered
+                            throughout, and you can hear the murmur of conversation and occasional
+                            laughter from the patrons. The atmosphere is welcoming and lively.
                         </div>
                     </div>
 
-                    <div class="action-buttons">
-                        <button class="btn">💬 Converse</button>
-                        <button class="btn">🗺️ Journey</button>
-                        <button class="btn">🛏️ Rest</button>
-                        <button class="btn">🏪 Market</button>
-                        <button class="btn">📜 Quests</button>
-                        <button class="btn">🎒 Items</button>
+                    <div class="section">
+                        <div class="section-title">Persons of Interest</div>
+                        <div class="npc-list">
+                            <div class="npc-card">
+                                <div class="npc-name">🧙‍♂️ Eldrin the Sage</div>
+                                <div class="npc-detail">Level 8 Wizard • Reading an ancient tome</div>
+                            </div>
+                            <div class="npc-card">
+                                <div class="npc-name">🍺 Garrick Stoneheart</div>
+                                <div class="npc-detail">Innkeeper • Wiping down the bar</div>
+                            </div>
+                            <div class="npc-card">
+                                <div class="npc-name">⚔️ Thora Ironheart</div>
+                                <div class="npc-detail">Level 10 Blacksmith • Enjoying a meal</div>
+                            </div>
+                            <div class="npc-card">
+                                <div class="npc-name">🎵 Lyra Songweaver</div>
+                                <div class="npc-detail">Level 6 Bard • Tuning her lute</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="action-grid">
+                            <button class="btn">💬 Converse</button>
+                            <button class="btn">🗺️ Journey</button>
+                            <button class="btn">🛏️ Rest</button>
+                            <button class="btn">🏪 Market</button>
+                        </div>
                     </div>
                 </div>
 
-                <div class="side-column">
-                    <div class="panel">
-                        <div class="panel-title">✦ Character ✦</div>
-                        <div class="character-info">
-                            <div class="character-level">Level 5 Adventurer</div>
-                            <div class="gold-display">💰 342 Gold Coins</div>
-                        </div>
+                <!-- Character page (hidden by default) -->
+                <div class="page-content hidden" data-page="character">
+                    <div class="page-header">
+                        <div class="page-title">⚔ Character ⚔</div>
+                        <div class="page-subtitle">~ Level 5 Adventurer ~</div>
+                    </div>
 
-                        <div class="stat-display">
-                            <div class="stat-label">
-                                <span>❤️ Health</span>
-                                <span>85 / 100</span>
-                            </div>
-                            <div class="stat-bar">
-                                <div class="stat-bar-fill health" style="width: 85%"></div>
-                            </div>
+                    <div class="section">
+                        <div style="text-align: center;">
+                            <div class="gold-badge">💰 342 Gold Coins</div>
                         </div>
+                    </div>
 
-                        <div class="stat-display">
-                            <div class="stat-label">
-                                <span>✨ Mana</span>
-                                <span>45 / 60</span>
+                    <div class="section">
+                        <div class="section-title">Vital Statistics</div>
+                        <div class="stat-group">
+                            <div class="stat-item">
+                                <div class="stat-label">
+                                    <span>❤️ Health</span>
+                                    <span>85 / 100</span>
+                                </div>
+                                <div class="stat-bar">
+                                    <div class="stat-bar-fill health" style="width: 85%"></div>
+                                </div>
                             </div>
-                            <div class="stat-bar">
-                                <div class="stat-bar-fill mana" style="width: 75%"></div>
-                            </div>
-                        </div>
 
-                        <div class="stat-display">
-                            <div class="stat-label">
-                                <span>⭐ Experience</span>
-                                <span>1250 / 2000</span>
+                            <div class="stat-item">
+                                <div class="stat-label">
+                                    <span>✨ Mana</span>
+                                    <span>45 / 60</span>
+                                </div>
+                                <div class="stat-bar">
+                                    <div class="stat-bar-fill mana" style="width: 75%"></div>
+                                </div>
                             </div>
-                            <div class="stat-bar">
-                                <div class="stat-bar-fill" style="width: 62.5%"></div>
+
+                            <div class="stat-item">
+                                <div class="stat-label">
+                                    <span>⭐ Experience</span>
+                                    <span>1250 / 2000</span>
+                                </div>
+                                <div class="stat-bar">
+                                    <div class="stat-bar-fill experience" style="width: 62.5%"></div>
+                                </div>
+                            </div>
+
+                            <div class="stat-item">
+                                <div class="stat-label">
+                                    <span>⚡ Energy</span>
+                                    <span>85 / 100</span>
+                                </div>
+                                <div class="stat-bar">
+                                    <div class="stat-bar-fill energy" style="width: 85%"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="panel">
-                        <div class="panel-title">✦ Inventory ✦</div>
-                        <div class="inventory-count">Carrying 5 of 20 items</div>
-                        <div class="item-slot legendary">⚔️ Legendary Flaming Greatsword (+25 DMG)</div>
-                        <div class="item-slot rare">🛡️ Rare Mithril Shield (+15 DEF)</div>
-                        <div class="item-slot">🧪 Health Potion × 3</div>
-                        <div class="item-slot">📜 Scroll of Fireball</div>
-                        <div class="item-slot">🗝️ Mysterious Key</div>
+                    <div class="section">
+                        <div class="section-title">Current Status</div>
+                        <div class="status-badges">
+                            <div class="badge">🍖 Hunger: 60%</div>
+                            <div class="badge">😊 Mood: Happy</div>
+                            <div class="badge">🌡️ Comfortable</div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="info-box">
+                            <div class="info-row">
+                                <span class="label">⚔️ Attack:</span>
+                                <span>45 (+25 weapon)</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="label">🛡️ Defense:</span>
+                                <span>30 (+15 armor)</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="label">✨ Magic Power:</span>
+                                <span>25</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Inventory page -->
+                <div class="page-content hidden" data-page="inventory">
+                    <div class="page-header">
+                        <div class="page-title">⚔ Inventory ⚔</div>
+                        <div class="page-subtitle">~ Carrying 5 of 20 items ~</div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-title">Equipped</div>
+                        <div class="item-list">
+                            <div class="item legendary">⚔️ Legendary Flaming Greatsword (+25 DMG)</div>
+                            <div class="item rare">🛡️ Rare Mithril Shield (+15 DEF)</div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-title">Consumables</div>
+                        <div class="item-list">
+                            <div class="item">🧪 Health Potion × 3</div>
+                            <div class="item">📜 Scroll of Fireball</div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-title">Key Items</div>
+                        <div class="item-list">
+                            <div class="item">🗝️ Mysterious Key</div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="action-grid">
+                            <button class="btn">🔍 Examine</button>
+                            <button class="btn">🍖 Use Item</button>
+                            <button class="btn">⚔️ Equip</button>
+                            <button class="btn">🗑️ Discard</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Other pages placeholder -->
+                <div class="page-content hidden" data-page="map">
+                    <div class="page-header">
+                        <div class="page-title">⚔ World Map ⚔</div>
+                        <div class="page-subtitle">~ Known Locations ~</div>
+                    </div>
+                    <div class="section">
+                        <div class="description">
+                            [Map content will be displayed here - showing connected locations,
+                            travel routes, and points of interest in the world.]
+                        </div>
+                    </div>
+                </div>
+
+                <div class="page-content hidden" data-page="quests">
+                    <div class="page-header">
+                        <div class="page-title">⚔ Quests ⚔</div>
+                        <div class="page-subtitle">~ Active Missions ~</div>
+                    </div>
+                    <div class="section">
+                        <div class="description">
+                            [Quest log will be displayed here - showing active quests,
+                            objectives, and rewards.]
+                        </div>
+                    </div>
+                </div>
+
+                <div class="page-content hidden" data-page="events">
+                    <div class="page-header">
+                        <div class="page-title">⚔ Event Log ⚔</div>
+                        <div class="page-subtitle">~ Recent Happenings ~</div>
+                    </div>
+                    <div class="section">
+                        <div class="section-title">Chronicle</div>
+                        <div class="event-list">
+                            <div class="event">Thora Ironheart completed forging an Iron Longsword</div>
+                            <div class="event">A merchant caravan arrived from the eastern provinces</div>
+                            <div class="event">The weather cleared to reveal beautiful skies</div>
+                            <div class="event">Garrick Stoneheart opened the tavern for business</div>
+                            <div class="event">You gained 50 experience points from your adventures</div>
+                            <div class="event">Eldrin the Sage discovered a new spell in his tome</div>
+                            <div class="event">Lyra Songweaver began composing a new ballad</div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="events-scroll">
-                <div class="panel-title">✦ Chronicle of Recent Events ✦</div>
-                <div class="event-entry">Thora Ironheart completed forging an Iron Longsword</div>
-                <div class="event-entry">A merchant caravan has arrived from the eastern provinces</div>
-                <div class="event-entry">The weather has cleared to reveal beautiful skies</div>
-                <div class="event-entry">Garrick Stoneheart has opened the tavern for the day</div>
-                <div class="event-entry">You have gained 50 experience points from your adventures</div>
+            <!-- Book spine -->
+            <div class="spine"></div>
+
+            <!-- Right page -->
+            <div class="page page-right">
+                <div class="page-content">
+                    <div class="page-header">
+                        <div class="page-title">⚔ Notes & Lore ⚔</div>
+                        <div class="page-subtitle">~ Knowledge Gained ~</div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-title">About Ironhaven</div>
+                        <div class="description">
+                            Ironhaven is a prosperous mining town nestled in the foothills of the
+                            Stonecrest Mountains. Known for its skilled blacksmiths and abundant
+                            iron deposits, the town has grown wealthy from trade with neighboring
+                            kingdoms. The Rusty Anvil Tavern serves as the social heart of the
+                            community, where miners, merchants, and adventurers gather to share
+                            stories and conduct business.
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-title">Notable Residents</div>
+                        <div class="description">
+                            <strong>Thora Ironheart</strong> is the town's master blacksmith,
+                            renowned throughout the region for her exceptional craftsmanship.
+                            Her workshop produces some of the finest weapons and armor in the land.
+                        </div>
+                        <div class="description" style="text-indent: 0; margin-top: 10px;">
+                            <strong>Eldrin the Sage</strong> is a mysterious wizard who arrived
+                            in town several years ago. He is often seen studying ancient texts
+                            and is known to possess knowledge of forgotten magic.
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-title">Rumors & Whispers</div>
+                        <div class="event-list">
+                            <div class="event">Strange lights have been seen in the mountains at night</div>
+                            <div class="event">A merchant spoke of bandits on the eastern road</div>
+                            <div class="event">The mines have uncovered an unusual ore deposit</div>
+                            <div class="event">Travelers report seeing a mysterious cloaked figure</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+
+    <script>
+        // Bookmark navigation
+        const bookmarks = document.querySelectorAll('.bookmark');
+        const pageContents = document.querySelectorAll('.page-left .page-content');
+
+        bookmarks.forEach(bookmark => {
+            bookmark.addEventListener('click', () => {
+                const targetPage = bookmark.getAttribute('data-page');
+
+                // Update active bookmark
+                bookmarks.forEach(b => b.classList.remove('active'));
+                bookmark.classList.add('active');
+
+                // Show corresponding page
+                pageContents.forEach(page => {
+                    if (page.getAttribute('data-page') === targetPage) {
+                        page.classList.remove('hidden');
+                    } else {
+                        page.classList.add('hidden');
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>
