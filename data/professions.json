@@ -59,7 +59,20 @@
       "forge",
       "workshop",
       "market"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.1,
+      "preferred_pets": [
+        {
+          "species": "Cat",
+          "weight": 5
+        },
+        {
+          "species": "Dog",
+          "weight": 5
+        }
+      ]
+    }
   },
   "guard": {
     "title": "Guard",
@@ -120,7 +133,16 @@
       "gate",
       "barracks",
       "city_square"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.5,
+      "preferred_pets": [
+        {
+          "species": "Dog",
+          "weight": 15
+        }
+      ]
+    }
   },
   "merchant": {
     "title": "Wandering Merchant",
@@ -181,7 +203,24 @@
       "market",
       "crossroads",
       "tavern"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.4,
+      "preferred_pets": [
+        {
+          "species": "Cat",
+          "weight": 10
+        },
+        {
+          "species": "Dog",
+          "weight": 5
+        },
+        {
+          "species": "Horse",
+          "weight": 8
+        }
+      ]
+    }
   },
   "mage": {
     "title": "Mage",
@@ -242,7 +281,20 @@
       "tower",
       "library",
       "shrine"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.4,
+      "preferred_pets": [
+        {
+          "species": "Raven",
+          "weight": 12
+        },
+        {
+          "species": "Cat",
+          "weight": 10
+        }
+      ]
+    }
   },
   "innkeeper": {
     "title": "Innkeeper",
@@ -302,7 +354,20 @@
     "typical_locations": [
       "tavern",
       "inn"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.5,
+      "preferred_pets": [
+        {
+          "species": "Cat",
+          "weight": 15
+        },
+        {
+          "species": "Dog",
+          "weight": 8
+        }
+      ]
+    }
   },
   "hermit": {
     "title": "Hermit",
@@ -362,7 +427,20 @@
       "forest_clearing",
       "cave",
       "mountain_peak"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.3,
+      "preferred_pets": [
+        {
+          "species": "Cat",
+          "weight": 10
+        },
+        {
+          "species": "Raven",
+          "weight": 5
+        }
+      ]
+    }
   },
   "alchemist": {
     "title": "Alchemist",
@@ -423,7 +501,20 @@
       "workshop",
       "market",
       "tower"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.4,
+      "preferred_pets": [
+        {
+          "species": "Cat",
+          "weight": 10
+        },
+        {
+          "species": "Raven",
+          "weight": 5
+        }
+      ]
+    }
   },
   "cleric": {
     "title": "Cleric",
@@ -484,7 +575,20 @@
       "temple",
       "shrine",
       "monastery"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.1,
+      "preferred_pets": [
+        {
+          "species": "Cat",
+          "weight": 5
+        },
+        {
+          "species": "Dog",
+          "weight": 5
+        }
+      ]
+    }
   },
   "druid": {
     "title": "Druid",
@@ -543,7 +647,20 @@
       "forest_clearing",
       "grove",
       "wilderness"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.1,
+      "preferred_pets": [
+        {
+          "species": "Cat",
+          "weight": 5
+        },
+        {
+          "species": "Dog",
+          "weight": 5
+        }
+      ]
+    }
   },
   "bard": {
     "title": "Bard",
@@ -604,7 +721,20 @@
       "tavern",
       "market",
       "theater"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.1,
+      "preferred_pets": [
+        {
+          "species": "Cat",
+          "weight": 5
+        },
+        {
+          "species": "Dog",
+          "weight": 5
+        }
+      ]
+    }
   },
   "thief": {
     "title": "Thief",
@@ -665,7 +795,20 @@
       "alley",
       "market",
       "tavern"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.1,
+      "preferred_pets": [
+        {
+          "species": "Cat",
+          "weight": 5
+        },
+        {
+          "species": "Dog",
+          "weight": 5
+        }
+      ]
+    }
   },
   "assassin": {
     "title": "Assassin",
@@ -724,7 +867,20 @@
       "shadows",
       "underground",
       "hidden_lair"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.1,
+      "preferred_pets": [
+        {
+          "species": "Cat",
+          "weight": 5
+        },
+        {
+          "species": "Dog",
+          "weight": 5
+        }
+      ]
+    }
   },
   "carpenter": {
     "title": "Carpenter",
@@ -785,7 +941,20 @@
       "workshop",
       "market",
       "construction_site"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.1,
+      "preferred_pets": [
+        {
+          "species": "Cat",
+          "weight": 5
+        },
+        {
+          "species": "Dog",
+          "weight": 5
+        }
+      ]
+    }
   },
   "tailor": {
     "title": "Tailor",
@@ -845,7 +1014,20 @@
       "shop",
       "market",
       "workshop"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.1,
+      "preferred_pets": [
+        {
+          "species": "Cat",
+          "weight": 5
+        },
+        {
+          "species": "Dog",
+          "weight": 5
+        }
+      ]
+    }
   },
   "jeweler": {
     "title": "Jeweler",
@@ -905,7 +1087,20 @@
       "shop",
       "market",
       "vault"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.1,
+      "preferred_pets": [
+        {
+          "species": "Cat",
+          "weight": 5
+        },
+        {
+          "species": "Dog",
+          "weight": 5
+        }
+      ]
+    }
   },
   "farmer": {
     "title": "Farmer",
@@ -965,7 +1160,28 @@
       "farmland",
       "village",
       "market"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.7,
+      "preferred_pets": [
+        {
+          "species": "Dog",
+          "weight": 15
+        },
+        {
+          "species": "Cat",
+          "weight": 8
+        },
+        {
+          "species": "Pig",
+          "weight": 5
+        },
+        {
+          "species": "Horse",
+          "weight": 3
+        }
+      ]
+    }
   },
   "fisherman": {
     "title": "Fisherman",
@@ -1025,7 +1241,20 @@
       "dock",
       "shore",
       "fishing_village"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.1,
+      "preferred_pets": [
+        {
+          "species": "Cat",
+          "weight": 5
+        },
+        {
+          "species": "Dog",
+          "weight": 5
+        }
+      ]
+    }
   },
   "hunter": {
     "title": "Hunter",
@@ -1085,7 +1314,20 @@
       "forest",
       "wilderness",
       "hunting_lodge"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.8,
+      "preferred_pets": [
+        {
+          "species": "Dog",
+          "weight": 20
+        },
+        {
+          "species": "Hawk",
+          "weight": 8
+        }
+      ]
+    }
   },
   "scholar": {
     "title": "Scholar",
@@ -1145,7 +1387,20 @@
       "library",
       "university",
       "archive"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.1,
+      "preferred_pets": [
+        {
+          "species": "Cat",
+          "weight": 5
+        },
+        {
+          "species": "Dog",
+          "weight": 5
+        }
+      ]
+    }
   },
   "scribe": {
     "title": "Scribe",
@@ -1206,7 +1461,16 @@
       "office",
       "library",
       "courthouse"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.3,
+      "preferred_pets": [
+        {
+          "species": "Cat",
+          "weight": 10
+        }
+      ]
+    }
   },
   "healer": {
     "title": "Healer",
@@ -1266,7 +1530,20 @@
       "clinic",
       "temple",
       "village"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.1,
+      "preferred_pets": [
+        {
+          "species": "Cat",
+          "weight": 5
+        },
+        {
+          "species": "Dog",
+          "weight": 5
+        }
+      ]
+    }
   },
   "knight": {
     "title": "Knight",
@@ -1326,7 +1603,20 @@
       "castle",
       "tournament",
       "battlefield"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.7,
+      "preferred_pets": [
+        {
+          "species": "Horse",
+          "weight": 20
+        },
+        {
+          "species": "Dog",
+          "weight": 8
+        }
+      ]
+    }
   },
   "soldier": {
     "title": "Soldier",
@@ -1387,7 +1677,20 @@
       "barracks",
       "battlefield",
       "fort"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.3,
+      "preferred_pets": [
+        {
+          "species": "Dog",
+          "weight": 8
+        },
+        {
+          "species": "Horse",
+          "weight": 5
+        }
+      ]
+    }
   },
   "archer": {
     "title": "Archer",
@@ -1448,7 +1751,20 @@
       "archery_range",
       "forest",
       "tower"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.1,
+      "preferred_pets": [
+        {
+          "species": "Cat",
+          "weight": 5
+        },
+        {
+          "species": "Dog",
+          "weight": 5
+        }
+      ]
+    }
   },
   "smuggler": {
     "title": "Smuggler",
@@ -1508,7 +1824,20 @@
       "docks",
       "alley",
       "tavern"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.1,
+      "preferred_pets": [
+        {
+          "species": "Cat",
+          "weight": 5
+        },
+        {
+          "species": "Dog",
+          "weight": 5
+        }
+      ]
+    }
   },
   "necromancer": {
     "title": "Necromancer",
@@ -1568,7 +1897,16 @@
       "tomb",
       "crypt",
       "dark_tower"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.4,
+      "preferred_pets": [
+        {
+          "species": "Raven",
+          "weight": 15
+        }
+      ]
+    }
   },
   "ranger": {
     "title": "Ranger",
@@ -1628,7 +1966,20 @@
       "forest",
       "wilderness",
       "frontier"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.7,
+      "preferred_pets": [
+        {
+          "species": "Dog",
+          "weight": 12
+        },
+        {
+          "species": "Hawk",
+          "weight": 10
+        }
+      ]
+    }
   },
   "paladin": {
     "title": "Paladin",
@@ -1687,7 +2038,20 @@
       "temple",
       "battlefield",
       "chapel"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.1,
+      "preferred_pets": [
+        {
+          "species": "Cat",
+          "weight": 5
+        },
+        {
+          "species": "Dog",
+          "weight": 5
+        }
+      ]
+    }
   },
   "warlock": {
     "title": "Warlock",
@@ -1747,7 +2111,20 @@
       "ruins",
       "tower",
       "shrine"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.1,
+      "preferred_pets": [
+        {
+          "species": "Cat",
+          "weight": 5
+        },
+        {
+          "species": "Dog",
+          "weight": 5
+        }
+      ]
+    }
   },
   "monk": {
     "title": "Monk",
@@ -1806,7 +2183,20 @@
       "monastery",
       "mountain",
       "dojo"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.1,
+      "preferred_pets": [
+        {
+          "species": "Cat",
+          "weight": 5
+        },
+        {
+          "species": "Dog",
+          "weight": 5
+        }
+      ]
+    }
   },
   "barbarian": {
     "title": "Barbarian",
@@ -1867,7 +2257,20 @@
       "wilderness",
       "battlefield",
       "tribal_camp"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.1,
+      "preferred_pets": [
+        {
+          "species": "Cat",
+          "weight": 5
+        },
+        {
+          "species": "Dog",
+          "weight": 5
+        }
+      ]
+    }
   },
   "engineer": {
     "title": "Engineer",
@@ -1928,7 +2331,20 @@
       "workshop",
       "laboratory",
       "siege_works"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.1,
+      "preferred_pets": [
+        {
+          "species": "Cat",
+          "weight": 5
+        },
+        {
+          "species": "Dog",
+          "weight": 5
+        }
+      ]
+    }
   },
   "cartographer": {
     "title": "Cartographer",
@@ -1989,7 +2405,20 @@
       "office",
       "ship",
       "exploration_camp"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.1,
+      "preferred_pets": [
+        {
+          "species": "Cat",
+          "weight": 5
+        },
+        {
+          "species": "Dog",
+          "weight": 5
+        }
+      ]
+    }
   },
   "baker": {
     "title": "Baker",
@@ -2049,7 +2478,20 @@
       "bakery",
       "market",
       "kitchen"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.1,
+      "preferred_pets": [
+        {
+          "species": "Cat",
+          "weight": 5
+        },
+        {
+          "species": "Dog",
+          "weight": 5
+        }
+      ]
+    }
   },
   "brewer": {
     "title": "Brewer",
@@ -2109,7 +2551,20 @@
       "brewery",
       "tavern",
       "cellar"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.1,
+      "preferred_pets": [
+        {
+          "species": "Cat",
+          "weight": 5
+        },
+        {
+          "species": "Dog",
+          "weight": 5
+        }
+      ]
+    }
   },
   "miner": {
     "title": "Miner",
@@ -2170,7 +2625,20 @@
       "mine",
       "quarry",
       "underground"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.1,
+      "preferred_pets": [
+        {
+          "species": "Cat",
+          "weight": 5
+        },
+        {
+          "species": "Dog",
+          "weight": 5
+        }
+      ]
+    }
   },
   "spy": {
     "title": "Spy",
@@ -2230,7 +2698,20 @@
       "anywhere",
       "shadows",
       "court"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.1,
+      "preferred_pets": [
+        {
+          "species": "Cat",
+          "weight": 5
+        },
+        {
+          "species": "Dog",
+          "weight": 5
+        }
+      ]
+    }
   },
   "navigator": {
     "title": "Navigator",
@@ -2290,7 +2771,20 @@
       "ship",
       "dock",
       "port"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.1,
+      "preferred_pets": [
+        {
+          "species": "Cat",
+          "weight": 5
+        },
+        {
+          "species": "Dog",
+          "weight": 5
+        }
+      ]
+    }
   },
   "diplomat": {
     "title": "Diplomat",
@@ -2350,7 +2844,20 @@
       "palace",
       "embassy",
       "council_chamber"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.1,
+      "preferred_pets": [
+        {
+          "species": "Cat",
+          "weight": 5
+        },
+        {
+          "species": "Dog",
+          "weight": 5
+        }
+      ]
+    }
   },
   "gladiator": {
     "title": "Gladiator",
@@ -2410,7 +2917,20 @@
       "arena",
       "coliseum",
       "fighting_pit"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.1,
+      "preferred_pets": [
+        {
+          "species": "Cat",
+          "weight": 5
+        },
+        {
+          "species": "Dog",
+          "weight": 5
+        }
+      ]
+    }
   },
   "fortune_teller": {
     "title": "Fortune Teller",
@@ -2470,7 +2990,20 @@
       "tent",
       "market",
       "mystical_shop"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.1,
+      "preferred_pets": [
+        {
+          "species": "Cat",
+          "weight": 5
+        },
+        {
+          "species": "Dog",
+          "weight": 5
+        }
+      ]
+    }
   },
   "sailor": {
     "title": "Sailor",
@@ -2530,7 +3063,20 @@
       "ship",
       "dock",
       "port"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.1,
+      "preferred_pets": [
+        {
+          "species": "Cat",
+          "weight": 5
+        },
+        {
+          "species": "Dog",
+          "weight": 5
+        }
+      ]
+    }
   },
   "pirate": {
     "title": "Pirate",
@@ -2590,6 +3136,19 @@
       "ship",
       "island",
       "hidden_cove"
-    ]
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.1,
+      "preferred_pets": [
+        {
+          "species": "Cat",
+          "weight": 5
+        },
+        {
+          "species": "Dog",
+          "weight": 5
+        }
+      ]
+    }
   }
 }

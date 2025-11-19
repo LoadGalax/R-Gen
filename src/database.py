@@ -98,6 +98,36 @@ class DatabaseManager:
                 )
             """)
 
+            # Create animals table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS animals (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    species TEXT NOT NULL,
+                    category TEXT NOT NULL,
+                    size TEXT,
+                    danger_level TEXT,
+                    data TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    seed INTEGER
+                )
+            """)
+
+            # Create flora table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS flora (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    species TEXT NOT NULL,
+                    category TEXT NOT NULL,
+                    rarity TEXT,
+                    magical INTEGER,
+                    data TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    seed INTEGER
+                )
+            """)
+
             # Create generation history table
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS generation_history (
@@ -117,6 +147,10 @@ class DatabaseManager:
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_items_rarity ON items(rarity)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_npcs_archetype ON npcs(archetype)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_locations_type ON locations(type)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_animals_species ON animals(species)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_animals_category ON animals(category)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_flora_species ON flora(species)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_flora_category ON flora(category)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_history_type ON generation_history(content_type)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_history_created ON generation_history(created_at)")
 
@@ -424,6 +458,110 @@ class DatabaseManager:
 
             conn.commit()
             return world_id
+
+    def save_animal(self, animal: Dict[str, Any], seed: Optional[int] = None) -> int:
+        """
+        Save an animal to the database.
+
+        Args:
+            animal: Animal dictionary
+            seed: Random seed used for generation
+
+        Returns:
+            Database ID of saved animal
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            data_str = json.dumps(animal)
+
+            if self.db_type == "sqlite":
+                cursor.execute("""
+                    INSERT INTO animals (name, species, category, size, danger_level, data, seed)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    animal["name"],
+                    animal["species"],
+                    animal["category"],
+                    animal.get("size"),
+                    animal.get("danger_level"),
+                    data_str,
+                    seed
+                ))
+                animal_id = cursor.lastrowid
+            else:  # postgresql
+                cursor.execute("""
+                    INSERT INTO animals (name, species, category, size, danger_level, data, seed)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    RETURNING id
+                """, (
+                    animal["name"],
+                    animal["species"],
+                    animal["category"],
+                    animal.get("size"),
+                    animal.get("danger_level"),
+                    data_str,
+                    seed
+                ))
+                animal_id = cursor.fetchone()[0]
+
+            # Save to history
+            self._save_history(conn, "animal", animal_id, None, None, seed)
+
+            conn.commit()
+            return animal_id
+
+    def save_flora(self, flora: Dict[str, Any], seed: Optional[int] = None) -> int:
+        """
+        Save flora to the database.
+
+        Args:
+            flora: Flora dictionary
+            seed: Random seed used for generation
+
+        Returns:
+            Database ID of saved flora
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            data_str = json.dumps(flora)
+
+            if self.db_type == "sqlite":
+                cursor.execute("""
+                    INSERT INTO flora (name, species, category, rarity, magical, data, seed)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    flora["name"],
+                    flora["species"],
+                    flora["category"],
+                    flora.get("rarity"),
+                    1 if flora.get("magical") else 0,
+                    data_str,
+                    seed
+                ))
+                flora_id = cursor.lastrowid
+            else:  # postgresql
+                cursor.execute("""
+                    INSERT INTO flora (name, species, category, rarity, magical, data, seed)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    RETURNING id
+                """, (
+                    flora["name"],
+                    flora["species"],
+                    flora["category"],
+                    flora.get("rarity"),
+                    flora.get("magical", False),
+                    data_str,
+                    seed
+                ))
+                flora_id = cursor.fetchone()[0]
+
+            # Save to history
+            self._save_history(conn, "flora", flora_id, None, None, seed)
+
+            conn.commit()
+            return flora_id
 
     def _save_history(self, conn, content_type: str, content_id: int, template_name: Optional[str],
                      constraints: Optional[Dict], seed: Optional[int]):
