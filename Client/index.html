@@ -622,6 +622,198 @@
                 font-size: 9px;
             }
         }
+
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1612 0%, #211c17 100%);
+            border: 3px solid #4a3a2a;
+            border-radius: 12px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow:
+                0 0 50px rgba(212, 175, 55, 0.3),
+                0 20px 60px rgba(0, 0, 0, 0.9);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #2a1f15 0%, #1f1710 100%);
+            padding: 20px;
+            border-bottom: 2px solid #4a3a2a;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            color: #d4af37;
+            font-size: 24px;
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #d4af37;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            color: #f4e4c1;
+        }
+
+        .modal-body {
+            padding: 30px;
+            color: #c9b896;
+        }
+
+        .dialogue-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .dialogue-box {
+            background: rgba(40, 30, 20, 0.5);
+            border: 2px solid #4a3a2a;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 100px;
+        }
+
+        .dialogue-text {
+            font-size: 16px;
+            line-height: 1.8;
+            font-style: italic;
+            color: #e6d5b8;
+        }
+
+        .dialogue-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Notification styles */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #2a1f15 0%, #1f1710 100%);
+            color: #f4e4c1;
+            padding: 15px 25px;
+            border-radius: 8px;
+            border: 2px solid #4a3a2a;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            opacity: 0;
+            transform: translateX(400px);
+            transition: all 0.3s ease;
+            max-width: 300px;
+        }
+
+        .notification-show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .notification-success {
+            border-color: #4caf50;
+            box-shadow: 0 4px 20px rgba(76, 175, 80, 0.3);
+        }
+
+        .notification-error {
+            border-color: #f44336;
+            box-shadow: 0 4px 20px rgba(244, 67, 54, 0.3);
+        }
+
+        .notification-warning {
+            border-color: #ff9800;
+            box-shadow: 0 4px 20px rgba(255, 152, 0, 0.3);
+        }
+
+        .notification-info {
+            border-color: #2196f3;
+            box-shadow: 0 4px 20px rgba(33, 150, 243, 0.3);
+        }
+
+        /* Map grid styles */
+        .map-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .map-location {
+            background: rgba(40, 30, 20, 0.4);
+            border: 2px solid #3d2f1f;
+            border-radius: 6px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .map-location:hover {
+            background: rgba(50, 40, 25, 0.6);
+            border-color: #d4af37;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .map-location.current {
+            border-color: #d4af37;
+            background: rgba(212, 175, 55, 0.1);
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
+        }
+
+        .map-location-name {
+            font-weight: bold;
+            color: #e6d5b8;
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+
+        .map-location-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: 12px;
+            color: #b8a485;
+        }
+
+        .location-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
     </style>
 </head>
 <body>
@@ -944,6 +1136,12 @@
         </div>
     </div>
 
+    <!-- Socket.IO Client -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+
+    <!-- Game Client Script -->
+    <script src="game.js"></script>
+
     <script>
         // Bookmark navigation
         const bookmarks = document.querySelectorAll('.bookmark');
@@ -965,6 +1163,11 @@
                         page.classList.add('hidden');
                     }
                 });
+
+                // Handle special page loads
+                if (targetPage === 'map' && window.game) {
+                    game.showMapPage();
+                }
             });
         });
     </script>
