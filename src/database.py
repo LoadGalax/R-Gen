@@ -347,7 +347,7 @@ class DatabaseManager:
                 """, (
                     npc["name"],
                     npc["title"],
-                    npc["archetype"],
+                    archetype,
                     data_str,
                     seed
                 ))
@@ -360,7 +360,7 @@ class DatabaseManager:
                 """, (
                     npc["name"],
                     npc["title"],
-                    npc["archetype"],
+                    archetype,
                     data_str,
                     seed
                 ))
