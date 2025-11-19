@@ -23,8 +23,8 @@ def format_item(item, indent=0):
     """Format an item for human-readable output"""
     prefix = "  " * indent
     lines = []
-    lines.append(f"{prefix}📦 {item['name']}")
-    lines.append(f"{prefix}   Type: {item['type']}")
+    lines.append(f"{prefix}📦 {item.get('name', 'Unknown Item')}")
+    lines.append(f"{prefix}   Type: {item.get('type', 'unknown')}")
 
     # Quality and rarity are optional
     quality_rarity = []
@@ -53,11 +53,33 @@ def format_item(item, indent=0):
     return "\n".join(lines)
 
 
+def format_loot_table(loot, indent=0):
+    """Format a loot table for human-readable output"""
+    prefix = "  " * indent
+    lines = []
+    lines.append(f"{prefix}💰 Loot Table")
+    lines.append(f"{prefix}   Enemy Type: {loot.get('enemy_type', 'unknown').title()}")
+    lines.append(f"{prefix}   Difficulty: {loot.get('difficulty', 1)}")
+    lines.append(f"{prefix}   Gold: {loot.get('gold', 0)}")
+
+    if loot.get('items'):
+        lines.append(f"{prefix}   Items ({len(loot['items'])}):")
+        for item in loot['items']:
+            item_lines = format_item(item, indent + 2)
+            lines.append(item_lines)
+    else:
+        lines.append(f"{prefix}   Items: None")
+
+    lines.append(f"{prefix}   Total Value: {loot.get('total_value', 0)} gold")
+
+    return "\n".join(lines)
+
+
 def format_npc(npc, indent=0):
     """Format an NPC for human-readable output"""
     prefix = "  " * indent
     lines = []
-    lines.append(f"{prefix}👤 {npc['name']}")
+    lines.append(f"{prefix}👤 {npc.get('name', 'Unknown NPC')}")
 
     if npc.get('title'):
         lines.append(f"{prefix}   Title: {npc['title']}")
@@ -87,7 +109,8 @@ def format_npc(npc, indent=0):
     if npc.get('skills'):
         lines.append(f"{prefix}   Skills: {', '.join(npc['skills'])}")
 
-    lines.append(f"{prefix}   Description: {npc['description']}")
+    if npc.get('description'):
+        lines.append(f"{prefix}   Description: {npc['description']}")
 
     if npc.get('dialogue'):
         lines.append(f"{prefix}   Dialogue: \"{npc['dialogue']}\"")
@@ -135,8 +158,8 @@ def format_location(location, indent=0):
     """Format a location for human-readable output"""
     prefix = "  " * indent
     lines = []
-    lines.append(f"{prefix}🗺️  {location['name']} (ID: {location['id']})")
-    lines.append(f"{prefix}   Type: {location['type']}")
+    lines.append(f"{prefix}🗺️  {location.get('name', 'Unknown Location')} (ID: {location.get('id', 'unknown')})")
+    lines.append(f"{prefix}   Type: {location.get('type', 'unknown')}")
 
     if location.get('biome'):
         lines.append(f"{prefix}   Biome: {location['biome']}")
@@ -144,7 +167,8 @@ def format_location(location, indent=0):
     if location.get('environment_tags'):
         lines.append(f"{prefix}   Environment: {', '.join(location['environment_tags'])}")
 
-    lines.append(f"{prefix}   Description: {location['description']}")
+    if location.get('description'):
+        lines.append(f"{prefix}   Description: {location['description']}")
 
     if location.get('npcs'):
         lines.append(f"{prefix}   NPCs ({len(location['npcs'])}):")
@@ -171,9 +195,9 @@ def format_animal(animal, indent=0):
 
     # Icon based on category
     icon = "🦁" if animal.get('category') == 'wild_fauna' else "🐾"
-    lines.append(f"{prefix}{icon} {animal['name']}")
-    lines.append(f"{prefix}   Species: {animal['species']}")
-    lines.append(f"{prefix}   Category: {animal['category'].replace('_', ' ').title()}")
+    lines.append(f"{prefix}{icon} {animal.get('name', 'Unknown Animal')}")
+    lines.append(f"{prefix}   Species: {animal.get('species', 'unknown')}")
+    lines.append(f"{prefix}   Category: {animal.get('category', 'unknown').replace('_', ' ').title()}")
     lines.append(f"{prefix}   Size: {animal.get('size', 'medium').title()}")
 
     if animal.get('danger_level'):
@@ -219,7 +243,7 @@ def format_flora(flora, indent=0):
     }
     icon = icon_map.get(flora.get('category'), '🌿')
 
-    lines.append(f"{prefix}{icon} {flora['name']}")
+    lines.append(f"{prefix}{icon} {flora.get('name', 'Unknown Flora')}")
     lines.append(f"{prefix}   Category: {flora.get('category', 'unknown').title()}")
     lines.append(f"{prefix}   Size: {flora.get('size', 'medium').title()}")
     lines.append(f"{prefix}   Rarity: {flora.get('rarity', 'common').title()}")
@@ -246,10 +270,10 @@ def format_market(market, indent=0):
     """Format a market for human-readable output"""
     prefix = "  " * indent
     lines = []
-    lines.append(f"{prefix}🏪 Market at {market['location']}")
-    lines.append(f"{prefix}   Wealth Level: {market['wealth_level'].title()}")
-    lines.append(f"{prefix}   Market Conditions: {market['market_conditions'].title()}")
-    lines.append(f"{prefix}   Merchant Count: {market['merchant_count']}")
+    lines.append(f"{prefix}🏪 Market at {market.get('location', 'Unknown')}")
+    lines.append(f"{prefix}   Wealth Level: {market.get('wealth_level', 'unknown').title()}")
+    lines.append(f"{prefix}   Market Conditions: {market.get('market_conditions', 'unknown').title()}")
+    lines.append(f"{prefix}   Merchant Count: {market.get('merchant_count', 0)}")
 
     if market.get('taxes'):
         lines.append(f"{prefix}   Taxes: Sales Tax {market['taxes']['sales_tax']*100:.1f}%, Tariff {market['taxes']['tariff']*100:.1f}%")
@@ -328,8 +352,11 @@ def output_data(data, format_type, output_file=None):
             else:
                 output = "No items generated"
         elif isinstance(data, dict):
+            # Check for Loot Table
+            if 'enemy_type' in data and 'items' in data and 'gold' in data:
+                output = format_loot_table(data)
             # Check for Animal
-            if 'species' in data and ('danger_level' in data or 'loyalty' in data):
+            elif 'species' in data and ('danger_level' in data or 'loyalty' in data):
                 output = format_animal(data)
             # Check for Flora
             elif 'species' in data and 'uses' in data:
