@@ -98,6 +98,36 @@ def format_npc(npc, indent=0):
             item_lines = format_item(item, indent + 2)
             lines.append(item_lines)
 
+    if npc.get('equipment'):
+        # Count how many equipment slots are filled
+        equipped_count = sum(1 for item in npc['equipment'].values() if item is not None)
+        lines.append(f"{prefix}   Equipment ({equipped_count}/11 slots):")
+
+        # Display equipment in a logical order
+        slot_order = ['helmet', 'collar', 'chest', 'gloves', 'belt', 'legs', 'boots', 'ring1', 'ring2', 'earring1', 'earring2']
+        slot_labels = {
+            'helmet': 'Helmet',
+            'collar': 'Collar',
+            'chest': 'Chest',
+            'gloves': 'Gloves',
+            'belt': 'Belt',
+            'legs': 'Legs',
+            'boots': 'Boots',
+            'ring1': 'Ring 1',
+            'ring2': 'Ring 2',
+            'earring1': 'Earring 1',
+            'earring2': 'Earring 2'
+        }
+
+        for slot in slot_order:
+            if slot in npc['equipment']:
+                item = npc['equipment'][slot]
+                if item is not None:
+                    # Format equipped item with slot name
+                    lines.append(f"{prefix}     [{slot_labels[slot]}]")
+                    item_lines = format_item(item, indent + 3)
+                    lines.append(item_lines)
+
     return "\n".join(lines)
 
 

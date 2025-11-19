@@ -372,6 +372,57 @@ class ContentGenerator:
 
         return items
 
+    def generate_equipment(self, equipment_chance: float = 0.7, equipment_set: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Generate equipment for NPCs with specified slots.
+
+        Args:
+            equipment_chance: Probability (0.0-1.0) that each slot will be filled
+            equipment_set: Optional equipment set name to use for generating items
+
+        Returns:
+            Dictionary containing equipment slots with items or None
+        """
+        equipment = {
+            "chest": None,
+            "helmet": None,
+            "gloves": None,
+            "legs": None,
+            "boots": None,
+            "belt": None,
+            "ring1": None,
+            "ring2": None,
+            "earring1": None,
+            "earring2": None,
+            "collar": None
+        }
+
+        # Define slot-to-template mapping
+        slot_templates = {
+            "chest": "chest",
+            "helmet": "helmet",
+            "gloves": "gloves",
+            "legs": "legs",
+            "boots": "boots",
+            "belt": "belt",
+            "ring1": "ring",
+            "ring2": "ring",
+            "earring1": "earring",
+            "earring2": "earring",
+            "collar": "collar"
+        }
+
+        # Fill equipment slots based on chance
+        for slot, template_name in slot_templates.items():
+            if self.rng.random() < equipment_chance:
+                try:
+                    equipment[slot] = self.generate_item(template_name)
+                except (ValueError, KeyError):
+                    # If template doesn't exist, leave slot empty
+                    equipment[slot] = None
+
+        return equipment
+
     def generate_npc(self, archetype_name: Optional[str] = None,
                     location_id: Optional[str] = None,
                     race: Optional[str] = None,
@@ -562,8 +613,21 @@ class ContentGenerator:
                 )
                 inventory.extend(items_from_prof)
 
+        # Generate equipment based on profession level
+        # Higher level NPCs have better chance of having equipment
+        equipment_chance_by_level = {
+            "novice": 0.3,
+            "apprentice": 0.5,
+            "journeyman": 0.6,
+            "expert": 0.7,
+            "master": 0.8,
+            "grandmaster": 0.9
+        }
+        equipment_chance = equipment_chance_by_level.get(profession_level, 0.5)
+        equipment = self.generate_equipment(equipment_chance=equipment_chance)
+
         # Calculate challenge rating (power level)
-        challenge_rating = self._calculate_challenge_rating(stats, skills, inventory, level_data["rank"])
+        challenge_rating = self._calculate_challenge_rating(stats, skills, inventory, level_data["rank"], equipment)
 
         # Build NPC object
         npc = {
@@ -577,6 +641,7 @@ class ContentGenerator:
             "dialogue": dialogue,
             "description": description,
             "inventory": inventory,
+            "equipment": equipment,
             "challenge_rating": challenge_rating
         }
 
@@ -675,6 +740,9 @@ class ContentGenerator:
         # Minimal inventory
         inventory = []
 
+        # Generate minimal equipment (commoners have less equipment)
+        equipment = self.generate_equipment(equipment_chance=0.2)
+
         # Build NPC object
         npc = {
             "name": full_name,
@@ -685,7 +753,8 @@ class ContentGenerator:
             "skills": skills,
             "dialogue": dialogue,
             "description": description,
-            "inventory": inventory
+            "inventory": inventory,
+            "equipment": equipment
         }
 
         # Add faction if assigned
@@ -868,7 +937,8 @@ class ContentGenerator:
         }
 
     def _calculate_challenge_rating(self, stats: Dict[str, int], skills: List[str],
-                                    inventory: List[Dict], profession_rank: int) -> float:
+                                    inventory: List[Dict], profession_rank: int,
+                                    equipment: Optional[Dict[str, Any]] = None) -> float:
         """
         Calculate NPC power level (challenge rating).
 
@@ -877,6 +947,7 @@ class ContentGenerator:
             skills: NPC skills
             inventory: NPC inventory
             profession_rank: Rank from profession level (1-6)
+            equipment: NPC equipped items
 
         Returns:
             Challenge rating as a float
@@ -888,14 +959,21 @@ class ContentGenerator:
         # Add skill bonus
         skill_bonus = len(skills) * 0.2
 
-        # Add equipment bonus
-        equipment_value = sum(item.get("value", 0) for item in inventory)
-        equipment_bonus = equipment_value / 1000.0
+        # Add inventory bonus
+        inventory_value = sum(item.get("value", 0) for item in inventory)
+        inventory_bonus = inventory_value / 1000.0
+
+        # Add equipment bonus (equipped items are more valuable for CR)
+        equipment_bonus = 0.0
+        if equipment:
+            for slot, item in equipment.items():
+                if item is not None:
+                    equipment_bonus += item.get("value", 0) / 500.0  # Equipment counts more than inventory
 
         # Add profession rank bonus
         rank_bonus = profession_rank * 0.5
 
-        total_cr = base_cr + skill_bonus + equipment_bonus + rank_bonus
+        total_cr = base_cr + skill_bonus + inventory_bonus + equipment_bonus + rank_bonus
         return round(total_cr, 2)
 
     def generate_loot_table(self, enemy_type: str = "standard", difficulty: int = 1,
