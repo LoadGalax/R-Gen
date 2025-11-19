@@ -238,9 +238,16 @@ class ContentGenerator:
             # Add required stats if specified
             if "required_stats" in constraints:
                 for req_stat in constraints["required_stats"]:
-                    if req_stat not in stats and req_stat in self.stats:
-                        stat_range = self.stats[req_stat]
-                        stats[req_stat] = self.rng.randint(stat_range["min"], stat_range["max"])
+                    # Case-insensitive stat lookup
+                    stat_key = None
+                    for key in self.stats.keys():
+                        if key.lower() == req_stat.lower():
+                            stat_key = key
+                            break
+
+                    if stat_key and stat_key not in stats:
+                        stat_range = self.stats[stat_key]
+                        stats[stat_key] = self.rng.randint(stat_range["min"], stat_range["max"])
 
             # Generate value (influenced by quality and rarity)
             base_value = self.rng.randint(
@@ -912,17 +919,38 @@ class ContentGenerator:
 
         Returns:
             Dictionary containing:
-            - locations: Dict of location_id to location data
+            - locations: Dict of location_id to location data (exactly num_locations main locations)
             - world_map: Summary of connections
         """
         # Clear location cache
         self.generated_locations = {}
 
-        # Generate main locations
+        # Generate main locations first without connections
         main_locations = []
         for _ in range(num_locations):
-            loc = self.generate_location(generate_connections=True, max_connections=2)
+            loc = self.generate_location(generate_connections=False)
             main_locations.append(loc)
+
+        # Now add connections between existing locations only (no new location creation)
+        for loc in main_locations:
+            template_name = [k for k, v in self.locations_config["templates"].items()
+                           if v["name"] == loc["name"]][0] if loc["name"] in [v["name"] for v in self.locations_config["templates"].values()] else None
+
+            if template_name:
+                template = self.locations_config["templates"][template_name]
+                connection_count = self.rng.randint(1, min(2, len(template["can_connect_to"])))
+                connection_types = self.rng.sample(template["can_connect_to"], connection_count)
+
+                for conn_type in connection_types:
+                    # Only connect to existing locations
+                    existing = [l for l in main_locations
+                              if conn_type in l["id"] and l["id"] != loc["id"]]
+
+                    if existing:
+                        connected_loc = self.rng.choice(existing)
+                        loc["connections"][conn_type] = connected_loc["id"]
+                        # Add bidirectional connection
+                        connected_loc["connections"][template_name] = loc["id"]
 
         # Build world map summary
         world_map = {}
@@ -1087,11 +1115,17 @@ class ContentGenerator:
 
         quest_name = f"{self.rng.choice(['The', 'A'])} {self.rng.choice(['Dangerous', 'Urgent', 'Secret', 'Ancient', 'Lost', 'Forbidden'])} {quest_type.capitalize()}"
 
+        # Generate quest description
+        objective_text = objectives.get(quest_type, "Complete the objective")
+        description = f"{quest_giver['name']} needs your help. {objective_text}. Reward: {reward_gold} gold."
+
         return {
             "name": quest_name,
+            "title": quest_name,  # Include both for compatibility
             "type": quest_type,
             "difficulty": difficulty,
-            "objective": objectives.get(quest_type, "Complete the objective"),
+            "description": description,
+            "objective": objective_text,
             "quest_giver": quest_giver,
             "rewards": {
                 "gold": reward_gold,
@@ -1154,7 +1188,9 @@ class ContentGenerator:
         skill_level = max(1, difficulty * 10)
 
         return {
+            "output": output_item,  # Include both for compatibility
             "output_item": output_item,
+            "ingredients": materials_needed,  # Include both for compatibility
             "materials": materials_needed,
             "required_tools": tools,
             "skill_requirements": {
@@ -1582,8 +1618,24 @@ class ContentGenerator:
                     "Legendary": 0.03,
                     "Mythic": 0.01
                 }
+            elif content_type == "npc":
+                distribution = {
+                    "Common": 0.40,
+                    "Uncommon": 0.30,
+                    "Rare": 0.15,
+                    "Epic": 0.10,
+                    "Legendary": 0.04,
+                    "Mythic": 0.01
+                }
+            elif content_type == "location":
+                # For locations, just use uniform distribution
+                distribution = {"default": 1.0}
+            else:
+                # Fallback for unknown types
+                distribution = {"default": 1.0}
 
         results = []
+        generated_count = 0
 
         # Calculate counts per rarity
         for rarity, percentage in distribution.items():
@@ -1623,6 +1675,32 @@ class ContentGenerator:
                 elif content_type == "location":
                     location = self.generate_location(**kwargs)
                     results.append(location)
+
+        # Fill up any remaining items due to rounding
+        while len(results) < count:
+            if content_type == "item":
+                # Use most common rarity for remainder
+                common_rarity = list(distribution.keys())[0]
+                constraints = kwargs.get("constraints", {})
+                constraints["min_rarity"] = common_rarity
+                constraints["max_rarity"] = common_rarity
+                try:
+                    item = self.generate_item(
+                        template_name=kwargs.get("template_name"),
+                        constraints=constraints
+                    )
+                    results.append(item)
+                except ValueError:
+                    # If constraints too strict, generate without constraints
+                    results.append(self.generate_item())
+
+            elif content_type == "npc":
+                npc = self.generate_npc(**kwargs)
+                results.append(npc)
+
+            elif content_type == "location":
+                location = self.generate_location(**kwargs)
+                results.append(location)
 
         return results
 
@@ -2291,10 +2369,15 @@ class ContentGenerator:
         if create_chain and self.rng.random() < 0.7:
             next_quest = self.generate_quest_advanced(difficulty=difficulty + 1, faction=faction, create_chain=False)
 
+        quest_name = f"The {self.rng.choice(['Ancient', 'Forgotten', 'Lost', 'Hidden', 'Dangerous'])} {quest_type.title()}"
+        description = f"{quest_giver['name']} has a quest for you. {objective}. Be warned: {complication if complication else 'unexpected challenges may arise'}."
+
         quest = {
-            "name": f"The {self.rng.choice(['Ancient', 'Forgotten', 'Lost', 'Hidden', 'Dangerous'])} {quest_type.title()}",
+            "name": quest_name,
+            "title": quest_name,  # Include both for compatibility
             "type": quest_type,
             "difficulty": difficulty,
+            "description": description,
             "primary_objective": objective,
             "secondary_objectives": secondary_objectives,
             "quest_giver": quest_giver,
@@ -2631,10 +2714,13 @@ class ContentGenerator:
         description = self._fill_template(description_template, description_values)
 
         # Build animal object
+        # Normalize category back to API format ("pet" instead of "pets")
+        display_category = "pet" if category == "pets" else category
+
         animal = {
             "name": individual_name or selected["species"],
             "species": selected["species"],
-            "category": category,
+            "category": display_category,
             "size": selected.get("size", "medium"),
             "danger_level": selected.get("danger_level", "low"),
             "stats": stats,
