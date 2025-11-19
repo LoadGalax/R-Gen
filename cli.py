@@ -134,6 +134,45 @@ def format_location(location, indent=0):
     return "\n".join(lines)
 
 
+def format_market(market, indent=0):
+    """Format a market for human-readable output"""
+    prefix = "  " * indent
+    lines = []
+    lines.append(f"{prefix}🏪 Market at {market['location']}")
+    lines.append(f"{prefix}   Wealth Level: {market['wealth_level'].title()}")
+    lines.append(f"{prefix}   Market Conditions: {market['market_conditions'].title()}")
+    lines.append(f"{prefix}   Merchant Count: {market['merchant_count']}")
+
+    if market.get('taxes'):
+        lines.append(f"{prefix}   Taxes: Sales Tax {market['taxes']['sales_tax']*100:.1f}%, Tariff {market['taxes']['tariff']*100:.1f}%")
+
+    if market.get('merchants'):
+        lines.append(f"{prefix}   Merchants ({len(market['merchants'])}):")
+        for idx, merchant in enumerate(market['merchants'][:5]):  # Show first 5
+            lines.append(f"{prefix}      {idx+1}. {merchant.get('name', 'Unknown')}")
+        if len(market['merchants']) > 5:
+            lines.append(f"{prefix}      ... and {len(market['merchants']) - 5} more")
+
+    if market.get('available_goods'):
+        lines.append(f"{prefix}   Available Goods ({len(market['available_goods'])}):")
+        for idx, good in enumerate(market['available_goods'][:10]):  # Show first 10
+            item = good.get('item', {})
+            pricing = good.get('pricing', {})
+            price = pricing.get('final_price', pricing.get('base_price', item.get('value', 0)))
+            lines.append(f"{prefix}      {idx+1}. {item.get('name', 'Unknown')} - {price} gold")
+        if len(market['available_goods']) > 10:
+            lines.append(f"{prefix}      ... and {len(market['available_goods']) - 10} more")
+
+    if market.get('available_services'):
+        lines.append(f"{prefix}   Available Services ({len(market['available_services'])}):")
+        for idx, service in enumerate(market['available_services'][:10]):  # Show first 10
+            lines.append(f"{prefix}      {idx+1}. {service.get('name', 'Unknown')} ({service.get('type', 'unknown').title()}) - {service.get('base_price', 0)} gold")
+        if len(market['available_services']) > 10:
+            lines.append(f"{prefix}      ... and {len(market['available_services']) - 10} more")
+
+    return "\n".join(lines)
+
+
 def format_world(world):
     """Format a world for human-readable output"""
     lines = []
@@ -182,6 +221,8 @@ def output_data(data, format_type, output_file=None):
                 output = format_location(data)
             elif 'locations' in data:
                 output = format_world(data)
+            elif 'merchants' in data and 'available_goods' in data and 'wealth_level' in data:
+                output = format_market(data)
             else:
                 output = format_item(data)
         else:
