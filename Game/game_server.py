@@ -19,7 +19,7 @@ from datetime import datetime
 from functools import wraps
 
 # Add engines to path
-project_root = Path(__file__).parent
+project_root = Path(__file__).parent.parent  # Go up one level from Game/ to R-Gen/
 sys.path.insert(0, str(project_root))
 
 from GenerationEngine import ContentGenerator
