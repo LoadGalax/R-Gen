@@ -87,15 +87,15 @@ def get_world_info():
     return jsonify({
         'name': w.name,
         'current_time': {
-            'day': w.time_manager.get_current_day(),
-            'season': w.time_manager.get_current_season(),
+            'day': w.time_manager.current_day,
+            'season': w.time_manager.current_season,
             'time': w.time_manager.get_time_string(),
-            'is_day': w.time_manager.is_day()
+            'is_day': w.time_manager.is_daytime
         },
         'stats': {
             'total_locations': len(w.locations),
             'total_npcs': len(w.npcs),
-            'total_events': len(w.event_history)
+            'total_events': len(w.event_system.event_history)
         }
     })
 
@@ -107,9 +107,12 @@ def get_locations():
     locations = []
     for loc_id, location in w.locations.items():
         loc_data = location.to_dict()
+        # Add commonly needed fields
+        loc_data['name'] = location.get_name()
+        loc_data['template'] = location.data.get('template', 'unknown') if location.data else 'unknown'
         # Add NPCs at this location
         npcs_here = [npc_id for npc_id, npc in w.npcs.items()
-                     if npc.get_current_location() == loc_id]
+                     if npc.current_location_id == loc_id]
         loc_data['npcs'] = npcs_here
         loc_data['npc_count'] = len(npcs_here)
         locations.append(loc_data)
@@ -127,16 +130,25 @@ def get_location_details(location_id):
     location = w.locations[location_id]
     loc_data = location.to_dict()
 
+    # Add commonly needed fields from nested data
+    loc_data['name'] = location.get_name()
+    loc_data['description'] = location.data.get('description', '') if location.data else ''
+    loc_data['template'] = location.data.get('template', 'unknown') if location.data else 'unknown'
+
     # Add NPCs at this location with full details
     npcs_here = []
     for npc_id, npc in w.npcs.items():
-        if npc.get_current_location() == location_id:
+        if npc.current_location_id == location_id:
             npc_data = npc.to_dict()
             npc_data['id'] = npc_id
+            npc_data['name'] = npc.get_name()
+            npc_data['profession'] = npc.get_profession()
+            npc_data['level'] = npc.data.get('level', 1) if npc.data else 1
+            npc_data['current_activity'] = npc.current_activity
             npcs_here.append(npc_data)
 
     loc_data['npcs'] = npcs_here
-    loc_data['weather'] = location.get_weather()
+    loc_data['weather'] = location.current_weather or 'Clear'
 
     # Add connected locations
     connections = []
@@ -146,7 +158,7 @@ def get_location_details(location_id):
             connections.append({
                 'id': conn_id,
                 'name': conn_loc.get_name(),
-                'template': conn_loc.template
+                'template': conn_loc.data.get('template', 'unknown') if conn_loc.data else 'unknown'
             })
     loc_data['connections'] = connections
 
@@ -161,9 +173,9 @@ def get_npcs():
     for npc_id, npc in w.npcs.items():
         npc_data = npc.to_dict()
         npc_data['id'] = npc_id
-        npc_data['location_id'] = npc.get_current_location()
-        if npc.get_current_location() in w.locations:
-            npc_data['location_name'] = w.locations[npc.get_current_location()].get_name()
+        npc_data['location_id'] = npc.current_location_id
+        if npc.current_location_id in w.locations:
+            npc_data['location_name'] = w.locations[npc.current_location_id].get_name()
         npcs.append(npc_data)
 
     return jsonify({'npcs': npcs})
@@ -179,10 +191,12 @@ def get_npc_details(npc_id):
     npc = w.npcs[npc_id]
     npc_data = npc.to_dict()
     npc_data['id'] = npc_id
-    npc_data['location_id'] = npc.get_current_location()
+    npc_data['name'] = npc.get_name()
+    npc_data['profession'] = npc.get_profession()
+    npc_data['location_id'] = npc.current_location_id
 
-    if npc.get_current_location() in w.locations:
-        npc_data['location_name'] = w.locations[npc.get_current_location()].get_name()
+    if npc.current_location_id in w.locations:
+        npc_data['location_name'] = w.locations[npc.current_location_id].get_name()
 
     return jsonify(npc_data)
 
@@ -198,7 +212,14 @@ def get_npc_dialogue(npc_id):
 
     # Generate dialogue based on NPC profession and mood
     profession = npc.get_profession()
-    mood = npc.get_mood()
+    mood_value = npc.mood
+    # Convert mood value to text
+    if mood_value > 70:
+        mood = "happy"
+    elif mood_value > 40:
+        mood = "content"
+    else:
+        mood = "troubled"
 
     dialogues = {
         'greeting': f"Greetings, traveler! I am {npc.get_name()}, a {profession}.",
@@ -228,17 +249,66 @@ def get_profession_dialogue(profession, npc):
     }
     return dialogues.get(profession.lower(), f"As a {profession}, I have many tasks to attend to.")
 
+def format_event(event, world):
+    """Format an Event object into a human-readable string."""
+    try:
+        event_type = event.event_type
+        data = event.data
+
+        # Get entity names
+        source_name = ""
+        if event.source_id and event.source_id in world.npcs:
+            source_name = world.npcs[event.source_id].get_name()
+
+        location_name = ""
+        if event.location_id and event.location_id in world.locations:
+            location_name = world.locations[event.location_id].get_name()
+
+        # Format based on event type
+        if event_type == "npc_moved":
+            return f"{source_name} traveled to {location_name}"
+        elif event_type == "npc_spawned":
+            npc_name = data.get("npc_name", "Someone")
+            profession = data.get("profession", "wanderer")
+            return f"{npc_name} the {profession} arrived at {location_name}"
+        elif event_type == "location_created":
+            return f"World '{data.get('world_name')}' created with {data.get('num_locations')} locations"
+        elif event_type == "hour_passed":
+            hour = data.get("hour", 0)
+            return f"Hour {hour} has arrived"
+        elif event_type == "day_passed":
+            day = data.get("day", 0)
+            return f"A new day begins (Day {day})"
+        else:
+            # Generic format
+            if source_name and location_name:
+                return f"{source_name} {event_type.replace('_', ' ')} at {location_name}"
+            elif source_name:
+                return f"{source_name} {event_type.replace('_', ' ')}"
+            else:
+                return event_type.replace('_', ' ').capitalize()
+    except Exception as e:
+        print(f"Error formatting event: {e}")
+        return None
+
 @app.route('/api/events', methods=['GET'])
 def get_events():
     """Get recent events."""
     w, sim = get_or_create_world()
 
     limit = request.args.get('limit', 50, type=int)
-    events = w.event_history[-limit:] if len(w.event_history) > limit else w.event_history
+    recent_events = w.event_system.get_recent_events(limit)
+
+    # Convert Event objects to readable strings
+    event_strings = []
+    for event in recent_events:
+        event_str = format_event(event, w)
+        if event_str:
+            event_strings.append(event_str)
 
     return jsonify({
-        'events': events,
-        'total_events': len(w.event_history)
+        'events': event_strings,
+        'total_events': len(w.event_system.event_history)
     })
 
 @app.route('/api/player/travel', methods=['POST'])
@@ -320,18 +390,23 @@ def run_simulation_loop():
             # Advance simulation by 30 minutes
             simulator.simulate_minutes(30)
 
-            # Get recent events (last 10)
-            recent_events = world.event_history[-10:] if len(world.event_history) > 0 else []
+            # Get recent events and format them
+            recent_events = world.event_system.get_recent_events(10)
+            event_strings = []
+            for event in recent_events:
+                event_str = format_event(event, world)
+                if event_str:
+                    event_strings.append(event_str)
 
             # Broadcast world update to all connected clients
             world_update = {
                 'time': {
-                    'day': world.time_manager.get_current_day(),
-                    'season': world.time_manager.get_current_season(),
+                    'day': world.time_manager.current_day,
+                    'season': world.time_manager.current_season,
                     'time_string': world.time_manager.get_time_string(),
-                    'is_day': world.time_manager.is_day()
+                    'is_day': world.time_manager.is_daytime
                 },
-                'recent_events': recent_events[-5:],  # Last 5 events
+                'recent_events': event_strings[-5:],  # Last 5 events
                 'timestamp': datetime.now().isoformat()
             }
 
@@ -378,14 +453,22 @@ def handle_request_update():
         emit('error', {'message': 'World not initialized'})
         return
 
+    # Get recent events and format them
+    recent_events = world.event_system.get_recent_events(10)
+    event_strings = []
+    for event in recent_events:
+        event_str = format_event(event, world)
+        if event_str:
+            event_strings.append(event_str)
+
     world_update = {
         'time': {
-            'day': world.time_manager.get_current_day(),
-            'season': world.time_manager.get_current_season(),
+            'day': world.time_manager.current_day,
+            'season': world.time_manager.current_season,
             'time_string': world.time_manager.get_time_string(),
-            'is_day': world.time_manager.is_day()
+            'is_day': world.time_manager.is_daytime
         },
-        'recent_events': world.event_history[-10:],
+        'recent_events': event_strings,
         'timestamp': datetime.now().isoformat()
     }
 
