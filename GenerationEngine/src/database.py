@@ -198,6 +198,77 @@ class DatabaseManager:
                 )
             """)
 
+            # Create professions table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS professions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT UNIQUE NOT NULL,
+                    icon TEXT,
+                    description TEXT,
+                    profession_type TEXT,
+                    data TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+
+            # Create player_professions table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS player_professions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    player_id INTEGER NOT NULL,
+                    profession_id INTEGER NOT NULL,
+                    level INTEGER DEFAULT 1,
+                    experience INTEGER DEFAULT 0,
+                    data TEXT,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE,
+                    FOREIGN KEY (profession_id) REFERENCES professions(id) ON DELETE CASCADE,
+                    UNIQUE(player_id, profession_id)
+                )
+            """)
+
+            # Create recipes table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS recipes (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    profession_id INTEGER NOT NULL,
+                    required_level INTEGER DEFAULT 1,
+                    result_item_name TEXT NOT NULL,
+                    result_quantity INTEGER DEFAULT 1,
+                    crafting_time INTEGER DEFAULT 5,
+                    difficulty TEXT DEFAULT 'medium',
+                    data TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (profession_id) REFERENCES professions(id) ON DELETE CASCADE
+                )
+            """)
+
+            # Create recipe_ingredients table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS recipe_ingredients (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    recipe_id INTEGER NOT NULL,
+                    ingredient_name TEXT NOT NULL,
+                    quantity INTEGER NOT NULL,
+                    FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE
+                )
+            """)
+
+            # Create player_recipes table (known recipes)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS player_recipes (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    player_id INTEGER NOT NULL,
+                    recipe_id INTEGER NOT NULL,
+                    learned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    times_crafted INTEGER DEFAULT 0,
+                    FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE,
+                    FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE,
+                    UNIQUE(player_id, recipe_id)
+                )
+            """)
+
             # Create indices
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_items_type ON items(type)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_items_quality ON items(quality)")
@@ -1436,3 +1507,468 @@ class DatabaseManager:
             cursor.execute(query, params)
             conn.commit()
             return cursor.rowcount > 0
+
+    # ===================================================================
+    # Profession Management
+    # ===================================================================
+
+    def create_profession(self, name: str, icon: str, description: str,
+                          profession_type: str, data: Dict[str, Any]) -> int:
+        """
+        Create a new profession in the database.
+
+        Args:
+            name: Profession name
+            icon: Icon emoji/character
+            description: Profession description
+            profession_type: Type (crafting, gathering, etc.)
+            data: Additional profession data (benefits, base stats, etc.)
+
+        Returns:
+            Profession ID
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            if self.db_type == "sqlite":
+                cursor.execute("""
+                    INSERT INTO professions (name, icon, description, profession_type, data)
+                    VALUES (?, ?, ?, ?, ?)
+                """, (name, icon, description, profession_type, json.dumps(data)))
+            else:
+                cursor.execute("""
+                    INSERT INTO professions (name, icon, description, profession_type, data)
+                    VALUES (%s, %s, %s, %s, %s)
+                    RETURNING id
+                """, (name, icon, description, profession_type, json.dumps(data)))
+
+            conn.commit()
+            return cursor.lastrowid if self.db_type == "sqlite" else cursor.fetchone()[0]
+
+    def get_all_professions(self) -> List[Dict[str, Any]]:
+        """
+        Get all professions.
+
+        Returns:
+            List of profession dictionaries
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute("""
+                SELECT id, name, icon, description, profession_type, data
+                FROM professions
+                ORDER BY name
+            """)
+
+            professions = []
+            for row in cursor.fetchall():
+                if self.db_type == "sqlite":
+                    profession = {
+                        'id': row[0],
+                        'name': row[1],
+                        'icon': row[2],
+                        'description': row[3],
+                        'profession_type': row[4]
+                    }
+                    profession.update(json.loads(row[5]))
+                else:
+                    profession = {
+                        'id': row['id'],
+                        'name': row['name'],
+                        'icon': row['icon'],
+                        'description': row['description'],
+                        'profession_type': row['profession_type']
+                    }
+                    profession.update(json.loads(row['data']))
+
+                professions.append(profession)
+
+            return professions
+
+    def get_player_professions(self, player_id: int) -> List[Dict[str, Any]]:
+        """
+        Get player's professions with their levels and experience.
+
+        Args:
+            player_id: Player ID
+
+        Returns:
+            List of player profession data
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute("""
+                SELECT pp.id, pp.level, pp.experience, pp.data,
+                       p.id as profession_id, p.name, p.icon, p.description,
+                       p.profession_type, p.data as profession_data
+                FROM player_professions pp
+                JOIN professions p ON pp.profession_id = p.id
+                WHERE pp.player_id = {}
+                ORDER BY pp.level DESC, p.name
+            """.format('?' if self.db_type == 'sqlite' else '%s'), (player_id,))
+
+            professions = []
+            for row in cursor.fetchall():
+                if self.db_type == "sqlite":
+                    prof_data = json.loads(row[9]) if row[9] else {}
+                    player_data = json.loads(row[3]) if row[3] else {}
+
+                    profession = {
+                        'player_profession_id': row[0],
+                        'level': row[1],
+                        'experience': row[2],
+                        'profession_id': row[4],
+                        'name': row[5],
+                        'icon': row[6],
+                        'description': row[7],
+                        'profession_type': row[8]
+                    }
+                    profession.update(prof_data)
+                    profession.update(player_data)
+                else:
+                    prof_data = json.loads(row['profession_data']) if row['profession_data'] else {}
+                    player_data = json.loads(row['data']) if row['data'] else {}
+
+                    profession = {
+                        'player_profession_id': row['id'],
+                        'level': row['level'],
+                        'experience': row['experience'],
+                        'profession_id': row['profession_id'],
+                        'name': row['name'],
+                        'icon': row['icon'],
+                        'description': row['description'],
+                        'profession_type': row['profession_type']
+                    }
+                    profession.update(prof_data)
+                    profession.update(player_data)
+
+                professions.append(profession)
+
+            return professions
+
+    def add_player_profession(self, player_id: int, profession_id: int,
+                             level: int = 1, experience: int = 0) -> int:
+        """
+        Add a profession to a player.
+
+        Args:
+            player_id: Player ID
+            profession_id: Profession ID
+            level: Starting level
+            experience: Starting experience
+
+        Returns:
+            Player profession ID
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            if self.db_type == "sqlite":
+                cursor.execute("""
+                    INSERT INTO player_professions (player_id, profession_id, level, experience)
+                    VALUES (?, ?, ?, ?)
+                """, (player_id, profession_id, level, experience))
+            else:
+                cursor.execute("""
+                    INSERT INTO player_professions (player_id, profession_id, level, experience)
+                    VALUES (%s, %s, %s, %s)
+                    RETURNING id
+                """, (player_id, profession_id, level, experience))
+
+            conn.commit()
+            return cursor.lastrowid if self.db_type == "sqlite" else cursor.fetchone()[0]
+
+    def update_player_profession(self, player_id: int, profession_id: int,
+                                 level: Optional[int] = None,
+                                 experience: Optional[int] = None) -> bool:
+        """
+        Update player's profession level or experience.
+
+        Args:
+            player_id: Player ID
+            profession_id: Profession ID
+            level: New level (optional)
+            experience: New experience (optional)
+
+        Returns:
+            True if successful
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            set_clauses = []
+            params = []
+
+            if level is not None:
+                set_clauses.append(f"level = {'?' if self.db_type == 'sqlite' else '%s'}")
+                params.append(level)
+
+            if experience is not None:
+                set_clauses.append(f"experience = {'?' if self.db_type == 'sqlite' else '%s'}")
+                params.append(experience)
+
+            if not set_clauses:
+                return False
+
+            set_clauses.append(f"updated_at = {'?' if self.db_type == 'sqlite' else '%s'}")
+            params.append(datetime.now())
+            params.extend([player_id, profession_id])
+
+            query = f"""
+                UPDATE player_professions
+                SET {', '.join(set_clauses)}
+                WHERE player_id = {'?' if self.db_type == 'sqlite' else '%s'}
+                  AND profession_id = {'?' if self.db_type == 'sqlite' else '%s'}
+            """
+
+            cursor.execute(query, params)
+            conn.commit()
+            return cursor.rowcount > 0
+
+    # ===================================================================
+    # Recipe Management
+    # ===================================================================
+
+    def create_recipe(self, name: str, profession_id: int, required_level: int,
+                     result_item_name: str, result_quantity: int,
+                     ingredients: List[Dict[str, Any]], crafting_time: int = 5,
+                     difficulty: str = 'medium', data: Optional[Dict[str, Any]] = None) -> int:
+        """
+        Create a new recipe.
+
+        Args:
+            name: Recipe name
+            profession_id: Required profession ID
+            required_level: Required profession level
+            result_item_name: Item produced
+            result_quantity: Quantity produced
+            ingredients: List of {ingredient_name, quantity}
+            crafting_time: Time in seconds
+            difficulty: Difficulty level
+            data: Additional recipe data
+
+        Returns:
+            Recipe ID
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            recipe_data = data or {}
+
+            if self.db_type == "sqlite":
+                cursor.execute("""
+                    INSERT INTO recipes
+                    (name, profession_id, required_level, result_item_name, result_quantity,
+                     crafting_time, difficulty, data)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """, (name, profession_id, required_level, result_item_name, result_quantity,
+                      crafting_time, difficulty, json.dumps(recipe_data)))
+                recipe_id = cursor.lastrowid
+            else:
+                cursor.execute("""
+                    INSERT INTO recipes
+                    (name, profession_id, required_level, result_item_name, result_quantity,
+                     crafting_time, difficulty, data)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    RETURNING id
+                """, (name, profession_id, required_level, result_item_name, result_quantity,
+                      crafting_time, difficulty, json.dumps(recipe_data)))
+                recipe_id = cursor.fetchone()[0]
+
+            # Add ingredients
+            for ingredient in ingredients:
+                if self.db_type == "sqlite":
+                    cursor.execute("""
+                        INSERT INTO recipe_ingredients (recipe_id, ingredient_name, quantity)
+                        VALUES (?, ?, ?)
+                    """, (recipe_id, ingredient['ingredient_name'], ingredient['quantity']))
+                else:
+                    cursor.execute("""
+                        INSERT INTO recipe_ingredients (recipe_id, ingredient_name, quantity)
+                        VALUES (%s, %s, %s)
+                    """, (recipe_id, ingredient['ingredient_name'], ingredient['quantity']))
+
+            conn.commit()
+            return recipe_id
+
+    def get_recipes_by_profession(self, profession_id: int) -> List[Dict[str, Any]]:
+        """
+        Get all recipes for a profession.
+
+        Args:
+            profession_id: Profession ID
+
+        Returns:
+            List of recipe dictionaries with ingredients
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute("""
+                SELECT r.id, r.name, r.required_level, r.result_item_name, r.result_quantity,
+                       r.crafting_time, r.difficulty, r.data, p.name as profession_name
+                FROM recipes r
+                JOIN professions p ON r.profession_id = p.id
+                WHERE r.profession_id = {}
+                ORDER BY r.required_level, r.name
+            """.format('?' if self.db_type == 'sqlite' else '%s'), (profession_id,))
+
+            recipes = []
+            for row in cursor.fetchall():
+                if self.db_type == "sqlite":
+                    recipe_id = row[0]
+                    recipe = {
+                        'id': row[0],
+                        'name': row[1],
+                        'required_level': row[2],
+                        'result_item_name': row[3],
+                        'result_quantity': row[4],
+                        'crafting_time': row[5],
+                        'difficulty': row[6],
+                        'profession_name': row[8]
+                    }
+                    recipe.update(json.loads(row[7]) if row[7] else {})
+                else:
+                    recipe_id = row['id']
+                    recipe = {
+                        'id': row['id'],
+                        'name': row['name'],
+                        'required_level': row['required_level'],
+                        'result_item_name': row['result_item_name'],
+                        'result_quantity': row['result_quantity'],
+                        'crafting_time': row['crafting_time'],
+                        'difficulty': row['difficulty'],
+                        'profession_name': row['profession_name']
+                    }
+                    recipe.update(json.loads(row['data']) if row['data'] else {})
+
+                # Get ingredients
+                ingredients_cursor = conn.cursor()
+                ingredients_cursor.execute("""
+                    SELECT ingredient_name, quantity
+                    FROM recipe_ingredients
+                    WHERE recipe_id = {}
+                """.format('?' if self.db_type == 'sqlite' else '%s'), (recipe_id,))
+
+                recipe['ingredients'] = []
+                for ing_row in ingredients_cursor.fetchall():
+                    recipe['ingredients'].append({
+                        'ingredient_name': ing_row[0] if self.db_type == 'sqlite' else ing_row['ingredient_name'],
+                        'quantity': ing_row[1] if self.db_type == 'sqlite' else ing_row['quantity']
+                    })
+
+                recipes.append(recipe)
+
+            return recipes
+
+    def get_player_recipes(self, player_id: int) -> List[Dict[str, Any]]:
+        """
+        Get all recipes known by a player.
+
+        Args:
+            player_id: Player ID
+
+        Returns:
+            List of known recipe dictionaries
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            cursor.execute("""
+                SELECT r.id, r.name, r.profession_id, r.required_level, r.result_item_name,
+                       r.result_quantity, r.crafting_time, r.difficulty, r.data,
+                       p.name as profession_name, p.icon as profession_icon,
+                       pr.times_crafted, pr.learned_at
+                FROM player_recipes pr
+                JOIN recipes r ON pr.recipe_id = r.id
+                JOIN professions p ON r.profession_id = p.id
+                WHERE pr.player_id = {}
+                ORDER BY p.name, r.required_level, r.name
+            """.format('?' if self.db_type == 'sqlite' else '%s'), (player_id,))
+
+            recipes = []
+            for row in cursor.fetchall():
+                if self.db_type == "sqlite":
+                    recipe_id = row[0]
+                    recipe = {
+                        'id': row[0],
+                        'name': row[1],
+                        'profession_id': row[2],
+                        'required_level': row[3],
+                        'result_item_name': row[4],
+                        'result_quantity': row[5],
+                        'crafting_time': row[6],
+                        'difficulty': row[7],
+                        'profession_name': row[9],
+                        'profession_icon': row[10],
+                        'times_crafted': row[11],
+                        'learned_at': row[12]
+                    }
+                    recipe.update(json.loads(row[8]) if row[8] else {})
+                else:
+                    recipe_id = row['id']
+                    recipe = {
+                        'id': row['id'],
+                        'name': row['name'],
+                        'profession_id': row['profession_id'],
+                        'required_level': row['required_level'],
+                        'result_item_name': row['result_item_name'],
+                        'result_quantity': row['result_quantity'],
+                        'crafting_time': row['crafting_time'],
+                        'difficulty': row['difficulty'],
+                        'profession_name': row['profession_name'],
+                        'profession_icon': row['profession_icon'],
+                        'times_crafted': row['times_crafted'],
+                        'learned_at': row['learned_at']
+                    }
+                    recipe.update(json.loads(row['data']) if row['data'] else {})
+
+                # Get ingredients
+                ingredients_cursor = conn.cursor()
+                ingredients_cursor.execute("""
+                    SELECT ingredient_name, quantity
+                    FROM recipe_ingredients
+                    WHERE recipe_id = {}
+                """.format('?' if self.db_type == 'sqlite' else '%s'), (recipe_id,))
+
+                recipe['ingredients'] = []
+                for ing_row in ingredients_cursor.fetchall():
+                    recipe['ingredients'].append({
+                        'ingredient_name': ing_row[0] if self.db_type == 'sqlite' else ing_row['ingredient_name'],
+                        'quantity': ing_row[1] if self.db_type == 'sqlite' else ing_row['quantity']
+                    })
+
+                recipes.append(recipe)
+
+            return recipes
+
+    def add_player_recipe(self, player_id: int, recipe_id: int) -> int:
+        """
+        Add a recipe to player's known recipes.
+
+        Args:
+            player_id: Player ID
+            recipe_id: Recipe ID
+
+        Returns:
+            Player recipe ID
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            if self.db_type == "sqlite":
+                cursor.execute("""
+                    INSERT INTO player_recipes (player_id, recipe_id)
+                    VALUES (?, ?)
+                """, (player_id, recipe_id))
+            else:
+                cursor.execute("""
+                    INSERT INTO player_recipes (player_id, recipe_id)
+                    VALUES (%s, %s)
+                    RETURNING id
+                """, (player_id, recipe_id))
+
+            conn.commit()
+            return cursor.lastrowid if self.db_type == "sqlite" else cursor.fetchone()[0]

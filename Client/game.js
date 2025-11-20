@@ -51,6 +51,9 @@ class RGenGame {
         await this.loadNPCs();
         await this.loadEvents();
         await this.loadPlayerData();
+        await this.loadPlayerInventory();
+        await this.loadPlayerProfessions();
+        await this.loadPlayerRecipes();
 
         // Set initial location
         if (this.player && this.player.current_location_id) {
@@ -61,6 +64,8 @@ class RGenGame {
 
         // Update character page with player data
         this.updateCharacterPage();
+        // Update craft page with profession data
+        this.updateCraftPage();
 
         console.log('Game client initialized!');
     }
@@ -322,6 +327,183 @@ class RGenGame {
         if (this.player.stats) {
             this.updateStatsDisplay(this.player.stats);
         }
+
+        // Update equipped items display
+        this.updateEquippedItemsDisplay();
+    }
+
+    async loadPlayerInventory() {
+        try {
+            const response = await fetch(`${this.apiUrl}/api/player/inventory`, {
+                credentials: 'include'
+            });
+            if (response.ok) {
+                const data = await response.json();
+                if (this.player) {
+                    this.player.inventory = data.inventory;
+                }
+                this.updateInventoryPage();
+                console.log('Inventory loaded:', data.inventory);
+            }
+        } catch (error) {
+            console.error('Error loading inventory:', error);
+        }
+    }
+
+    async loadPlayerProfessions() {
+        try {
+            const response = await fetch(`${this.apiUrl}/api/player/professions`, {
+                credentials: 'include'
+            });
+            if (response.ok) {
+                const data = await response.json();
+                if (this.player) {
+                    this.player.professions = data.professions;
+                }
+                console.log('Professions loaded:', data.professions);
+            }
+        } catch (error) {
+            console.error('Error loading professions:', error);
+            this.player.professions = [];
+        }
+    }
+
+    async loadPlayerRecipes() {
+        try {
+            const response = await fetch(`${this.apiUrl}/api/player/recipes`, {
+                credentials: 'include'
+            });
+            if (response.ok) {
+                const data = await response.json();
+                if (this.player) {
+                    this.player.recipes = data.recipes;
+                }
+                console.log('Recipes loaded:', data.recipes);
+            }
+        } catch (error) {
+            console.error('Error loading recipes:', error);
+            this.player.recipes = [];
+        }
+    }
+
+    updateInventoryPage() {
+        if (!this.player || !this.player.inventory) return;
+
+        const inventory = this.player.inventory;
+        const itemList = document.querySelector('[data-page="inventory"] .item-list');
+
+        if (!itemList) return;
+
+        // Separate equipped and unequipped items
+        const equippedItems = inventory.filter(item => item.equipped);
+        const unequippedItems = inventory.filter(item => !item.equipped);
+
+        // Clear the item list
+        itemList.innerHTML = '';
+
+        // Add equipped items section
+        if (equippedItems.length > 0) {
+            equippedItems.forEach(item => {
+                const itemDiv = this.createInventoryItemElement(item);
+                itemList.appendChild(itemDiv);
+            });
+        }
+
+        // Add unequipped items section
+        if (unequippedItems.length > 0) {
+            unequippedItems.forEach(item => {
+                const itemDiv = this.createInventoryItemElement(item);
+                itemList.appendChild(itemDiv);
+            });
+        }
+
+        // Update subtitle with count
+        const subtitle = document.querySelector('[data-page="inventory"] .page-subtitle');
+        if (subtitle) {
+            subtitle.textContent = `~ Carrying ${inventory.length} items ~`;
+        }
+    }
+
+    createInventoryItemElement(item) {
+        const itemDiv = document.createElement('div');
+        const rarityClass = (item.item_data?.rarity || 'common').toLowerCase();
+        itemDiv.className = `item ${rarityClass}`;
+
+        // Get icon based on item type
+        let icon = '📦';
+        const itemType = item.item_type?.toLowerCase() || '';
+        if (itemType.includes('weapon')) icon = '⚔️';
+        else if (itemType.includes('armor') || itemType.includes('shield')) icon = '🛡️';
+        else if (itemType.includes('potion') || itemType.includes('consumable')) icon = '🧪';
+        else if (itemType.includes('ring') || itemType.includes('amulet')) icon = '💍';
+
+        // Build display text
+        let displayText = `${icon} `;
+        if (item.item_data?.rarity) {
+            displayText += `${item.item_data.rarity} `;
+        }
+        displayText += item.item_name;
+
+        // Add stats if available
+        if (item.item_data?.damage) {
+            displayText += ` (+${item.item_data.damage} DMG)`;
+        } else if (item.item_data?.defense) {
+            displayText += ` (+${item.item_data.defense} DEF)`;
+        }
+
+        if (item.quantity > 1) {
+            displayText += ` x${item.quantity}`;
+        }
+
+        if (item.equipped) {
+            displayText += ' [EQUIPPED]';
+        }
+
+        itemDiv.textContent = displayText;
+        itemDiv.onclick = () => this.showItemDetailsOnRightPage(item);
+
+        return itemDiv;
+    }
+
+    updateEquippedItemsDisplay() {
+        if (!this.player || !this.player.inventory) return;
+
+        const equippedItems = this.player.inventory.filter(item => item.equipped);
+        const rightCharContent = document.getElementById('right-character-content');
+
+        if (!rightCharContent) return;
+
+        if (equippedItems.length === 0) {
+            rightCharContent.innerHTML = `
+                <div class="section-title">Currently Equipped</div>
+                <div class="description" style="text-align: center; color: #b8a485;">
+                    You have no items equipped. Visit the Items tab to equip gear.
+                </div>
+            `;
+            return;
+        }
+
+        // Build equipped items display
+        let html = '<div class="section-title">Currently Equipped</div>';
+
+        equippedItems.forEach(item => {
+            const rarityClass = (item.item_data?.rarity || 'common').toLowerCase();
+
+            html += `
+                <div class="item ${rarityClass}" style="margin-bottom: 10px; cursor: pointer;" onclick="game.showItemDetailsOnRightPage(${JSON.stringify(item).replace(/"/g, '&quot;')})">
+                    <div style="font-weight: bold; margin-bottom: 5px;">
+                        ${item.item_name}
+                    </div>
+                    <div style="font-size: 0.9em; opacity: 0.9;">
+                        Type: ${item.item_type}
+                        ${item.item_data?.damage ? ` | Damage: +${item.item_data.damage}` : ''}
+                        ${item.item_data?.defense ? ` | Defense: +${item.item_data.defense}` : ''}
+                    </div>
+                </div>
+            `;
+        });
+
+        rightCharContent.innerHTML = html;
     }
 
     updateStatsDisplay(stats) {
@@ -1047,29 +1229,725 @@ class RGenGame {
     // ========================================================================
 
     async equipItem(itemId) {
-        this.showNotification('Equipping item...', 'info');
-        // TODO: Implement item equipping via API
-        console.log('Equip item:', itemId);
+        try {
+            const response = await fetch(`/api/player/inventory/${itemId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ equipped: true })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                this.showNotification('Item equipped successfully!', 'success');
+                // Reload inventory to update display
+                await this.loadPlayerInventory();
+                // Update character page to show newly equipped item
+                this.updateEquippedItemsDisplay();
+            } else {
+                this.showNotification(data.error || 'Failed to equip item', 'error');
+            }
+        } catch (error) {
+            console.error('Error equipping item:', error);
+            this.showNotification('Failed to equip item', 'error');
+        }
     }
 
     async unequipItem(itemId) {
-        this.showNotification('Unequipping item...', 'info');
-        // TODO: Implement item unequipping via API
-        console.log('Unequip item:', itemId);
+        try {
+            const response = await fetch(`/api/player/inventory/${itemId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ equipped: false })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                this.showNotification('Item unequipped', 'info');
+                // Reload inventory to update display
+                await this.loadPlayerInventory();
+                // Update character page
+                this.updateEquippedItemsDisplay();
+            } else {
+                this.showNotification(data.error || 'Failed to unequip item', 'error');
+            }
+        } catch (error) {
+            console.error('Error unequipping item:', error);
+            this.showNotification('Failed to unequip item', 'error');
+        }
     }
 
     async useItem(itemId) {
         this.showNotification('Using item...', 'info');
-        // TODO: Implement item usage via API
+        // TODO: Implement item usage via API (consume potions, etc.)
         console.log('Use item:', itemId);
     }
 
     async discardItem(itemId) {
         const confirmed = confirm('Are you sure you want to discard this item?');
-        if (confirmed) {
-            this.showNotification('Item discarded', 'warning');
-            // TODO: Implement item discarding via API
-            console.log('Discard item:', itemId);
+        if (!confirmed) return;
+
+        try {
+            const response = await fetch(`/api/player/inventory/${itemId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                this.showNotification('Item discarded', 'warning');
+                // Reload inventory to update display
+                await this.loadPlayerInventory();
+                // Clear right page if this item was being displayed
+                const rightInventoryContent = document.getElementById('right-inventory-content');
+                if (rightInventoryContent) {
+                    rightInventoryContent.innerHTML = `
+                        <div class="description" style="text-align: center; color: #b8a485;">
+                            Select an item from your inventory to view its details.
+                        </div>
+                    `;
+                }
+            } else {
+                this.showNotification(data.error || 'Failed to discard item', 'error');
+            }
+        } catch (error) {
+            console.error('Error discarding item:', error);
+            this.showNotification('Failed to discard item', 'error');
+        }
+    }
+
+    // ========================================================================
+    // Crafting System
+    // ========================================================================
+
+    updateCraftPage() {
+        if (!this.player) return;
+
+        // Update professions list
+        const professionsListEl = document.getElementById('craft-professions-list');
+        if (professionsListEl && this.player.professions) {
+            professionsListEl.innerHTML = '';
+
+            if (this.player.professions.length === 0) {
+                professionsListEl.innerHTML = '<div class="description" style="text-align: center; color: #b8a485;">No professions learned yet. Visit a trainer to learn a profession!</div>';
+            } else {
+                this.player.professions.forEach(prof => {
+                    const rarityClass = prof.level >= 8 ? 'legendary' : prof.level >= 6 ? 'rare' : prof.level >= 3 ? 'uncommon' : 'common';
+                    const profDiv = document.createElement('div');
+                    profDiv.className = `item ${rarityClass}`;
+                    profDiv.textContent = `${prof.icon || '🔨'} ${prof.name} - Level ${prof.level}`;
+                    profDiv.onclick = () => this.showCraftDetailOnRightPage('profession', prof);
+                    professionsListEl.appendChild(profDiv);
+                });
+            }
+        }
+
+        // Update recipes list
+        const recipesListEl = document.getElementById('craft-recipes-list');
+        if (recipesListEl && this.player.recipes) {
+            recipesListEl.innerHTML = '';
+
+            if (this.player.recipes.length === 0) {
+                recipesListEl.innerHTML = '<div class="description" style="text-align: center; color: #b8a485;">No recipes learned yet. Learn recipes from profession trainers!</div>';
+            } else {
+                this.player.recipes.forEach(recipe => {
+                    const rarityClass = recipe.required_level >= 7 ? 'rare' : recipe.required_level >= 4 ? 'uncommon' : 'common';
+                    const recipeDiv = document.createElement('div');
+                    recipeDiv.className = `item ${rarityClass}`;
+                    recipeDiv.textContent = `${recipe.profession_icon || '📜'} ${recipe.name} [${recipe.profession_name} ${recipe.required_level}]`;
+                    recipeDiv.onclick = () => this.showCraftDetailOnRightPage('recipe', recipe);
+                    recipesListEl.appendChild(recipeDiv);
+                });
+            }
+        }
+
+        // Update materials list (from inventory)
+        const materialsListEl = document.getElementById('craft-materials-list');
+        if (materialsListEl && this.player.inventory) {
+            materialsListEl.innerHTML = '';
+
+            // Filter crafting materials from inventory
+            const materials = this.player.inventory.filter(item =>
+                ['material', 'reagent', 'component', 'ore', 'herb', 'leather'].some(type =>
+                    item.item_type.toLowerCase().includes(type)
+                )
+            );
+
+            if (materials.length === 0) {
+                materialsListEl.innerHTML = '<div class="description" style="text-align: center; color: #b8a485;">No crafting materials in inventory.</div>';
+            } else {
+                materials.forEach(material => {
+                    const matDiv = document.createElement('div');
+                    matDiv.className = 'item';
+                    matDiv.textContent = `📦 ${material.item_name} x${material.quantity}`;
+                    matDiv.onclick = () => this.showCraftDetailOnRightPage('material', material);
+                    materialsListEl.appendChild(matDiv);
+                });
+            }
+        }
+    }
+
+    showCraftDetailOnRightPage(type, data) {
+        const rightCraftTitle = document.getElementById('right-craft-title');
+        const rightCraftSubtitle = document.getElementById('right-craft-subtitle');
+        const rightCraftContent = document.getElementById('right-craft-content');
+
+        if (!rightCraftContent) return;
+
+        if (type === 'profession') {
+            this.showProfessionDetail(data, rightCraftTitle, rightCraftSubtitle, rightCraftContent);
+        } else if (type === 'recipe') {
+            this.showRecipeDetail(data, rightCraftTitle, rightCraftSubtitle, rightCraftContent);
+        } else if (type === 'material') {
+            this.showMaterialDetail(data, rightCraftTitle, rightCraftSubtitle, rightCraftContent);
+        }
+    }
+
+    showProfessionDetail(profession, titleEl, subtitleEl, contentEl) {
+        // Use profession data from backend (already loaded)
+        const icon = profession.icon || '🔨';
+        const name = profession.name;
+        const level = profession.level;
+        const xp = profession.experience || 0;
+
+        // Calculate XP needed for next level (100 * level)
+        const nextLevel = 100 * level;
+        const progressPercent = (xp / nextLevel) * 100;
+
+        // Get description and benefits from profession data
+        const description = profession.description || 'A skilled profession';
+        const benefits = profession.skills || [];
+
+        // Get recipes for this profession from player's known recipes
+        const professionRecipes = (this.player.recipes || [])
+            .filter(r => r.profession_id === profession.profession_id)
+            .map(r => r.name);
+
+        if (titleEl) titleEl.textContent = `${icon} ${name} ${icon}`;
+        if (subtitleEl) subtitleEl.textContent = `~ Level ${level} ~`;
+
+        contentEl.innerHTML = `
+            <div class="section">
+                <div class="section-title">Profession Level</div>
+                <div class="description">
+                    <strong>Current Level:</strong> ${level}<br>
+                    <strong>Experience:</strong> ${xp} / ${nextLevel} XP<br>
+                    <div style="background: #2a1810; height: 20px; border: 1px solid #8b7355; margin-top: 10px; position: relative;">
+                        <div style="background: linear-gradient(90deg, #cd7f32, #8b4513); height: 100%; width: ${progressPercent}%;"></div>
+                        <span style="position: absolute; top: 2px; left: 50%; transform: translateX(-50%); color: #fff; font-size: 0.9em;">${Math.round(progressPercent)}%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">About</div>
+                <div class="description">
+                    ${description}
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Skills & Benefits</div>
+                <div class="description">
+                    ${benefits.length > 0 ? benefits.map(b => `• ${b}`).join('<br>') : 'No specific skills listed'}
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Known Recipes (${professionRecipes.length})</div>
+                <div class="description">
+                    ${professionRecipes.length > 0 ? professionRecipes.map(r => `• ${r}`).join('<br>') : 'No recipes learned yet'}
+                </div>
+            </div>
+
+            <div class="section" style="margin-top: auto;">
+                <div class="action-grid">
+                    <button class="btn" onclick="game.showNotification('Training not yet implemented', 'info')">
+                        📚 Train
+                    </button>
+                    <button class="btn" onclick="game.showNotification('Recipe discovery coming soon', 'info')">
+                        🔍 Discover Recipes
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    showRecipeDetail(recipe, titleEl, subtitleEl, contentEl) {
+        if (titleEl) titleEl.textContent = `🔨 ${recipe.name} 🔨`;
+        if (subtitleEl) subtitleEl.textContent = `~ ${recipe.profession_name} Recipe ~`;
+
+        // Check if player has materials in inventory
+        const materialsHtml = (recipe.ingredients || []).map(mat => {
+            const invItem = this.player.inventory?.find(i => i.item_name === mat.ingredient_name);
+            const hasEnough = invItem && invItem.quantity >= mat.quantity;
+            const statusColor = hasEnough ? '#90EE90' : '#FF6B6B';
+            return `<div style="color: ${statusColor};">• ${mat.ingredient_name} x${mat.quantity}${invItem ? ` (have ${invItem.quantity})` : ' (none)'}</div>`;
+        }).join('');
+
+        contentEl.innerHTML = `
+            <div class="section">
+                <div class="section-title">Recipe Information</div>
+                <div class="description">
+                    <strong>Profession:</strong> ${recipe.profession_name}<br>
+                    <strong>Required Level:</strong> ${recipe.required_level}<br>
+                    <strong>Difficulty:</strong> ${recipe.difficulty}<br>
+                    <strong>Crafting Time:</strong> ${recipe.crafting_time}s
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Required Materials</div>
+                <div class="description">
+                    ${materialsHtml || 'No materials required'}
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Result</div>
+                <div class="description">
+                    Crafting this recipe will produce:<br>
+                    <strong>${recipe.result_item_name}</strong> x${recipe.result_quantity}
+                </div>
+            </div>
+
+            <div class="section" style="margin-top: auto;">
+                <div class="action-grid">
+                    <button class="btn" onclick="game.craftItem(${recipe.id})">
+                        🔨 Craft Item
+                    </button>
+                    <button class="btn" onclick="game.showNotification('Mass crafting coming soon', 'info')">
+                        ⚡ Craft x5
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    showRecipeDetail_OLD_REMOVE_ME(recipe, titleEl, subtitleEl, contentEl) {
+        // OLD HARDCODED VERSION - DELETE THIS
+        /*
+            blacksmithing: {
+                name: 'Blacksmithing',
+                icon: '⚒️',
+                level: 8,
+                xp: 750,
+                nextLevel: 1000,
+                description: 'The ancient art of forging metal into weapons and armor. Blacksmiths are masters of the forge, capable of creating powerful equipment for warriors.',
+                benefits: [
+                    'Craft weapons and heavy armor',
+                    'Repair damaged equipment',
+                    'Enhance gear with special properties',
+                    'Unlock legendary weapon recipes at high levels'
+                ],
+                recipes: ['Iron Sword', 'Steel Helmet', 'Chain Mail', 'Battle Axe', 'Legendary Greatsword', 'Mithril Armor']
+            },
+            alchemy: {
+                name: 'Alchemy',
+                icon: '🧪',
+                level: 6,
+                xp: 480,
+                nextLevel: 600,
+                description: 'The mystical practice of combining reagents to create powerful potions and elixirs. Alchemists can brew concoctions that heal, enhance abilities, or cause devastating effects.',
+                benefits: [
+                    'Brew healing and mana potions',
+                    'Create buff potions for combat',
+                    'Transmute materials',
+                    'Craft powerful explosives'
+                ],
+                recipes: ['Health Potion', 'Mana Potion', 'Strength Elixir', 'Poison Vial', 'Elixir of Life']
+            },
+            enchanting: {
+                name: 'Enchanting',
+                icon: '✨',
+                level: 5,
+                xp: 380,
+                nextLevel: 500,
+                description: 'The art of imbuing items with magical properties. Enchanters can enhance weapons and armor with powerful enchantments, making them far more effective.',
+                benefits: [
+                    'Add magical properties to equipment',
+                    'Disenchant items to learn enchantments',
+                    'Create enchanted scrolls',
+                    'Craft powerful artifacts at high levels'
+                ],
+                recipes: ['Fire Weapon Enchant', 'Shield of Protection', 'Ring of Speed', 'Scroll of Wisdom']
+            },
+            leatherworking: {
+                name: 'Leatherworking',
+                icon: '🦌',
+                level: 4,
+                xp: 280,
+                nextLevel: 400,
+                description: 'The craft of working with leather and hides to create light armor and accessories. Leatherworkers can craft durable gear perfect for rangers and rogues.',
+                benefits: [
+                    'Craft light armor and leather goods',
+                    'Create bags and containers',
+                    'Tan rare hides for exotic armor',
+                    'Make armor kits to enhance gear'
+                ],
+                recipes: ['Leather Armor', 'Hunting Boots', 'Leather Gloves', 'Dragon Scale Vest', 'Quiver']
+            },
+            tailoring: {
+                name: 'Tailoring',
+                icon: '🧵',
+                level: 4,
+                xp: 300,
+                nextLevel: 400,
+                description: 'The art of working with cloth and fabric to create robes and magical garments. Tailors specialize in creating gear for spellcasters and creating bags.',
+                benefits: [
+                    'Craft cloth armor and robes',
+                    'Create magical garments',
+                    'Sew enchanted bags',
+                    'Make cloaks with special properties'
+                ],
+                recipes: ['Mage Robe', 'Silk Cloak', 'Netherweave Bag', 'Hood of Shadows', 'Embroidered Gloves']
+            },
+            jewelcrafting: {
+                name: 'Jewelcrafting',
+                icon: '💎',
+                level: 3,
+                xp: 200,
+                nextLevel: 300,
+                description: 'The delicate art of cutting gems and crafting jewelry. Jewelcrafters create rings, necklaces, and other accessories that grant powerful bonuses.',
+                benefits: [
+                    'Cut and polish precious gems',
+                    'Craft rings and necklaces',
+                    'Socket gems into equipment',
+                    'Create legendary jewelry pieces'
+                ],
+                recipes: ['Ruby Ring', 'Sapphire Necklace', 'Diamond Amulet', 'Emerald Earrings', 'Crown of Kings']
+            },
+            cooking: {
+                name: 'Cooking',
+                icon: '🍳',
+                level: 3,
+                xp: 220,
+                nextLevel: 300,
+                description: 'The culinary arts provide sustenance and temporary buffs. Skilled cooks can prepare meals that grant significant advantages in battle and exploration.',
+                benefits: [
+                    'Prepare food that restores health',
+                    'Cook meals that grant temporary buffs',
+                    'Create travel rations',
+                    'Unlock gourmet recipes'
+                ],
+                recipes: ['Bread', 'Grilled Meat', 'Vegetable Stew', 'Apple Pie', 'Feast Platter']
+            },
+            woodworking: {
+                name: 'Woodworking',
+                icon: '🪓',
+                level: 3,
+                xp: 190,
+                nextLevel: 300,
+                description: 'The craft of shaping wood into useful items. Woodworkers create staves, bows, shields, and furniture. Master woodworkers can craft legendary wooden weapons.',
+                benefits: [
+                    'Craft bows and staves',
+                    'Create wooden shields',
+                    'Build furniture and decorations',
+                    'Make magical wands'
+                ],
+                recipes: ['Oak Bow', 'Maple Staff', 'Wooden Shield', 'Enchanted Wand', 'Ancient Staff']
+            },
+            engineering: {
+                name: 'Engineering',
+                icon: '⚙️',
+                level: 2,
+                xp: 140,
+                nextLevel: 200,
+                description: 'The science of creating mechanical devices and explosives. Engineers craft unique gadgets, bombs, and mechanical companions that provide utility and combat advantages.',
+                benefits: [
+                    'Create bombs and explosives',
+                    'Build mechanical pets',
+                    'Craft goggles and trinkets',
+                    'Make siege weapons'
+                ],
+                recipes: ['Dynamite', 'Mechanical Squirrel', 'Goggles of Vision', 'Portable Cannon', 'Rocket Boots']
+            },
+            inscription: {
+                name: 'Inscription',
+                icon: '📜',
+                level: 2,
+                xp: 120,
+                nextLevel: 200,
+                description: 'The art of creating magical scrolls, glyphs, and tomes. Scribes can craft powerful scrolls for instant spellcasting and create valuable books.',
+                benefits: [
+                    'Create magical scrolls',
+                    'Inscribe glyphs to enhance abilities',
+                    'Craft spellbooks and tomes',
+                    'Make contracts and documents'
+                ],
+                recipes: ['Scroll of Fireball', 'Glyph of Strength', 'Tome of Knowledge', 'Contract Scroll', 'Ancient Codex']
+            },
+            mining: {
+                name: 'Mining',
+                icon: '⛏️',
+                level: 2,
+                xp: 150,
+                nextLevel: 200,
+                description: 'The gathering profession focused on extracting ores and gems from the earth. Miners provide essential materials for blacksmithing, engineering, and jewelcrafting.',
+                benefits: [
+                    'Extract ores from mineral veins',
+                    'Find precious gems while mining',
+                    'Smelt ores into usable bars',
+                    'Discover rare materials in rich veins'
+                ],
+                recipes: ['Copper Bar', 'Iron Bar', 'Steel Ingot', 'Mithril Bar', 'Adamantite Ore']
+            },
+            herbalism: {
+                name: 'Herbalism',
+                icon: '🌿',
+                level: 1,
+                xp: 60,
+                nextLevel: 100,
+                description: 'The gathering profession of collecting herbs and plants. Herbalists gather ingredients essential for alchemy and inscription, finding rare plants in the wilderness.',
+                benefits: [
+                    'Gather herbs and flowers',
+                    'Find rare alchemical reagents',
+                    'Identify medicinal plants',
+                    'Harvest magical herbs'
+                ],
+                recipes: ['Red Herb', 'Blue Flower', 'Moonpetal', 'Dragonbloom', 'Ancient Moss']
+            },
+            skinning: {
+                name: 'Skinning',
+                icon: '🔪',
+                level: 1,
+                xp: 45,
+                nextLevel: 100,
+                description: 'The gathering profession of collecting hides and leather from defeated creatures. Skinners provide essential materials for leatherworking.',
+                benefits: [
+                    'Skin beasts for leather',
+                    'Harvest rare hides from exotic creatures',
+                    'Obtain scales from dragons and serpents',
+                    'Collect rare furs'
+                ],
+                recipes: ['Leather Scraps', 'Thick Hide', 'Dragon Scale', 'Bear Fur', 'Serpent Skin']
+            },
+            fishing: {
+                name: 'Fishing',
+                icon: '🎣',
+                level: 1,
+                xp: 30,
+                nextLevel: 100,
+                description: 'The peaceful art of catching fish from waters around the world. Fishers can catch fish for cooking, find treasure, and discover rare aquatic creatures.',
+                benefits: [
+                    'Catch fish for cooking',
+                    'Find treasure in waters',
+                    'Discover rare fish',
+                    'Fish in any body of water'
+                ],
+                recipes: ['Raw Fish', 'Salmon', 'Treasure Chest', 'Golden Trout', 'Ancient Relic']
+            },
+            archaeology: {
+                name: 'Archaeology',
+                icon: '🏺',
+                level: 1,
+                xp: 25,
+                nextLevel: 100,
+                description: 'The scholarly profession of uncovering ancient artifacts and relics. Archaeologists can discover powerful items from lost civilizations and learn forgotten knowledge.',
+                benefits: [
+                    'Excavate dig sites for artifacts',
+                    'Restore ancient relics',
+                    'Discover lost treasures',
+                    'Learn about ancient civilizations'
+                ],
+                recipes: ['Ancient Pottery', 'Fossil', 'Relic Fragment', 'Lost Artifact', 'Legendary Tome']
+            }
+        };
+
+        const profession = professions[professionName.toLowerCase()] || professions.blacksmithing;
+
+        if (titleEl) titleEl.textContent = `${profession.icon} ${profession.name} ${profession.icon}`;
+        if (subtitleEl) subtitleEl.textContent = `~ Level ${profession.level} ~`;
+
+        const progressPercent = (profession.xp / profession.nextLevel) * 100;
+
+        contentEl.innerHTML = `
+            <div class="section">
+                <div class="section-title">Profession Level</div>
+                <div class="description">
+                    <strong>Current Level:</strong> ${profession.level}<br>
+                    <strong>Experience:</strong> ${profession.xp} / ${profession.nextLevel} XP<br>
+                    <div style="background: #2a1810; height: 20px; border: 1px solid #8b7355; margin-top: 10px; position: relative;">
+                        <div style="background: linear-gradient(90deg, #cd7f32, #8b4513); height: 100%; width: ${progressPercent}%;"></div>
+                        <span style="position: absolute; top: 2px; left: 50%; transform: translateX(-50%); color: #fff; font-size: 0.9em;">${Math.round(progressPercent)}%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">About</div>
+                <div class="description">
+                    ${profession.description}
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Benefits</div>
+                <div class="description">
+                    ${profession.benefits.map(b => `• ${b}`).join('<br>')}
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Known Recipes (${profession.recipes.length})</div>
+                <div class="description">
+                    ${profession.recipes.map(r => `• ${r}`).join('<br>')}
+                </div>
+            </div>
+
+            <div class="section" style="margin-top: auto;">
+                <div class="action-grid">
+                    <button class="btn" onclick="game.showNotification('Training not yet implemented', 'info')">
+                        📚 Train
+                    </button>
+                    <button class="btn" onclick="game.showNotification('Recipe discovery coming soon', 'info')">
+                        🔍 Discover Recipes
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    showRecipeDetail(recipe, titleEl, subtitleEl, contentEl) {
+        if (titleEl) titleEl.textContent = `🔨 ${recipe.name} 🔨`;
+        if (subtitleEl) subtitleEl.textContent = `~ ${recipe.profession} Recipe ~`;
+
+        // Check if player has materials
+        const materialsHtml = recipe.materials.map(mat => {
+            // For demo purposes, we're showing if they have enough (this should check actual inventory)
+            const hasEnough = true; // TODO: Check actual inventory
+            const statusColor = hasEnough ? '#90EE90' : '#FF6B6B';
+            return `<div style="color: ${statusColor};">• ${mat.name} x${mat.quantity}</div>`;
+        }).join('');
+
+        contentEl.innerHTML = `
+            <div class="section">
+                <div class="section-title">Recipe Information</div>
+                <div class="description">
+                    <strong>Profession:</strong> ${recipe.profession}<br>
+                    <strong>Required Level:</strong> ${recipe.level}<br>
+                    <strong>Difficulty:</strong> ${recipe.level <= 2 ? 'Easy' : recipe.level <= 4 ? 'Medium' : 'Hard'}
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Required Materials</div>
+                <div class="description">
+                    ${materialsHtml}
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Result</div>
+                <div class="description">
+                    Crafting this recipe will produce: <strong>${recipe.name}</strong><br>
+                    ${recipe.name.includes('Sword') ? 'A sharp blade suitable for combat.' : ''}
+                    ${recipe.name.includes('Potion') ? 'A restorative potion that heals wounds.' : ''}
+                    ${recipe.name.includes('Bread') ? 'Nourishing bread that restores energy.' : ''}
+                </div>
+            </div>
+
+            <div class="section" style="margin-top: auto;">
+                <div class="action-grid">
+                    <button class="btn" onclick="game.craftItem('${recipe.id}')">
+                        🔨 Craft Item
+                    </button>
+                    <button class="btn" onclick="game.showNotification('Mass crafting coming soon', 'info')">
+                        ⚡ Craft x5
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    showMaterialDetail(material, titleEl, subtitleEl, contentEl) {
+        if (titleEl) titleEl.textContent = `📦 ${material.name} 📦`;
+        if (subtitleEl) subtitleEl.textContent = `~ Crafting Material ~`;
+
+        contentEl.innerHTML = `
+            <div class="section">
+                <div class="section-title">Material Information</div>
+                <div class="description">
+                    <strong>Quantity:</strong> ${material.quantity}<br>
+                    <strong>Type:</strong> Crafting Material
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Description</div>
+                <div class="description">
+                    ${material.description}
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Used In</div>
+                <div class="description">
+                    ${material.name === 'Iron Ingot' ? '• Iron Sword<br>• Steel Helmet<br>• Chain Mail' : ''}
+                    ${material.name === 'Wood' ? '• Iron Sword (handle)<br>• Wooden Shield<br>• Bow' : ''}
+                    ${material.name === 'Red Herb' ? '• Health Potion<br>• Antidote<br>• Healing Salve' : ''}
+                    ${material.name === 'Crystal Vial' ? '• All potions and elixirs' : ''}
+                    ${material.name === 'Wheat' ? '• Bread<br>• Pastries<br>• Beer' : ''}
+                </div>
+            </div>
+
+            <div class="section" style="margin-top: auto;">
+                <div class="action-grid">
+                    <button class="btn" onclick="game.showNotification('Gathering locations coming soon', 'info')">
+                        🗺️ Find Sources
+                    </button>
+                    <button class="btn" onclick="game.showNotification('Trading not yet implemented', 'info')">
+                        💰 Sell Material
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    async craftItem(recipeId) {
+        try {
+            this.showNotification('Crafting...', 'info');
+
+            const response = await fetch(`${this.apiUrl}/api/craft`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({ recipe_id: recipeId })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                this.showNotification(`${data.message}! +${data.xp_gained} XP`, 'success');
+
+                // Reload inventory and professions to reflect changes
+                await this.loadPlayerInventory();
+                await this.loadPlayerProfessions();
+
+                // Update displays
+                this.updateInventoryPage();
+                this.updateCraftPage();
+
+                // If leveled up, show additional notification
+                if (data.new_level > this.player.professions.find(p => p.level === data.new_level - 1)?.level) {
+                    this.showNotification(`Profession leveled up to ${data.new_level}!`, 'success');
+                }
+            } else {
+                this.showNotification(data.error || 'Failed to craft item', 'error');
+            }
+        } catch (error) {
+            console.error('Error crafting item:', error);
+            this.showNotification('Failed to craft item', 'error');
         }
     }
 }
