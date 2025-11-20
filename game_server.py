@@ -619,6 +619,27 @@ def update_player_inventory_item(inventory_id):
 # Profession Endpoints
 # ========================================================================
 
+# Icon mapping for professions
+PROFESSION_ICONS = {
+    'blacksmith': '⚒️', 'alchemist': '🧪', 'enchanter': '✨', 'leatherworker': '🦌',
+    'tailor': '🧵', 'jeweler': '💎', 'cook': '🍳', 'carpenter': '🪓',
+    'engineer': '⚙️', 'scribe': '📜', 'miner': '⛏️', 'herbalist': '🌿',
+    'skinner': '🔪', 'fisherman': '🎣', 'fisher': '🎣', 'archaeologist': '🏺',
+    'armorer': '🛡️', 'weaponsmith': '⚔️', 'brewer': '🍺', 'baker': '🍞',
+    'potter': '🏺', 'glassblower': '🫧', 'mason': '🧱', 'chandler': '🕯️',
+    'tanner': '🦌', 'bowyer': '🏹', 'fletcher': '🎯', 'saddler': '🐴',
+    'cobbler': '👞', 'cartographer': '🗺️', 'astrologer': '⭐', 'apothecary': '💊',
+    'sage': '📚', 'bard': '🎵', 'painter': '🎨', 'sculptor': '🗿', 'architect': '🏛️',
+    'guard': '🛡️', 'merchant': '💰', 'mage': '🔮', 'innkeeper': '🍺',
+    'hermit': '🧙', 'cleric': '⛪', 'druid': '🌳', 'thief': '🗡️',
+    'assassin': '⚔️', 'farmer': '🌾', 'hunter': '🏹', 'scholar': '📚',
+    'healer': '💊', 'knight': '⚔️', 'soldier': '⚔️', 'archer': '🏹',
+    'smuggler': '💼', 'necromancer': '💀', 'ranger': '🌲', 'paladin': '⚔️',
+    'warlock': '🔥', 'monk': '🥋', 'barbarian': '⚡', 'spy': '🕵️',
+    'navigator': '🧭', 'diplomat': '🤝', 'gladiator': '⚔️', 'fortune_teller': '🔮',
+    'sailor': '⚓', 'pirate': '☠️'
+}
+
 @app.route('/api/professions', methods=['GET'])
 def get_all_professions():
     """Get all available professions from GenerationEngine."""
@@ -630,6 +651,7 @@ def get_all_professions():
         profession = {
             'id': prof_name.lower(),
             'name': prof_name.title(),
+            'icon': PROFESSION_ICONS.get(prof_name.lower(), '🔨'),
             'description': prof_data.get('description_templates', [f"A skilled {prof_name}."])[0] if prof_data.get('description_templates') else f"A skilled {prof_name}.",
             'skills': prof_data.get('skills', []),
             'base_stats': prof_data.get('base_stats', {}),
@@ -667,6 +689,7 @@ def get_player_professions():
                 'id': prof_record['id'],
                 'profession_id': prof_id,
                 'name': prof_id.title(),
+                'icon': PROFESSION_ICONS.get(prof_id.lower(), '🔨'),
                 'level': prof_record['level'],
                 'experience': prof_record['experience'],
                 'description': prof_data.get('description_templates', [f"A skilled {prof_id}."])[0] if prof_data.get('description_templates') else f"A skilled {prof_id}.",
