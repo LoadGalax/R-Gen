@@ -124,6 +124,10 @@
             background: linear-gradient(135deg, #daa520 0%, #8b6914 100%);
         }
 
+        .bookmark[data-page="craft"] {
+            background: linear-gradient(135deg, #cd7f32 0%, #8b4513 100%);
+        }
+
         .bookmark[data-page="map"] {
             background: linear-gradient(135deg, #4169e1 0%, #191970 100%);
         }
@@ -884,6 +888,10 @@
                 <div class="icon">🎒</div>
                 <div class="label">Items</div>
             </div>
+            <div class="bookmark" data-page="craft">
+                <div class="icon">🔨</div>
+                <div class="label">Craft</div>
+            </div>
             <div class="bookmark" data-page="map">
                 <div class="icon">🧭</div>
                 <div class="label">Map</div>
@@ -1090,6 +1098,65 @@
                     </div>
                 </div>
 
+                <!-- Craft page left side: Recipes, Materials, Professions -->
+                <div class="page-content hidden" data-page="craft">
+                    <div class="page-header">
+                        <div class="page-title">🔨 Crafting 🔨</div>
+                        <div class="page-subtitle">~ The Art of Creation ~</div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-title">Professions</div>
+                        <div id="craft-professions-list" class="item-list">
+                            <div class="item rare" onclick="game.showCraftDetailOnRightPage('profession', 'blacksmithing')">
+                                ⚒️ Blacksmithing - Level 5
+                            </div>
+                            <div class="item uncommon" onclick="game.showCraftDetailOnRightPage('profession', 'alchemy')">
+                                🧪 Alchemy - Level 3
+                            </div>
+                            <div class="item common" onclick="game.showCraftDetailOnRightPage('profession', 'cooking')">
+                                🍳 Cooking - Level 1
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-title">Known Recipes</div>
+                        <div id="craft-recipes-list" class="item-list">
+                            <div class="item rare" onclick="game.showCraftDetailOnRightPage('recipe', {id: 'iron_sword', name: 'Iron Sword', profession: 'Blacksmithing', level: 3, materials: [{name: 'Iron Ingot', quantity: 3}, {name: 'Wood', quantity: 1}]})">
+                                ⚔️ Iron Sword [Blacksmithing 3]
+                            </div>
+                            <div class="item uncommon" onclick="game.showCraftDetailOnRightPage('recipe', {id: 'health_potion', name: 'Health Potion', profession: 'Alchemy', level: 2, materials: [{name: 'Red Herb', quantity: 2}, {name: 'Crystal Vial', quantity: 1}]})">
+                                🧪 Health Potion [Alchemy 2]
+                            </div>
+                            <div class="item common" onclick="game.showCraftDetailOnRightPage('recipe', {id: 'bread', name: 'Bread', profession: 'Cooking', level: 1, materials: [{name: 'Wheat', quantity: 2}]})">
+                                🍞 Bread [Cooking 1]
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-title">Available Materials</div>
+                        <div id="craft-materials-list" class="item-list">
+                            <div class="item" onclick="game.showCraftDetailOnRightPage('material', {name: 'Iron Ingot', quantity: 15, description: 'A bar of refined iron, perfect for forging weapons and armor.'})">
+                                📦 Iron Ingot x15
+                            </div>
+                            <div class="item" onclick="game.showCraftDetailOnRightPage('material', {name: 'Wood', quantity: 8, description: 'Sturdy timber harvested from the forest. Used in many crafts.'})">
+                                🪵 Wood x8
+                            </div>
+                            <div class="item" onclick="game.showCraftDetailOnRightPage('material', {name: 'Red Herb', quantity: 12, description: 'A medicinal herb with healing properties. Essential for alchemy.'})">
+                                🌿 Red Herb x12
+                            </div>
+                            <div class="item" onclick="game.showCraftDetailOnRightPage('material', {name: 'Crystal Vial', quantity: 5, description: 'A delicate vial made of pure crystal. Holds potions perfectly.'})">
+                                🧴 Crystal Vial x5
+                            </div>
+                            <div class="item" onclick="game.showCraftDetailOnRightPage('material', {name: 'Wheat', quantity: 20, description: 'Golden wheat, freshly harvested. Can be milled into flour.'})">
+                                🌾 Wheat x20
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Other pages placeholder -->
                 <div class="page-content hidden" data-page="map">
                     <div class="page-header">
@@ -1178,6 +1245,19 @@
                     <div id="right-inventory-content" class="section">
                         <div class="description" style="text-align: center; color: #b8a485;">
                             Click on an item to view its detailed stats and description.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Craft page right side: Recipe/Material/Profession details -->
+                <div class="page-content hidden" data-page="craft">
+                    <div class="page-header">
+                        <div class="page-title" id="right-craft-title">🔨 Craft Details 🔨</div>
+                        <div class="page-subtitle" id="right-craft-subtitle">~ Select to learn more ~</div>
+                    </div>
+                    <div id="right-craft-content" class="section">
+                        <div class="description" style="text-align: center; color: #b8a485;">
+                            Select a profession, recipe, or material to view detailed information and crafting options.
                         </div>
                     </div>
                 </div>
