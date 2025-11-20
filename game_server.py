@@ -614,6 +614,188 @@ def update_player_inventory_item(inventory_id):
 
     return jsonify({'success': True, 'message': 'Item updated'})
 
+# ========================================================================
+# Profession Endpoints
+# ========================================================================
+
+@app.route('/api/professions', methods=['GET'])
+def get_all_professions():
+    """Get all available professions."""
+    database = get_db()
+    professions = database.get_all_professions()
+    return jsonify({'professions': professions})
+
+@app.route('/api/player/professions', methods=['GET'])
+@login_required
+def get_player_professions():
+    """Get player's professions with levels and XP."""
+    database = get_db()
+    player_id = session['player_id']
+
+    professions = database.get_player_professions(player_id)
+    return jsonify({'professions': professions})
+
+@app.route('/api/player/professions', methods=['POST'])
+@login_required
+def add_player_profession():
+    """Add a profession to player."""
+    data = request.get_json()
+    database = get_db()
+    player_id = session['player_id']
+
+    profession_id = data.get('profession_id')
+    if not profession_id:
+        return jsonify({'error': 'profession_id required'}), 400
+
+    level = data.get('level', 1)
+    experience = data.get('experience', 0)
+
+    try:
+        player_prof_id = database.add_player_profession(player_id, profession_id, level, experience)
+        return jsonify({'success': True, 'player_profession_id': player_prof_id})
+    except Exception as e:
+        return jsonify({'error': f'Failed to add profession: {str(e)}'}), 500
+
+@app.route('/api/player/professions/<int:profession_id>', methods=['PATCH'])
+@login_required
+def update_player_profession(profession_id):
+    """Update player's profession level or XP."""
+    data = request.get_json()
+    database = get_db()
+    player_id = session['player_id']
+
+    level = data.get('level')
+    experience = data.get('experience')
+
+    success = database.update_player_profession(player_id, profession_id, level, experience)
+    if not success:
+        return jsonify({'error': 'Failed to update profession'}), 500
+
+    return jsonify({'success': True, 'message': 'Profession updated'})
+
+# ========================================================================
+# Recipe Endpoints
+# ========================================================================
+
+@app.route('/api/recipes', methods=['GET'])
+def get_all_recipes():
+    """Get all recipes, optionally filtered by profession."""
+    database = get_db()
+    profession_id = request.args.get('profession_id', type=int)
+
+    if profession_id:
+        recipes = database.get_recipes_by_profession(profession_id)
+    else:
+        # Get all recipes by querying all professions
+        professions = database.get_all_professions()
+        recipes = []
+        for prof in professions:
+            recipes.extend(database.get_recipes_by_profession(prof['id']))
+
+    return jsonify({'recipes': recipes})
+
+@app.route('/api/player/recipes', methods=['GET'])
+@login_required
+def get_player_recipes():
+    """Get player's known recipes."""
+    database = get_db()
+    player_id = session['player_id']
+
+    recipes = database.get_player_recipes(player_id)
+    return jsonify({'recipes': recipes})
+
+@app.route('/api/player/recipes', methods=['POST'])
+@login_required
+def add_player_recipe():
+    """Add a recipe to player's known recipes."""
+    data = request.get_json()
+    database = get_db()
+    player_id = session['player_id']
+
+    recipe_id = data.get('recipe_id')
+    if not recipe_id:
+        return jsonify({'error': 'recipe_id required'}), 400
+
+    try:
+        player_recipe_id = database.add_player_recipe(player_id, recipe_id)
+        return jsonify({'success': True, 'player_recipe_id': player_recipe_id})
+    except Exception as e:
+        return jsonify({'error': f'Failed to add recipe: {str(e)}'}), 500
+
+@app.route('/api/craft', methods=['POST'])
+@login_required
+def craft_item():
+    """Craft an item from a recipe."""
+    data = request.get_json()
+    database = get_db()
+    player_id = session['player_id']
+
+    recipe_id = data.get('recipe_id')
+    if not recipe_id:
+        return jsonify({'error': 'recipe_id required'}), 400
+
+    # Get recipe details
+    player_recipes = database.get_player_recipes(player_id)
+    recipe = next((r for r in player_recipes if r['id'] == recipe_id), None)
+
+    if not recipe:
+        return jsonify({'error': 'Recipe not known'}), 403
+
+    # Check profession level
+    player_professions = database.get_player_professions(player_id)
+    prof = next((p for p in player_professions if p['profession_id'] == recipe['profession_id']), None)
+
+    if not prof or prof['level'] < recipe['required_level']:
+        return jsonify({'error': 'Insufficient profession level'}), 403
+
+    # Check materials in inventory
+    inventory = database.get_player_inventory(player_id)
+    for ingredient in recipe['ingredients']:
+        inv_item = next((i for i in inventory if i['item_name'] == ingredient['ingredient_name']), None)
+        if not inv_item or inv_item['quantity'] < ingredient['quantity']:
+            return jsonify({'error': f'Insufficient materials: {ingredient["ingredient_name"]}'}), 400
+
+    # Consume materials
+    for ingredient in recipe['ingredients']:
+        inv_item = next(i for i in inventory if i['item_name'] == ingredient['ingredient_name'])
+        database.remove_from_inventory(player_id, inv_item['id'], ingredient['quantity'])
+
+    # Add crafted item to inventory
+    item_data = {
+        'crafted': True,
+        'recipe_id': recipe_id,
+        'profession': recipe['profession_name']
+    }
+
+    database.add_to_inventory(
+        player_id=player_id,
+        item_name=recipe['result_item_name'],
+        item_type='Crafted',
+        quantity=recipe['result_quantity'],
+        item_data=item_data
+    )
+
+    # Grant profession XP (10 * required_level)
+    xp_gain = 10 * recipe['required_level']
+    new_xp = prof['experience'] + xp_gain
+
+    # Simple leveling: 100 XP per level
+    new_level = prof['level']
+    xp_per_level = 100
+    while new_xp >= xp_per_level * new_level:
+        new_xp -= xp_per_level * new_level
+        new_level += 1
+
+    database.update_player_profession(player_id, recipe['profession_id'], new_level, new_xp)
+
+    return jsonify({
+        'success': True,
+        'message': f'Crafted {recipe["result_item_name"]}',
+        'xp_gained': xp_gain,
+        'new_level': new_level,
+        'new_experience': new_xp
+    })
+
 @app.route('/api/player/update', methods=['PATCH'])
 @login_required
 def update_player_data():
