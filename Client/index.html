@@ -1060,23 +1060,23 @@
                     <div class="section">
                         <div class="section-title">Equipped</div>
                         <div class="item-list">
-                            <div class="item legendary">⚔️ Legendary Flaming Greatsword (+25 DMG)</div>
-                            <div class="item rare">🛡️ Rare Mithril Shield (+15 DEF)</div>
+                            <div class="item legendary" onclick="game.showItemDetailsOnRightPage({id: 'sword1', name: 'Flaming Greatsword', rarity: 'Legendary', type: 'Weapon', damage: 25, value: 500, weight: 8, description: 'A magnificent greatsword wreathed in eternal flames. Forged by ancient dragon smiths in the heart of a volcano.', special_effects: 'Deals additional fire damage on hit. Illuminates dark areas.', equipped: true})">⚔️ Legendary Flaming Greatsword (+25 DMG)</div>
+                            <div class="item rare" onclick="game.showItemDetailsOnRightPage({id: 'shield1', name: 'Mithril Shield', rarity: 'Rare', type: 'Armor', defense: 15, value: 200, weight: 5, description: 'A lightweight but incredibly strong shield crafted from pure mithril.', special_effects: 'Reflects 10% of damage back to attacker.', equipped: true})">🛡️ Rare Mithril Shield (+15 DEF)</div>
                         </div>
                     </div>
 
                     <div class="section">
                         <div class="section-title">Consumables</div>
                         <div class="item-list">
-                            <div class="item">🧪 Health Potion × 3</div>
-                            <div class="item">📜 Scroll of Fireball</div>
+                            <div class="item" onclick="game.showItemDetailsOnRightPage({id: 'potion1', name: 'Health Potion', rarity: 'Common', type: 'Consumable', value: 25, weight: 0.5, description: 'A red potion that restores 50 health points when consumed.', special_effects: 'Instantly restores 50 HP.'})">🧪 Health Potion × 3</div>
+                            <div class="item" onclick="game.showItemDetailsOnRightPage({id: 'scroll1', name: 'Scroll of Fireball', rarity: 'Uncommon', type: 'Consumable', magic_power: 30, value: 50, weight: 0.2, description: 'A magical scroll inscribed with arcane runes. When read, it unleashes a devastating fireball.', special_effects: 'Deals 30 fire damage in an area. Single use.'})">📜 Scroll of Fireball</div>
                         </div>
                     </div>
 
                     <div class="section">
                         <div class="section-title">Key Items</div>
                         <div class="item-list">
-                            <div class="item">🗝️ Mysterious Key</div>
+                            <div class="item" onclick="game.showItemDetailsOnRightPage({id: 'key1', name: 'Mysterious Key', rarity: 'Rare', type: 'Key Item', value: 0, weight: 0.1, description: 'An ancient key covered in strange symbols. It seems to pulse with magical energy. What door does it unlock?', special_effects: 'Opens a mysterious door somewhere in the world.'})">🗝️ Mysterious Key</div>
                         </div>
                     </div>
 
@@ -1142,45 +1142,81 @@
 
             <!-- Right page -->
             <div class="page page-right">
-                <div class="page-content">
+                <!-- World page right side: NPC/Location details -->
+                <div class="page-content" data-page="world">
                     <div class="page-header">
-                        <div class="page-title">⚔ Notes & Lore ⚔</div>
-                        <div class="page-subtitle">~ Knowledge Gained ~</div>
+                        <div class="page-title" id="right-world-title">⚔ Select an NPC ⚔</div>
+                        <div class="page-subtitle" id="right-world-subtitle">~ Click to view details ~</div>
                     </div>
-
-                    <div class="section">
-                        <div class="section-title">About Ironhaven</div>
-                        <div class="description">
-                            Ironhaven is a prosperous mining town nestled in the foothills of the
-                            Stonecrest Mountains. Known for its skilled blacksmiths and abundant
-                            iron deposits, the town has grown wealthy from trade with neighboring
-                            kingdoms. The Rusty Anvil Tavern serves as the social heart of the
-                            community, where miners, merchants, and adventurers gather to share
-                            stories and conduct business.
+                    <div id="right-world-content" class="section">
+                        <div class="description" style="text-align: center; color: #b8a485;">
+                            Click on an NPC or location element to view detailed information here.
                         </div>
                     </div>
+                </div>
 
-                    <div class="section">
-                        <div class="section-title">Notable Residents</div>
-                        <div class="description">
-                            <strong>Thora Ironheart</strong> is the town's master blacksmith,
-                            renowned throughout the region for her exceptional craftsmanship.
-                            Her workshop produces some of the finest weapons and armor in the land.
-                        </div>
-                        <div class="description" style="text-indent: 0; margin-top: 10px;">
-                            <strong>Eldrin the Sage</strong> is a mysterious wizard who arrived
-                            in town several years ago. He is often seen studying ancient texts
-                            and is known to possess knowledge of forgotten magic.
+                <!-- Character page right side: Equipment/Skills details -->
+                <div class="page-content hidden" data-page="character">
+                    <div class="page-header">
+                        <div class="page-title">⚔ Equipment ⚔</div>
+                        <div class="page-subtitle">~ Gear & Abilities ~</div>
+                    </div>
+                    <div id="right-character-content" class="section">
+                        <div class="section-title">Currently Equipped</div>
+                        <div class="description" style="text-align: center; color: #b8a485;">
+                            Your equipped items and abilities will be shown here.
                         </div>
                     </div>
+                </div>
 
-                    <div class="section">
-                        <div class="section-title">Rumors & Whispers</div>
-                        <div class="event-list">
-                            <div class="event">Strange lights have been seen in the mountains at night</div>
-                            <div class="event">A merchant spoke of bandits on the eastern road</div>
-                            <div class="event">The mines have uncovered an unusual ore deposit</div>
-                            <div class="event">Travelers report seeing a mysterious cloaked figure</div>
+                <!-- Inventory page right side: Item details -->
+                <div class="page-content hidden" data-page="inventory">
+                    <div class="page-header">
+                        <div class="page-title" id="right-inventory-title">⚔ Item Details ⚔</div>
+                        <div class="page-subtitle" id="right-inventory-subtitle">~ Select an item ~</div>
+                    </div>
+                    <div id="right-inventory-content" class="section">
+                        <div class="description" style="text-align: center; color: #b8a485;">
+                            Click on an item to view its detailed stats and description.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Map page right side: Location details -->
+                <div class="page-content hidden" data-page="map">
+                    <div class="page-header">
+                        <div class="page-title" id="right-map-title">⚔ Location Info ⚔</div>
+                        <div class="page-subtitle" id="right-map-subtitle">~ Select a location ~</div>
+                    </div>
+                    <div id="right-map-content" class="section">
+                        <div class="description" style="text-align: center; color: #b8a485;">
+                            Click on a location to view details and travel options.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quests page right side: Quest details -->
+                <div class="page-content hidden" data-page="quests">
+                    <div class="page-header">
+                        <div class="page-title" id="right-quests-title">⚔ Quest Details ⚔</div>
+                        <div class="page-subtitle" id="right-quests-subtitle">~ Select a quest ~</div>
+                    </div>
+                    <div id="right-quests-content" class="section">
+                        <div class="description" style="text-align: center; color: #b8a485;">
+                            Select a quest to view objectives, rewards, and progress.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Events page right side: Event details -->
+                <div class="page-content hidden" data-page="events">
+                    <div class="page-header">
+                        <div class="page-title" id="right-events-title">⚔ Event Details ⚔</div>
+                        <div class="page-subtitle" id="right-events-subtitle">~ Select an event ~</div>
+                    </div>
+                    <div id="right-events-content" class="section">
+                        <div class="description" style="text-align: center; color: #b8a485;">
+                            Click on an event to view full details and context.
                         </div>
                     </div>
                 </div>
@@ -1276,7 +1312,8 @@
     <script>
         // Bookmark navigation
         const bookmarks = document.querySelectorAll('.bookmark');
-        const pageContents = document.querySelectorAll('.page-left .page-content');
+        const leftPageContents = document.querySelectorAll('.page-left .page-content');
+        const rightPageContents = document.querySelectorAll('.page-right .page-content');
 
         bookmarks.forEach(bookmark => {
             bookmark.addEventListener('click', () => {
@@ -1286,8 +1323,17 @@
                 bookmarks.forEach(b => b.classList.remove('active'));
                 bookmark.classList.add('active');
 
-                // Show corresponding page
-                pageContents.forEach(page => {
+                // Show corresponding page on LEFT side
+                leftPageContents.forEach(page => {
+                    if (page.getAttribute('data-page') === targetPage) {
+                        page.classList.remove('hidden');
+                    } else {
+                        page.classList.add('hidden');
+                    }
+                });
+
+                // Show corresponding page on RIGHT side
+                rightPageContents.forEach(page => {
                     if (page.getAttribute('data-page') === targetPage) {
                         page.classList.remove('hidden');
                     } else {
