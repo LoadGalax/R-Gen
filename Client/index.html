@@ -1356,11 +1356,26 @@
         </div>
     </div>
 
+    <!-- Configuration -->
+    <script src="config.js"></script>
+
     <!-- Socket.IO Client -->
-    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script>
+        // Dynamically load Socket.IO from config
+        const socketScript = document.createElement('script');
+        socketScript.src = CONFIG.external.socketIoUrl;
+        document.head.appendChild(socketScript);
+    </script>
 
     <!-- Game Client Script with cache-busting timestamp -->
-    <script src="game.js?v=20251120-2"></script>
+    <script>
+        // Dynamically load game.js with config version
+        socketScript.onload = function() {
+            const gameScript = document.createElement('script');
+            gameScript.src = `game.js?v=${CONFIG.cache.gamejsVersion}`;
+            document.head.appendChild(gameScript);
+        };
+    </script>
 
     <script>
         // Bookmark navigation

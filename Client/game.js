@@ -609,7 +609,7 @@ class RGenGame {
     }
 
     async loadEvents() {
-        const data = await this.apiGet('/events?limit=20');
+        const data = await this.apiGet(`/events?limit=${CONFIG.api.eventsLimit}`);
         if (data && data.events) {
             this.events = data.events;
             this.updateEventsDisplay();
@@ -996,12 +996,7 @@ class RGenGame {
         const equipped = item.equipped;
         const itemId = item.id;
 
-        const rarityColor = {
-            'Legendary': '#ffd700',
-            'Rare': '#6495ed',
-            'Uncommon': '#32cd32',
-            'Common': '#b8a485'
-        };
+        const rarityColor = CONFIG.itemRarity.colors;
 
         if (title) title.textContent = `⚔ ${name} ⚔`;
         if (subtitle) subtitle.innerHTML = `~ <span style="color: ${rarityColor[rarity] || '#b8a485'}">${rarity}</span> ${type} ~`;
@@ -1230,8 +1225,8 @@ class RGenGame {
         }
 
         this.events.push(event);
-        if (this.events.length > 50) {
-            this.events.shift(); // Keep only last 50 events
+        if (this.events.length > CONFIG.ui.maxEventsInMemory) {
+            this.events.shift(); // Keep only last N events
         }
 
         this.updateEventsDisplay();
@@ -1307,7 +1302,7 @@ class RGenGame {
         setTimeout(() => {
             notification.classList.remove('notification-show');
             setTimeout(() => notification.remove(), 300);
-        }, 3000);
+        }, CONFIG.ui.notificationDuration);
     }
 
     // ========================================================================
@@ -1426,7 +1421,9 @@ class RGenGame {
                 professionsListEl.innerHTML = '<div class="description" style="text-align: center; color: #b8a485;">No professions learned yet. Visit a trainer to learn a profession!</div>';
             } else {
                 this.player.professions.forEach(prof => {
-                    const rarityClass = prof.level >= 8 ? 'legendary' : prof.level >= 6 ? 'rare' : prof.level >= 3 ? 'uncommon' : 'common';
+                    const rarityClass = prof.level >= CONFIG.profession.rarityThresholds.legendary ? 'legendary' :
+                                       prof.level >= CONFIG.profession.rarityThresholds.rare ? 'rare' :
+                                       prof.level >= CONFIG.profession.rarityThresholds.uncommon ? 'uncommon' : 'common';
                     const profDiv = document.createElement('div');
                     profDiv.className = `item ${rarityClass}`;
                     profDiv.textContent = `${prof.icon || '🔨'} ${prof.name} - Level ${prof.level}`;
@@ -1445,7 +1442,8 @@ class RGenGame {
                 recipesListEl.innerHTML = '<div class="description" style="text-align: center; color: #b8a485;">No recipes learned yet. Learn recipes from profession trainers!</div>';
             } else {
                 this.player.recipes.forEach(recipe => {
-                    const rarityClass = recipe.required_level >= 7 ? 'rare' : recipe.required_level >= 4 ? 'uncommon' : 'common';
+                    const rarityClass = recipe.required_level >= CONFIG.recipe.rarityThresholds.rare ? 'rare' :
+                                       recipe.required_level >= CONFIG.recipe.rarityThresholds.uncommon ? 'uncommon' : 'common';
                     const recipeDiv = document.createElement('div');
                     recipeDiv.className = `item ${rarityClass}`;
                     recipeDiv.textContent = `${recipe.profession_icon || '📜'} ${recipe.name} [${recipe.profession_name} ${recipe.required_level}]`;
@@ -1504,8 +1502,8 @@ class RGenGame {
         const level = profession.level;
         const xp = profession.experience || 0;
 
-        // Calculate XP needed for next level (100 * level)
-        const nextLevel = 100 * level;
+        // Calculate XP needed for next level
+        const nextLevel = CONFIG.profession.xpPerLevel * level;
         const progressPercent = (xp / nextLevel) * 100;
 
         // Get description and benefits from profession data
