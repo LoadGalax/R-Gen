@@ -814,9 +814,61 @@
             flex-direction: column;
             gap: 10px;
         }
+
+        /* Form inputs */
+        .form-input {
+            width: 100%;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid #3d2f1f;
+            border-radius: 6px;
+            color: #e6d5b8;
+            font-family: 'Georgia', serif;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #d4af37;
+            background: rgba(0, 0, 0, 0.6);
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
+        }
+
+        .form-input::placeholder {
+            color: #7a6f5d;
+        }
+
+        /* Logout button */
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #8b0000 0%, #5a0000 100%);
+            color: #f4e4c1;
+            border: 2px solid #3d2f1f;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Georgia', serif;
+            font-size: 12px;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+            z-index: 500;
+        }
+
+        .logout-btn:hover {
+            background: linear-gradient(135deg, #a00000 0%, #6a0000 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(139, 0, 0, 0.6);
+        }
     </style>
 </head>
 <body>
+    <!-- Logout button (hidden by default) -->
+    <button id="logout-btn" class="logout-btn" style="display: none;">🚪 Logout</button>
+
     <div class="grimoire-container">
         <!-- Bookmark markers -->
         <div class="bookmarks">
@@ -1136,6 +1188,85 @@
         </div>
     </div>
 
+    <!-- Login/Registration Modal -->
+    <div id="auth-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2 id="auth-modal-title">⚔ Enter the Realm ⚔</h2>
+            </div>
+            <div class="modal-body">
+                <!-- Login Form -->
+                <div id="login-form" class="auth-form">
+                    <div class="section">
+                        <div class="section-title">Login</div>
+                        <div style="display: flex; flex-direction: column; gap: 15px;">
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; color: #d4af37;">Username</label>
+                                <input type="text" id="login-username" class="form-input" placeholder="Enter username" />
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; color: #d4af37;">Password</label>
+                                <input type="password" id="login-password" class="form-input" placeholder="Enter password" />
+                            </div>
+                            <button id="login-btn" class="btn" style="width: 100%;">🗝️ Enter Realm</button>
+                            <div style="text-align: center; color: #b8a485; font-size: 13px;">
+                                Don't have an account?
+                                <a href="#" id="show-register" style="color: #d4af37; text-decoration: none;">Register here</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Registration Form -->
+                <div id="register-form" class="auth-form" style="display: none;">
+                    <div class="section">
+                        <div class="section-title">Create Account</div>
+                        <div style="display: flex; flex-direction: column; gap: 15px;">
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; color: #d4af37;">Username</label>
+                                <input type="text" id="register-username" class="form-input" placeholder="Choose username" />
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; color: #d4af37;">Password</label>
+                                <input type="password" id="register-password" class="form-input" placeholder="Choose password" />
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; color: #d4af37;">Character Name</label>
+                                <input type="text" id="register-character-name" class="form-input" placeholder="Enter character name" />
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; color: #d4af37;">Race</label>
+                                <select id="register-race" class="form-input">
+                                    <option value="Human">Human</option>
+                                    <option value="Elf">Elf</option>
+                                    <option value="Dwarf">Dwarf</option>
+                                    <option value="Halfling">Halfling</option>
+                                    <option value="Orc">Orc</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 5px; color: #d4af37;">Class</label>
+                                <select id="register-class" class="form-input">
+                                    <option value="Warrior">Warrior</option>
+                                    <option value="Mage">Mage</option>
+                                    <option value="Rogue">Rogue</option>
+                                    <option value="Cleric">Cleric</option>
+                                    <option value="Ranger">Ranger</option>
+                                    <option value="Bard">Bard</option>
+                                </select>
+                            </div>
+                            <button id="register-btn" class="btn" style="width: 100%;">⚔️ Create Hero</button>
+                            <div style="text-align: center; color: #b8a485; font-size: 13px;">
+                                Already have an account?
+                                <a href="#" id="show-login" style="color: #d4af37; text-decoration: none;">Login here</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Socket.IO Client -->
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 
@@ -1169,6 +1300,24 @@
                     game.showMapPage();
                 }
             });
+        });
+
+        // Auth modal toggle
+        const showRegister = document.getElementById('show-register');
+        const showLogin = document.getElementById('show-login');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+
+        showRegister.addEventListener('click', (e) => {
+            e.preventDefault();
+            loginForm.style.display = 'none';
+            registerForm.style.display = 'block';
+        });
+
+        showLogin.addEventListener('click', (e) => {
+            e.preventDefault();
+            registerForm.style.display = 'none';
+            loginForm.style.display = 'block';
         });
     </script>
 </body>

@@ -13,6 +13,8 @@ class RGenGame {
         this.npcs = [];
         this.events = [];
         this.selectedNPC = null;
+        this.player = null;
+        this.isAuthenticated = false;
 
         // Initialize
         this.init();
@@ -20,6 +22,25 @@ class RGenGame {
 
     async init() {
         console.log('Initializing R-Gen Game Client...');
+
+        // Check if authenticated
+        await this.checkAuth();
+
+        if (!this.isAuthenticated) {
+            this.showAuthModal();
+            this.setupAuthHandlers();
+            return;
+        }
+
+        // Hide auth modal if showing
+        this.hideAuthModal();
+
+        // Show logout button
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.style.display = 'block';
+            logoutBtn.onclick = () => this.logout();
+        }
 
         // Connect to WebSocket
         this.connectWebSocket();
@@ -29,14 +50,20 @@ class RGenGame {
         await this.loadLocations();
         await this.loadNPCs();
         await this.loadEvents();
+        await this.loadPlayerData();
 
         // Set initial location
-        if (this.locations.length > 0) {
+        if (this.player && this.player.current_location_id) {
+            await this.setLocation(this.player.current_location_id);
+        } else if (this.locations.length > 0) {
             await this.setLocation(this.locations[0].id);
         }
 
         // Start simulation
         await this.startSimulation();
+
+        // Update character page with player data
+        this.updateCharacterPage();
 
         console.log('Game client initialized!');
     }
@@ -96,7 +123,9 @@ class RGenGame {
 
     async apiGet(endpoint) {
         try {
-            const response = await fetch(`${this.apiUrl}/api${endpoint}`);
+            const response = await fetch(`${this.apiUrl}/api${endpoint}`, {
+                credentials: 'include' // Include cookies for session
+            });
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             return await response.json();
         } catch (error) {
@@ -113,15 +142,218 @@ class RGenGame {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(data)
+                body: JSON.stringify(data),
+                credentials: 'include' // Include cookies for session
             });
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => null);
+                throw new Error(errorData?.error || `HTTP error! status: ${response.status}`);
+            }
             return await response.json();
         } catch (error) {
             console.error(`API POST error (${endpoint}):`, error);
             this.showNotification(`Error: ${error.message}`, 'error');
             return null;
         }
+    }
+
+    // ========================================================================
+    // Authentication
+    // ========================================================================
+
+    async checkAuth() {
+        try {
+            const response = await fetch(`${this.apiUrl}/api/player/me`, {
+                credentials: 'include'
+            });
+            if (response.ok) {
+                const data = await response.json();
+                this.player = data.player;
+                this.isAuthenticated = true;
+                console.log('Authenticated as:', this.player.username);
+                return true;
+            }
+        } catch (error) {
+            console.log('Not authenticated');
+        }
+        this.isAuthenticated = false;
+        return false;
+    }
+
+    async login(username, password) {
+        const data = await this.apiPost('/player/login', { username, password });
+        if (data && data.success) {
+            this.player = data.player;
+            this.isAuthenticated = true;
+            this.showNotification('Welcome back, ' + this.player.character_name + '!', 'success');
+            // Reinitialize the game
+            await this.init();
+            return true;
+        }
+        return false;
+    }
+
+    async register(username, password, characterName, race, characterClass) {
+        const data = await this.apiPost('/player/register', {
+            username,
+            password,
+            character_name: characterName,
+            race,
+            class: characterClass
+        });
+        if (data && data.success) {
+            this.player = data.player;
+            this.isAuthenticated = true;
+            this.showNotification('Welcome to the realm, ' + this.player.character_name + '!', 'success');
+            // Reinitialize the game
+            await this.init();
+            return true;
+        }
+        return false;
+    }
+
+    async logout() {
+        const data = await this.apiPost('/player/logout', {});
+        if (data && data.success) {
+            this.player = null;
+            this.isAuthenticated = false;
+            this.showNotification('You have left the realm', 'info');
+            // Reload page to show login
+            window.location.reload();
+        }
+    }
+
+    async loadPlayerData() {
+        try {
+            const response = await fetch(`${this.apiUrl}/api/player/me`, {
+                credentials: 'include'
+            });
+            if (response.ok) {
+                const data = await response.json();
+                this.player = data.player;
+                console.log('Player data loaded:', this.player);
+            }
+        } catch (error) {
+            console.error('Error loading player data:', error);
+        }
+    }
+
+    showAuthModal() {
+        const modal = document.getElementById('auth-modal');
+        if (modal) {
+            modal.style.display = 'flex';
+        }
+    }
+
+    hideAuthModal() {
+        const modal = document.getElementById('auth-modal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+
+    setupAuthHandlers() {
+        // Login button
+        const loginBtn = document.getElementById('login-btn');
+        if (loginBtn) {
+            loginBtn.onclick = async () => {
+                const username = document.getElementById('login-username').value;
+                const password = document.getElementById('login-password').value;
+
+                if (!username || !password) {
+                    this.showNotification('Please enter username and password', 'warning');
+                    return;
+                }
+
+                await this.login(username, password);
+            };
+        }
+
+        // Register button
+        const registerBtn = document.getElementById('register-btn');
+        if (registerBtn) {
+            registerBtn.onclick = async () => {
+                const username = document.getElementById('register-username').value;
+                const password = document.getElementById('register-password').value;
+                const characterName = document.getElementById('register-character-name').value;
+                const race = document.getElementById('register-race').value;
+                const characterClass = document.getElementById('register-class').value;
+
+                if (!username || !password || !characterName) {
+                    this.showNotification('Please fill in all required fields', 'warning');
+                    return;
+                }
+
+                await this.register(username, password, characterName, race, characterClass);
+            };
+        }
+
+        // Enter key support
+        const loginInputs = ['login-username', 'login-password'];
+        loginInputs.forEach(id => {
+            const input = document.getElementById(id);
+            if (input) {
+                input.onkeypress = (e) => {
+                    if (e.key === 'Enter') loginBtn?.click();
+                };
+            }
+        });
+    }
+
+    updateCharacterPage() {
+        if (!this.player) return;
+
+        // Update character page title
+        const charTitle = document.querySelector('[data-page="character"] .page-title');
+        if (charTitle) {
+            charTitle.textContent = `⚔ ${this.player.character_name} ⚔`;
+        }
+
+        // Update subtitle
+        const charSubtitle = document.querySelector('[data-page="character"] .page-subtitle');
+        if (charSubtitle) {
+            charSubtitle.textContent = `~ Level ${this.player.level} ${this.player.race} ${this.player.class} ~`;
+        }
+
+        // Update gold
+        const goldBadge = document.querySelector('[data-page="character"] .gold-badge');
+        if (goldBadge) {
+            goldBadge.textContent = `💰 ${this.player.gold} Gold Coins`;
+        }
+
+        // Update stats if available
+        if (this.player.stats) {
+            this.updateStatsDisplay(this.player.stats);
+        }
+    }
+
+    updateStatsDisplay(stats) {
+        const statItems = {
+            health: { label: '❤️ Health', color: 'health' },
+            mana: { label: '✨ Mana', color: 'mana' },
+            energy: { label: '⚡ Energy', color: 'energy' }
+        };
+
+        Object.entries(statItems).forEach(([key, config]) => {
+            const current = stats[key];
+            const max = stats[`max_${key}`];
+            const percent = (current / max) * 100;
+
+            // Update label
+            const label = document.querySelector(`[data-page="character"] .stat-label span:first-child`);
+            if (label && label.textContent.includes(config.label.substring(2))) {
+                const valueSpan = label.parentElement.querySelector('span:last-child');
+                if (valueSpan) {
+                    valueSpan.textContent = `${current} / ${max}`;
+                }
+            }
+
+            // Update bar
+            const bars = document.querySelectorAll(`[data-page="character"] .stat-bar-fill.${config.color}`);
+            bars.forEach(bar => {
+                bar.style.width = `${percent}%`;
+            });
+        });
     }
 
     async loadWorldInfo() {
