@@ -49,7 +49,6 @@ function setupEventListeners() {
     document.getElementById('refresh-btn').addEventListener('click', loadAllData);
 
     // Dashboard quick actions
-    document.getElementById('advance-time-btn').addEventListener('click', advanceSimulation);
     document.getElementById('clear-events-btn').addEventListener('click', clearEvents);
 
     // World settings
@@ -61,7 +60,6 @@ function setupEventListeners() {
     document.getElementById('player-search').addEventListener('input', (e) => filterPlayers(e.target.value));
 
     // Simulation controls
-    document.getElementById('sim-advance-btn').addEventListener('click', advanceSimulation);
     document.getElementById('sim-clear-events-btn').addEventListener('click', clearEvents);
     document.getElementById('sim-refresh-btn').addEventListener('click', loadAllData);
 
@@ -122,14 +120,11 @@ async function loadWorldData() {
 
     // Update header
     document.getElementById('world-name').textContent = data.name;
-    document.getElementById('current-time').textContent = data.time.time_string;
 
     // Update world form
     document.getElementById('world-name-input').value = data.name;
     document.getElementById('world-description').value = data.description || '';
     document.getElementById('world-seed').value = data.seed || 'N/A';
-    document.getElementById('world-day').value = data.time.current_day;
-    document.getElementById('world-season').value = data.time.current_season;
 }
 
 async function loadNPCs() {
@@ -188,8 +183,6 @@ function updateDashboard() {
     document.getElementById('stat-npcs').textContent = state.worldData.stats.total_npcs;
     document.getElementById('stat-players').textContent = state.players.length;
     document.getElementById('stat-events').textContent = state.worldData.stats.total_events;
-    document.getElementById('stat-day').textContent = state.worldData.time.current_day;
-    document.getElementById('stat-season').textContent = state.worldData.time.current_season;
 }
 
 // ============================================================================
@@ -201,11 +194,7 @@ async function saveWorldSettings(e) {
 
     const updates = {
         name: document.getElementById('world-name-input').value,
-        description: document.getElementById('world-description').value,
-        time: {
-            current_day: parseInt(document.getElementById('world-day').value),
-            current_season: document.getElementById('world-season').value
-        }
+        description: document.getElementById('world-description').value
     };
 
     try {
@@ -618,28 +607,6 @@ async function deletePlayer() {
 // ============================================================================
 // Simulation Control
 // ============================================================================
-
-async function advanceSimulation() {
-    try {
-        const response = await fetch(`${API_BASE}/simulation/step`, {
-            method: 'POST'
-        });
-
-        const data = await response.json();
-        if (data.success) {
-            showToast(`Simulation advanced: ${data.current_time}`, 'success');
-            await loadWorldData();
-            await loadNPCs();
-            await loadLocations();
-            updateDashboard();
-        } else {
-            showToast('Error advancing simulation', 'error');
-        }
-    } catch (error) {
-        console.error('Error advancing simulation:', error);
-        showToast('Error advancing simulation', 'error');
-    }
-}
 
 async function clearEvents() {
     if (!confirm('Are you sure you want to clear all events? This cannot be undone.')) {

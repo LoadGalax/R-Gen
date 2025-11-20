@@ -13,7 +13,6 @@
             <h1>🎮 R-Gen Master Control Panel</h1>
             <div class="header-info">
                 <span id="world-name">Loading...</span>
-                <span id="current-time">--:--</span>
                 <button id="refresh-btn" class="btn btn-primary">🔄 Refresh All</button>
             </div>
         </header>
@@ -50,19 +49,10 @@
                         <h3>Total Events</h3>
                         <p class="stat-value" id="stat-events">0</p>
                     </div>
-                    <div class="stat-card">
-                        <h3>Current Day</h3>
-                        <p class="stat-value" id="stat-day">0</p>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Current Season</h3>
-                        <p class="stat-value" id="stat-season">-</p>
-                    </div>
                 </div>
 
                 <div class="quick-actions">
                     <h3>Quick Actions</h3>
-                    <button class="btn btn-success" id="advance-time-btn">⏩ Advance Time (30 min)</button>
                     <button class="btn btn-warning" id="clear-events-btn">🗑️ Clear Event History</button>
                 </div>
             </section>
@@ -82,19 +72,6 @@
                     <div class="form-group">
                         <label for="world-seed">Seed:</label>
                         <input type="text" id="world-seed" class="form-input" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label for="world-day">Current Day:</label>
-                        <input type="number" id="world-day" class="form-input" min="1">
-                    </div>
-                    <div class="form-group">
-                        <label for="world-season">Current Season:</label>
-                        <select id="world-season" class="form-input">
-                            <option value="Spring">Spring</option>
-                            <option value="Summer">Summer</option>
-                            <option value="Fall">Fall</option>
-                            <option value="Winter">Winter</option>
-                        </select>
                     </div>
                     <button class="btn btn-success" id="save-world-btn">💾 Save World Settings</button>
                 </div>
@@ -189,12 +166,6 @@
             <section id="simulation-tab" class="tab-content">
                 <h2>Simulation Control</h2>
                 <div class="simulation-controls">
-                    <div class="control-group">
-                        <h3>Time Control</h3>
-                        <button class="btn btn-lg btn-primary" id="sim-advance-btn">⏩ Advance 30 Minutes</button>
-                        <p class="help-text">Manually advance the simulation by one tick (30 in-game minutes)</p>
-                    </div>
-
                     <div class="control-group">
                         <h3>Event Management</h3>
                         <button class="btn btn-lg btn-warning" id="sim-clear-events-btn">🗑️ Clear Event History</button>
