@@ -23,7 +23,6 @@ project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
 from GenerationEngine import ContentGenerator, DatabaseManager
-from SimulationEngine import World, WorldSimulator
 
 app = Flask(__name__, static_folder='Client', static_url_path='')
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(32))
@@ -35,9 +34,6 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 generator = ContentGenerator()
 db = None
 world = None
-simulator = None
-simulation_thread = None
-simulation_running = False
 
 def get_db():
     """Get or create database instance."""
@@ -48,13 +44,14 @@ def get_db():
 
 def get_or_create_world():
     """Get or create world instance."""
-    global world, simulator
+    global world
     if world is None:
         print("Creating new world...")
+        # Import World here to avoid requiring SimulationEngine at module level
+        from SimulationEngine import World
         world = World.create_new(num_locations=10, seed=42, name="Fantasy Realm")
-        simulator = WorldSimulator(world)
         print(f"World created with {len(world.locations)} locations and {len(world.npcs)} NPCs")
-    return world, simulator
+    return world
 
 def login_required(f):
     """Decorator to require player login."""
@@ -89,14 +86,13 @@ def health_check():
     return jsonify({
         'status': 'healthy',
         'timestamp': datetime.now().isoformat(),
-        'world_active': world is not None,
-        'simulation_running': simulation_running
+        'world_active': world is not None
     })
 
 @app.route('/api/world/info', methods=['GET'])
 def get_world_info():
     """Get current world information."""
-    w, sim = get_or_create_world()
+    w = get_or_create_world()
 
     return jsonify({
         'name': w.name,
@@ -116,7 +112,7 @@ def get_world_info():
 @app.route('/api/locations', methods=['GET'])
 def get_locations():
     """Get all locations."""
-    w, sim = get_or_create_world()
+    w = get_or_create_world()
 
     locations = []
     for loc_id, location in w.locations.items():
@@ -136,7 +132,7 @@ def get_locations():
 @app.route('/api/location/<location_id>', methods=['GET'])
 def get_location_details(location_id):
     """Get detailed information about a specific location."""
-    w, sim = get_or_create_world()
+    w = get_or_create_world()
 
     if location_id not in w.locations:
         return jsonify({'error': 'Location not found'}), 404
@@ -181,7 +177,7 @@ def get_location_details(location_id):
 @app.route('/api/npcs', methods=['GET'])
 def get_npcs():
     """Get all NPCs."""
-    w, sim = get_or_create_world()
+    w = get_or_create_world()
 
     npcs = []
     for npc_id, npc in w.npcs.items():
@@ -197,7 +193,7 @@ def get_npcs():
 @app.route('/api/npc/<npc_id>', methods=['GET'])
 def get_npc_details(npc_id):
     """Get detailed information about a specific NPC."""
-    w, sim = get_or_create_world()
+    w = get_or_create_world()
 
     if npc_id not in w.npcs:
         return jsonify({'error': 'NPC not found'}), 404
@@ -217,7 +213,7 @@ def get_npc_details(npc_id):
 @app.route('/api/npc/<npc_id>/dialogue', methods=['GET'])
 def get_npc_dialogue(npc_id):
     """Get dialogue options for an NPC."""
-    w, sim = get_or_create_world()
+    w = get_or_create_world()
 
     if npc_id not in w.npcs:
         return jsonify({'error': 'NPC not found'}), 404
@@ -308,7 +304,7 @@ def format_event(event, world):
 @app.route('/api/events', methods=['GET'])
 def get_events():
     """Get recent events."""
-    w, sim = get_or_create_world()
+    w = get_or_create_world()
 
     limit = request.args.get('limit', 50, type=int)
     recent_events = w.event_system.get_recent_events(limit)
@@ -332,7 +328,7 @@ def player_travel():
     data = request.get_json()
     target_location = data.get('location_id')
 
-    w, sim = get_or_create_world()
+    w = get_or_create_world()
     database = get_db()
 
     if target_location not in w.locations:
@@ -381,7 +377,7 @@ def register_player():
     character_class = data.get('class', 'Adventurer')
 
     database = get_db()
-    w, sim = get_or_create_world()
+    w = get_or_create_world()
 
     # Check if username already exists
     existing_player = database.get_player_by_username(username)
@@ -634,90 +630,6 @@ def update_player_data():
     return jsonify({'success': True, 'player': player})
 
 # ============================================================================
-# Simulation Control
-# ============================================================================
-
-@app.route('/api/simulation/start', methods=['POST'])
-def start_simulation():
-    """Start the world simulation."""
-    global simulation_running, simulation_thread
-
-    if simulation_running:
-        return jsonify({'error': 'Simulation already running'}), 400
-
-    get_or_create_world()
-    simulation_running = True
-
-    simulation_thread = threading.Thread(target=run_simulation_loop, daemon=True)
-    simulation_thread.start()
-
-    return jsonify({'success': True, 'message': 'Simulation started'})
-
-@app.route('/api/simulation/stop', methods=['POST'])
-def stop_simulation():
-    """Stop the world simulation."""
-    global simulation_running
-
-    if not simulation_running:
-        return jsonify({'error': 'Simulation not running'}), 400
-
-    simulation_running = False
-
-    return jsonify({'success': True, 'message': 'Simulation stopped'})
-
-@app.route('/api/simulation/status', methods=['GET'])
-def simulation_status():
-    """Get simulation status."""
-    return jsonify({
-        'running': simulation_running,
-        'world_exists': world is not None
-    })
-
-def run_simulation_loop():
-    """Main simulation loop that runs in background."""
-    global simulation_running, world, simulator
-
-    print("Simulation loop started")
-
-    while simulation_running:
-        try:
-            # Advance simulation by 30 minutes
-            simulator.step(30)
-
-            # Get recent events and format them
-            recent_events = world.event_system.get_recent_events(10)
-            event_strings = []
-            for event in recent_events:
-                event_str = format_event(event, world)
-                if event_str:
-                    event_strings.append(event_str)
-
-            # Broadcast world update to all connected clients
-            world_update = {
-                'time': {
-                    'day': world.time_manager.current_day,
-                    'season': world.time_manager.current_season,
-                    'time_string': world.time_manager.get_time_string(),
-                    'is_day': world.time_manager.is_daytime
-                },
-                'recent_events': event_strings[-5:],  # Last 5 events
-                'timestamp': datetime.now().isoformat()
-            }
-
-            socketio.emit('world_update', world_update)
-
-            # Sleep for 5 seconds (real time) before next simulation step
-            time.sleep(5)
-
-        except Exception as e:
-            print(f"Error in simulation loop: {e}")
-            import traceback
-            traceback.print_exc()
-            simulation_running = False
-
-    print("Simulation loop stopped")
-
-# ============================================================================
 # WebSocket Events
 # ============================================================================
 
@@ -727,12 +639,11 @@ def handle_connect():
     print(f"Client connected: {request.sid}")
 
     # Send initial world state to newly connected client
-    w, sim = get_or_create_world()
+    w = get_or_create_world()
 
     emit('connected', {
         'message': 'Connected to R-Gen game server',
-        'world_name': w.name,
-        'simulation_running': simulation_running
+        'world_name': w.name
     })
 
 @socketio.on('disconnect')
