@@ -1309,9 +1309,9 @@ class RGenGame {
             blacksmithing: {
                 name: 'Blacksmithing',
                 icon: '⚒️',
-                level: 5,
-                xp: 450,
-                nextLevel: 500,
+                level: 8,
+                xp: 750,
+                nextLevel: 1000,
                 description: 'The ancient art of forging metal into weapons and armor. Blacksmiths are masters of the forge, capable of creating powerful equipment for warriors.',
                 benefits: [
                     'Craft weapons and heavy armor',
@@ -1319,14 +1319,14 @@ class RGenGame {
                     'Enhance gear with special properties',
                     'Unlock legendary weapon recipes at high levels'
                 ],
-                recipes: ['Iron Sword', 'Steel Helmet', 'Chain Mail', 'Battle Axe']
+                recipes: ['Iron Sword', 'Steel Helmet', 'Chain Mail', 'Battle Axe', 'Legendary Greatsword', 'Mithril Armor']
             },
             alchemy: {
                 name: 'Alchemy',
                 icon: '🧪',
-                level: 3,
-                xp: 180,
-                nextLevel: 250,
+                level: 6,
+                xp: 480,
+                nextLevel: 600,
                 description: 'The mystical practice of combining reagents to create powerful potions and elixirs. Alchemists can brew concoctions that heal, enhance abilities, or cause devastating effects.',
                 benefits: [
                     'Brew healing and mana potions',
@@ -1334,14 +1334,74 @@ class RGenGame {
                     'Transmute materials',
                     'Craft powerful explosives'
                 ],
-                recipes: ['Health Potion', 'Mana Potion', 'Strength Elixir', 'Poison Vial']
+                recipes: ['Health Potion', 'Mana Potion', 'Strength Elixir', 'Poison Vial', 'Elixir of Life']
+            },
+            enchanting: {
+                name: 'Enchanting',
+                icon: '✨',
+                level: 5,
+                xp: 380,
+                nextLevel: 500,
+                description: 'The art of imbuing items with magical properties. Enchanters can enhance weapons and armor with powerful enchantments, making them far more effective.',
+                benefits: [
+                    'Add magical properties to equipment',
+                    'Disenchant items to learn enchantments',
+                    'Create enchanted scrolls',
+                    'Craft powerful artifacts at high levels'
+                ],
+                recipes: ['Fire Weapon Enchant', 'Shield of Protection', 'Ring of Speed', 'Scroll of Wisdom']
+            },
+            leatherworking: {
+                name: 'Leatherworking',
+                icon: '🦌',
+                level: 4,
+                xp: 280,
+                nextLevel: 400,
+                description: 'The craft of working with leather and hides to create light armor and accessories. Leatherworkers can craft durable gear perfect for rangers and rogues.',
+                benefits: [
+                    'Craft light armor and leather goods',
+                    'Create bags and containers',
+                    'Tan rare hides for exotic armor',
+                    'Make armor kits to enhance gear'
+                ],
+                recipes: ['Leather Armor', 'Hunting Boots', 'Leather Gloves', 'Dragon Scale Vest', 'Quiver']
+            },
+            tailoring: {
+                name: 'Tailoring',
+                icon: '🧵',
+                level: 4,
+                xp: 300,
+                nextLevel: 400,
+                description: 'The art of working with cloth and fabric to create robes and magical garments. Tailors specialize in creating gear for spellcasters and creating bags.',
+                benefits: [
+                    'Craft cloth armor and robes',
+                    'Create magical garments',
+                    'Sew enchanted bags',
+                    'Make cloaks with special properties'
+                ],
+                recipes: ['Mage Robe', 'Silk Cloak', 'Netherweave Bag', 'Hood of Shadows', 'Embroidered Gloves']
+            },
+            jewelcrafting: {
+                name: 'Jewelcrafting',
+                icon: '💎',
+                level: 3,
+                xp: 200,
+                nextLevel: 300,
+                description: 'The delicate art of cutting gems and crafting jewelry. Jewelcrafters create rings, necklaces, and other accessories that grant powerful bonuses.',
+                benefits: [
+                    'Cut and polish precious gems',
+                    'Craft rings and necklaces',
+                    'Socket gems into equipment',
+                    'Create legendary jewelry pieces'
+                ],
+                recipes: ['Ruby Ring', 'Sapphire Necklace', 'Diamond Amulet', 'Emerald Earrings', 'Crown of Kings']
             },
             cooking: {
                 name: 'Cooking',
                 icon: '🍳',
-                level: 1,
-                xp: 50,
-                nextLevel: 100,
+                level: 3,
+                xp: 220,
+                nextLevel: 300,
                 description: 'The culinary arts provide sustenance and temporary buffs. Skilled cooks can prepare meals that grant significant advantages in battle and exploration.',
                 benefits: [
                     'Prepare food that restores health',
@@ -1349,7 +1409,127 @@ class RGenGame {
                     'Create travel rations',
                     'Unlock gourmet recipes'
                 ],
-                recipes: ['Bread', 'Grilled Meat', 'Vegetable Stew', 'Apple Pie']
+                recipes: ['Bread', 'Grilled Meat', 'Vegetable Stew', 'Apple Pie', 'Feast Platter']
+            },
+            woodworking: {
+                name: 'Woodworking',
+                icon: '🪓',
+                level: 3,
+                xp: 190,
+                nextLevel: 300,
+                description: 'The craft of shaping wood into useful items. Woodworkers create staves, bows, shields, and furniture. Master woodworkers can craft legendary wooden weapons.',
+                benefits: [
+                    'Craft bows and staves',
+                    'Create wooden shields',
+                    'Build furniture and decorations',
+                    'Make magical wands'
+                ],
+                recipes: ['Oak Bow', 'Maple Staff', 'Wooden Shield', 'Enchanted Wand', 'Ancient Staff']
+            },
+            engineering: {
+                name: 'Engineering',
+                icon: '⚙️',
+                level: 2,
+                xp: 140,
+                nextLevel: 200,
+                description: 'The science of creating mechanical devices and explosives. Engineers craft unique gadgets, bombs, and mechanical companions that provide utility and combat advantages.',
+                benefits: [
+                    'Create bombs and explosives',
+                    'Build mechanical pets',
+                    'Craft goggles and trinkets',
+                    'Make siege weapons'
+                ],
+                recipes: ['Dynamite', 'Mechanical Squirrel', 'Goggles of Vision', 'Portable Cannon', 'Rocket Boots']
+            },
+            inscription: {
+                name: 'Inscription',
+                icon: '📜',
+                level: 2,
+                xp: 120,
+                nextLevel: 200,
+                description: 'The art of creating magical scrolls, glyphs, and tomes. Scribes can craft powerful scrolls for instant spellcasting and create valuable books.',
+                benefits: [
+                    'Create magical scrolls',
+                    'Inscribe glyphs to enhance abilities',
+                    'Craft spellbooks and tomes',
+                    'Make contracts and documents'
+                ],
+                recipes: ['Scroll of Fireball', 'Glyph of Strength', 'Tome of Knowledge', 'Contract Scroll', 'Ancient Codex']
+            },
+            mining: {
+                name: 'Mining',
+                icon: '⛏️',
+                level: 2,
+                xp: 150,
+                nextLevel: 200,
+                description: 'The gathering profession focused on extracting ores and gems from the earth. Miners provide essential materials for blacksmithing, engineering, and jewelcrafting.',
+                benefits: [
+                    'Extract ores from mineral veins',
+                    'Find precious gems while mining',
+                    'Smelt ores into usable bars',
+                    'Discover rare materials in rich veins'
+                ],
+                recipes: ['Copper Bar', 'Iron Bar', 'Steel Ingot', 'Mithril Bar', 'Adamantite Ore']
+            },
+            herbalism: {
+                name: 'Herbalism',
+                icon: '🌿',
+                level: 1,
+                xp: 60,
+                nextLevel: 100,
+                description: 'The gathering profession of collecting herbs and plants. Herbalists gather ingredients essential for alchemy and inscription, finding rare plants in the wilderness.',
+                benefits: [
+                    'Gather herbs and flowers',
+                    'Find rare alchemical reagents',
+                    'Identify medicinal plants',
+                    'Harvest magical herbs'
+                ],
+                recipes: ['Red Herb', 'Blue Flower', 'Moonpetal', 'Dragonbloom', 'Ancient Moss']
+            },
+            skinning: {
+                name: 'Skinning',
+                icon: '🔪',
+                level: 1,
+                xp: 45,
+                nextLevel: 100,
+                description: 'The gathering profession of collecting hides and leather from defeated creatures. Skinners provide essential materials for leatherworking.',
+                benefits: [
+                    'Skin beasts for leather',
+                    'Harvest rare hides from exotic creatures',
+                    'Obtain scales from dragons and serpents',
+                    'Collect rare furs'
+                ],
+                recipes: ['Leather Scraps', 'Thick Hide', 'Dragon Scale', 'Bear Fur', 'Serpent Skin']
+            },
+            fishing: {
+                name: 'Fishing',
+                icon: '🎣',
+                level: 1,
+                xp: 30,
+                nextLevel: 100,
+                description: 'The peaceful art of catching fish from waters around the world. Fishers can catch fish for cooking, find treasure, and discover rare aquatic creatures.',
+                benefits: [
+                    'Catch fish for cooking',
+                    'Find treasure in waters',
+                    'Discover rare fish',
+                    'Fish in any body of water'
+                ],
+                recipes: ['Raw Fish', 'Salmon', 'Treasure Chest', 'Golden Trout', 'Ancient Relic']
+            },
+            archaeology: {
+                name: 'Archaeology',
+                icon: '🏺',
+                level: 1,
+                xp: 25,
+                nextLevel: 100,
+                description: 'The scholarly profession of uncovering ancient artifacts and relics. Archaeologists can discover powerful items from lost civilizations and learn forgotten knowledge.',
+                benefits: [
+                    'Excavate dig sites for artifacts',
+                    'Restore ancient relics',
+                    'Discover lost treasures',
+                    'Learn about ancient civilizations'
+                ],
+                recipes: ['Ancient Pottery', 'Fossil', 'Relic Fragment', 'Lost Artifact', 'Legendary Tome']
             }
         };
 
