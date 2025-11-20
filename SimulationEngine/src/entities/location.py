@@ -69,9 +69,18 @@ class LivingLocation(BaseEntity):
             season = self.world.time_manager.current_season
             time_of_day = self.world.time_manager.current_time_of_day
 
+            # Convert season to lowercase and map "Fall" to "autumn"
+            season_map = {
+                "Spring": "spring",
+                "Summer": "summer",
+                "Fall": "autumn",
+                "Winter": "winter"
+            }
+            season_lower = season_map.get(season, season.lower())
+
             self.current_weather = self.world.generator_adapter.generate_weather(
                 biome=biome,
-                season=season,
+                season=season_lower,
                 time_of_day=time_of_day
             )
 

@@ -388,7 +388,7 @@ def run_simulation_loop():
     while simulation_running:
         try:
             # Advance simulation by 30 minutes
-            simulator.simulate_minutes(30)
+            simulator.step(30)
 
             # Get recent events and format them
             recent_events = world.event_system.get_recent_events(10)
@@ -490,4 +490,4 @@ if __name__ == '__main__':
     get_or_create_world()
 
     # Start Flask-SocketIO server
-    socketio.run(app, host='0.0.0.0', port=5000, debug=True, allow_unsafe_werkzeug=True)
+    socketio.run(app, host='0.0.0.0', port=5000, debug=False, allow_unsafe_werkzeug=True)
