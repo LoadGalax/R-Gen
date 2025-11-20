@@ -1912,15 +1912,43 @@ class RGenGame {
         `;
     }
 
-    craftItem(recipeId) {
-        this.showNotification('Crafting system coming soon! This will create: ' + recipeId, 'info');
-        console.log('Craft item:', recipeId);
-        // TODO: Implement crafting via API
-        // - Check materials
-        // - Check profession level
-        // - Consume materials
-        // - Add crafted item to inventory
-        // - Give profession XP
+    async craftItem(recipeId) {
+        try {
+            this.showNotification('Crafting...', 'info');
+
+            const response = await fetch(`${this.apiUrl}/api/craft`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({ recipe_id: recipeId })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                this.showNotification(`${data.message}! +${data.xp_gained} XP`, 'success');
+
+                // Reload inventory and professions to reflect changes
+                await this.loadPlayerInventory();
+                await this.loadPlayerProfessions();
+
+                // Update displays
+                this.updateInventoryPage();
+                this.updateCraftPage();
+
+                // If leveled up, show additional notification
+                if (data.new_level > this.player.professions.find(p => p.level === data.new_level - 1)?.level) {
+                    this.showNotification(`Profession leveled up to ${data.new_level}!`, 'success');
+                }
+            } else {
+                this.showNotification(data.error || 'Failed to craft item', 'error');
+            }
+        } catch (error) {
+            console.error('Error crafting item:', error);
+            this.showNotification('Failed to craft item', 'error');
+        }
     }
 }
 
