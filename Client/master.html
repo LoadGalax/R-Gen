@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>R-Gen Master Control Panel</title>
+    <link rel="stylesheet" href="master.css">
+</head>
+<body>
+    <div class="master-container">
+        <!-- Header -->
+        <header class="master-header">
+            <h1>🎮 R-Gen Master Control Panel</h1>
+            <div class="header-info">
+                <span id="world-name">Loading...</span>
+                <span id="current-time">--:--</span>
+                <button id="refresh-btn" class="btn btn-primary">🔄 Refresh All</button>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="master-nav">
+            <button class="tab-btn active" data-tab="dashboard">📊 Dashboard</button>
+            <button class="tab-btn" data-tab="world">🌍 World</button>
+            <button class="tab-btn" data-tab="npcs">👥 NPCs</button>
+            <button class="tab-btn" data-tab="locations">📍 Locations</button>
+            <button class="tab-btn" data-tab="players">🎮 Players</button>
+            <button class="tab-btn" data-tab="simulation">⚙️ Simulation</button>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="master-content">
+            <!-- Dashboard Tab -->
+            <section id="dashboard-tab" class="tab-content active">
+                <h2>Dashboard</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Locations</h3>
+                        <p class="stat-value" id="stat-locations">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total NPCs</h3>
+                        <p class="stat-value" id="stat-npcs">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Players</h3>
+                        <p class="stat-value" id="stat-players">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Events</h3>
+                        <p class="stat-value" id="stat-events">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Current Day</h3>
+                        <p class="stat-value" id="stat-day">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Current Season</h3>
+                        <p class="stat-value" id="stat-season">-</p>
+                    </div>
+                </div>
+
+                <div class="quick-actions">
+                    <h3>Quick Actions</h3>
+                    <button class="btn btn-success" id="advance-time-btn">⏩ Advance Time (30 min)</button>
+                    <button class="btn btn-warning" id="clear-events-btn">🗑️ Clear Event History</button>
+                </div>
+            </section>
+
+            <!-- World Tab -->
+            <section id="world-tab" class="tab-content">
+                <h2>World Settings</h2>
+                <div class="form-section">
+                    <div class="form-group">
+                        <label for="world-name-input">World Name:</label>
+                        <input type="text" id="world-name-input" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="world-description">World Description:</label>
+                        <textarea id="world-description" class="form-input" rows="4"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="world-seed">Seed:</label>
+                        <input type="text" id="world-seed" class="form-input" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="world-day">Current Day:</label>
+                        <input type="number" id="world-day" class="form-input" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="world-season">Current Season:</label>
+                        <select id="world-season" class="form-input">
+                            <option value="Spring">Spring</option>
+                            <option value="Summer">Summer</option>
+                            <option value="Fall">Fall</option>
+                            <option value="Winter">Winter</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-success" id="save-world-btn">💾 Save World Settings</button>
+                </div>
+            </section>
+
+            <!-- NPCs Tab -->
+            <section id="npcs-tab" class="tab-content">
+                <h2>NPCs Management</h2>
+                <div class="toolbar">
+                    <input type="text" id="npc-search" class="form-input search-input" placeholder="🔍 Search NPCs...">
+                    <span id="npc-count">0 NPCs</span>
+                </div>
+                <div class="table-container">
+                    <table class="data-table" id="npcs-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Profession</th>
+                                <th>Location</th>
+                                <th>Activity</th>
+                                <th>Energy</th>
+                                <th>Mood</th>
+                                <th>Gold</th>
+                                <th>Active</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="npcs-table-body">
+                            <tr><td colspan="9" class="loading">Loading NPCs...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Locations Tab -->
+            <section id="locations-tab" class="tab-content">
+                <h2>Locations Management</h2>
+                <div class="toolbar">
+                    <input type="text" id="location-search" class="form-input search-input" placeholder="🔍 Search Locations...">
+                    <span id="location-count">0 Locations</span>
+                </div>
+                <div class="table-container">
+                    <table class="data-table" id="locations-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Template</th>
+                                <th>NPCs</th>
+                                <th>Weather</th>
+                                <th>Market Open</th>
+                                <th>Active</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="locations-table-body">
+                            <tr><td colspan="7" class="loading">Loading Locations...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Players Tab -->
+            <section id="players-tab" class="tab-content">
+                <h2>Players Management</h2>
+                <div class="toolbar">
+                    <input type="text" id="player-search" class="form-input search-input" placeholder="🔍 Search Players...">
+                    <span id="player-count">0 Players</span>
+                </div>
+                <div class="table-container">
+                    <table class="data-table" id="players-table">
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Character</th>
+                                <th>Race</th>
+                                <th>Class</th>
+                                <th>Level</th>
+                                <th>Gold</th>
+                                <th>Professions</th>
+                                <th>Items</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="players-table-body">
+                            <tr><td colspan="9" class="loading">Loading Players...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Simulation Tab -->
+            <section id="simulation-tab" class="tab-content">
+                <h2>Simulation Control</h2>
+                <div class="simulation-controls">
+                    <div class="control-group">
+                        <h3>Time Control</h3>
+                        <button class="btn btn-lg btn-primary" id="sim-advance-btn">⏩ Advance 30 Minutes</button>
+                        <p class="help-text">Manually advance the simulation by one tick (30 in-game minutes)</p>
+                    </div>
+
+                    <div class="control-group">
+                        <h3>Event Management</h3>
+                        <button class="btn btn-lg btn-warning" id="sim-clear-events-btn">🗑️ Clear Event History</button>
+                        <p class="help-text">Clear all recorded events from the event system</p>
+                    </div>
+
+                    <div class="control-group">
+                        <h3>Data Refresh</h3>
+                        <button class="btn btn-lg btn-success" id="sim-refresh-btn">🔄 Refresh All Data</button>
+                        <p class="help-text">Reload all data from the server</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- NPC Edit Modal -->
+    <div id="npc-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h2>Edit NPC</h2>
+            <form id="npc-edit-form">
+                <input type="hidden" id="edit-npc-id">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Name:</label>
+                        <input type="text" id="edit-npc-name" class="form-input" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Profession:</label>
+                        <input type="text" id="edit-npc-profession" class="form-input" readonly>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Energy (0-100):</label>
+                        <input type="number" id="edit-npc-energy" class="form-input" min="0" max="100" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>Hunger (0-100):</label>
+                        <input type="number" id="edit-npc-hunger" class="form-input" min="0" max="100" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>Mood (0-100):</label>
+                        <input type="number" id="edit-npc-mood" class="form-input" min="0" max="100" step="0.1">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Gold:</label>
+                        <input type="number" id="edit-npc-gold" class="form-input" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Activity:</label>
+                        <select id="edit-npc-activity" class="form-input">
+                            <option value="idle">Idle</option>
+                            <option value="working">Working</option>
+                            <option value="traveling">Traveling</option>
+                            <option value="eating">Eating</option>
+                            <option value="sleeping">Sleeping</option>
+                            <option value="socializing">Socializing</option>
+                            <option value="shopping">Shopping</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Work Hours:</label>
+                        <div class="inline-group">
+                            <input type="number" id="edit-npc-work-start" class="form-input" min="0" max="23" placeholder="Start">
+                            <span>to</span>
+                            <input type="number" id="edit-npc-work-end" class="form-input" min="0" max="23" placeholder="End">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Active:</label>
+                        <input type="checkbox" id="edit-npc-active" class="form-checkbox">
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-success">💾 Save Changes</button>
+                    <button type="button" class="btn btn-danger" id="delete-npc-btn">🗑️ Delete NPC</button>
+                    <button type="button" class="btn btn-secondary modal-close-btn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Location Edit Modal -->
+    <div id="location-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h2>Edit Location</h2>
+            <form id="location-edit-form">
+                <input type="hidden" id="edit-location-id">
+
+                <div class="form-group">
+                    <label>Name:</label>
+                    <input type="text" id="edit-location-name" class="form-input" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label>Description:</label>
+                    <textarea id="edit-location-description" class="form-input" rows="4"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Template:</label>
+                        <input type="text" id="edit-location-template" class="form-input" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Weather:</label>
+                        <select id="edit-location-weather" class="form-input">
+                            <option value="Clear">Clear</option>
+                            <option value="Cloudy">Cloudy</option>
+                            <option value="Rain">Rain</option>
+                            <option value="Storm">Storm</option>
+                            <option value="Fog">Fog</option>
+                            <option value="Snow">Snow</option>
+                            <option value="Hail">Hail</option>
+                            <option value="Wind">Wind</option>
+                            <option value="Mist">Mist</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Market Open:</label>
+                        <input type="checkbox" id="edit-location-market" class="form-checkbox">
+                    </div>
+                    <div class="form-group">
+                        <label>Active:</label>
+                        <input type="checkbox" id="edit-location-active" class="form-checkbox">
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-success">💾 Save Changes</button>
+                    <button type="button" class="btn btn-danger" id="delete-location-btn">🗑️ Delete Location</button>
+                    <button type="button" class="btn btn-secondary modal-close-btn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Player Edit Modal -->
+    <div id="player-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h2>Edit Player</h2>
+            <form id="player-edit-form">
+                <input type="hidden" id="edit-player-id">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Username:</label>
+                        <input type="text" id="edit-player-username" class="form-input" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Character Name:</label>
+                        <input type="text" id="edit-player-character" class="form-input">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Race:</label>
+                        <input type="text" id="edit-player-race" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Class:</label>
+                        <input type="text" id="edit-player-class" class="form-input">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Level:</label>
+                        <input type="number" id="edit-player-level" class="form-input" min="1" max="100">
+                    </div>
+                    <div class="form-group">
+                        <label>Experience:</label>
+                        <input type="number" id="edit-player-experience" class="form-input" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Gold:</label>
+                        <input type="number" id="edit-player-gold" class="form-input" min="0">
+                    </div>
+                </div>
+
+                <h3>Stats</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Health:</label>
+                        <input type="number" id="edit-player-health" class="form-input" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Max Health:</label>
+                        <input type="number" id="edit-player-max-health" class="form-input" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Mana:</label>
+                        <input type="number" id="edit-player-mana" class="form-input" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Max Mana:</label>
+                        <input type="number" id="edit-player-max-mana" class="form-input" min="1">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Strength:</label>
+                        <input type="number" id="edit-player-str" class="form-input" min="-5" max="30">
+                    </div>
+                    <div class="form-group">
+                        <label>Dexterity:</label>
+                        <input type="number" id="edit-player-dex" class="form-input" min="-5" max="30">
+                    </div>
+                    <div class="form-group">
+                        <label>Constitution:</label>
+                        <input type="number" id="edit-player-con" class="form-input" min="-5" max="30">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Intelligence:</label>
+                        <input type="number" id="edit-player-int" class="form-input" min="-5" max="30">
+                    </div>
+                    <div class="form-group">
+                        <label>Wisdom:</label>
+                        <input type="number" id="edit-player-wis" class="form-input" min="-5" max="30">
+                    </div>
+                    <div class="form-group">
+                        <label>Charisma:</label>
+                        <input type="number" id="edit-player-cha" class="form-input" min="-5" max="30">
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-success">💾 Save Changes</button>
+                    <button type="button" class="btn btn-danger" id="delete-player-btn">🗑️ Delete Player</button>
+                    <button type="button" class="btn btn-secondary modal-close-btn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <script src="master.js"></script>
+</body>
+</html>

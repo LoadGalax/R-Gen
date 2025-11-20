@@ -820,6 +820,332 @@ def update_player_data():
     return jsonify({'success': True, 'player': player})
 
 # ============================================================================
+# Master Admin Panel Endpoints
+# ============================================================================
+
+@app.route('/master')
+def serve_master_panel():
+    """Serve the master admin panel page."""
+    response = send_from_directory(client_folder, 'master.html')
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
+
+@app.route('/api/master/world', methods=['GET'])
+def get_master_world_data():
+    """Get complete world data for master panel."""
+    w = get_or_create_world()
+
+    return jsonify({
+        'name': w.name,
+        'seed': w.seed,
+        'description': w.description,
+        'total_simulation_time': w.total_simulation_time,
+        'time': {
+            'current_day': w.time_manager.current_day,
+            'current_season': w.time_manager.current_season,
+            'time_string': w.time_manager.get_time_string(),
+            'is_daytime': w.time_manager.is_daytime,
+            'is_working_hours': w.time_manager.is_working_hours,
+            'current_time_of_day': w.time_manager.current_time_of_day
+        },
+        'stats': {
+            'total_locations': len(w.locations),
+            'total_npcs': len(w.npcs),
+            'total_events': len(w.event_system.event_history)
+        }
+    })
+
+@app.route('/api/master/world', methods=['PATCH'])
+def update_master_world_data():
+    """Update world settings."""
+    w = get_or_create_world()
+    data = request.get_json()
+
+    if 'name' in data:
+        w.name = data['name']
+    if 'description' in data:
+        w.description = data['description']
+
+    # Time updates
+    if 'time' in data:
+        time_data = data['time']
+        if 'current_day' in time_data:
+            w.time_manager.current_day = time_data['current_day']
+        if 'current_season' in time_data:
+            w.time_manager.current_season = time_data['current_season']
+
+    return jsonify({'success': True, 'message': 'World updated'})
+
+@app.route('/api/master/npcs', methods=['GET'])
+def get_master_npcs():
+    """Get all NPCs with full details for editing."""
+    w = get_or_create_world()
+
+    npcs_list = []
+    for npc_id, npc in w.npcs.items():
+        npc_dict = {
+            'id': npc_id,
+            'name': npc.get_name(),
+            'profession': npc.get_profession(),
+            'current_location_id': npc.current_location_id,
+            'current_activity': npc.current_activity,
+            'energy': npc.energy,
+            'hunger': npc.hunger,
+            'mood': npc.mood,
+            'gold': npc.gold,
+            'active': npc.active,
+            'work_start_hour': npc.work_start_hour,
+            'work_end_hour': npc.work_end_hour,
+            'work_location_id': npc.work_location_id,
+            'data': npc.data
+        }
+        npcs_list.append(npc_dict)
+
+    return jsonify({'npcs': npcs_list})
+
+@app.route('/api/master/npc/<npc_id>', methods=['PATCH'])
+def update_master_npc(npc_id):
+    """Update NPC properties."""
+    w = get_or_create_world()
+
+    if npc_id not in w.npcs:
+        return jsonify({'error': 'NPC not found'}), 404
+
+    npc = w.npcs[npc_id]
+    data = request.get_json()
+
+    # Update mutable properties
+    if 'energy' in data:
+        npc.energy = float(data['energy'])
+    if 'hunger' in data:
+        npc.hunger = float(data['hunger'])
+    if 'mood' in data:
+        npc.mood = float(data['mood'])
+    if 'gold' in data:
+        npc.gold = int(data['gold'])
+    if 'current_location_id' in data:
+        old_location = npc.current_location_id
+        npc.current_location_id = data['current_location_id']
+        # Update location tracking
+        if old_location and old_location in w.locations:
+            w.locations[old_location].npc_ids.discard(npc_id)
+        if npc.current_location_id in w.locations:
+            w.locations[npc.current_location_id].npc_ids.add(npc_id)
+    if 'current_activity' in data:
+        npc.current_activity = data['current_activity']
+    if 'active' in data:
+        npc.active = bool(data['active'])
+    if 'work_start_hour' in data:
+        npc.work_start_hour = int(data['work_start_hour'])
+    if 'work_end_hour' in data:
+        npc.work_end_hour = int(data['work_end_hour'])
+    if 'work_location_id' in data:
+        npc.work_location_id = data['work_location_id']
+
+    # Update nested data properties
+    if 'data' in data:
+        for key, value in data['data'].items():
+            npc.data[key] = value
+
+    return jsonify({'success': True, 'message': f'NPC {npc_id} updated'})
+
+@app.route('/api/master/npc/<npc_id>', methods=['DELETE'])
+def delete_master_npc(npc_id):
+    """Delete an NPC from the world."""
+    w = get_or_create_world()
+
+    if npc_id not in w.npcs:
+        return jsonify({'error': 'NPC not found'}), 404
+
+    npc = w.npcs[npc_id]
+
+    # Remove from location tracking
+    if npc.current_location_id and npc.current_location_id in w.locations:
+        w.locations[npc.current_location_id].npc_ids.discard(npc_id)
+
+    # Remove from world
+    del w.npcs[npc_id]
+
+    return jsonify({'success': True, 'message': f'NPC {npc_id} deleted'})
+
+@app.route('/api/master/locations', methods=['GET'])
+def get_master_locations():
+    """Get all locations with full details for editing."""
+    w = get_or_create_world()
+
+    locations_list = []
+    for loc_id, location in w.locations.items():
+        loc_dict = {
+            'id': loc_id,
+            'name': location.get_name(),
+            'description': location.data.get('description', '') if location.data else '',
+            'template': location.data.get('template', 'unknown') if location.data else 'unknown',
+            'current_weather': location.current_weather,
+            'market_open': location.market_open,
+            'active': location.active,
+            'npc_count': len(location.npc_ids),
+            'connections': list(location.get_connections()),
+            'data': location.data
+        }
+        locations_list.append(loc_dict)
+
+    return jsonify({'locations': locations_list})
+
+@app.route('/api/master/location/<location_id>', methods=['PATCH'])
+def update_master_location(location_id):
+    """Update location properties."""
+    w = get_or_create_world()
+
+    if location_id not in w.locations:
+        return jsonify({'error': 'Location not found'}), 404
+
+    location = w.locations[location_id]
+    data = request.get_json()
+
+    # Update mutable properties
+    if 'current_weather' in data:
+        location.current_weather = data['current_weather']
+    if 'market_open' in data:
+        location.market_open = bool(data['market_open'])
+    if 'active' in data:
+        location.active = bool(data['active'])
+
+    # Update nested data properties
+    if 'data' in data:
+        for key, value in data['data'].items():
+            location.data[key] = value
+
+    # Update connections
+    if 'connections' in data:
+        location.data['connections'] = data['connections']
+
+    return jsonify({'success': True, 'message': f'Location {location_id} updated'})
+
+@app.route('/api/master/location/<location_id>', methods=['DELETE'])
+def delete_master_location(location_id):
+    """Delete a location from the world."""
+    w = get_or_create_world()
+
+    if location_id not in w.locations:
+        return jsonify({'error': 'Location not found'}), 404
+
+    # Move NPCs at this location to the first available location
+    if len(w.locations) > 1:
+        alternative_location = next(loc_id for loc_id in w.locations.keys() if loc_id != location_id)
+        for npc in w.npcs.values():
+            if npc.current_location_id == location_id:
+                npc.current_location_id = alternative_location
+                w.locations[alternative_location].npc_ids.add(npc.id)
+
+    # Remove connections from other locations
+    for loc in w.locations.values():
+        if 'connections' in loc.data and location_id in loc.data['connections']:
+            loc.data['connections'].remove(location_id)
+
+    # Remove from world
+    del w.locations[location_id]
+
+    return jsonify({'success': True, 'message': f'Location {location_id} deleted'})
+
+@app.route('/api/master/players', methods=['GET'])
+def get_master_players():
+    """Get all players for admin viewing/editing."""
+    database = get_db()
+
+    # Get all players from database
+    with database._get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, username, character_name, race, class, level,
+                   experience, gold, current_location_id, created_at, last_login
+            FROM players
+            ORDER BY created_at DESC
+        """)
+
+        players = [dict(row) for row in cursor.fetchall()]
+
+        # Enrich with stats
+        for player in players:
+            stats = database.get_player_stats(player['id'])
+            player['stats'] = stats
+
+            # Get profession count
+            professions = database.get_player_professions(player['id'])
+            player['profession_count'] = len(professions)
+
+            # Get inventory count
+            inventory = database.get_player_inventory(player['id'])
+            player['inventory_count'] = len(inventory)
+
+    return jsonify({'players': players})
+
+@app.route('/api/master/player/<int:player_id>', methods=['PATCH'])
+def update_master_player(player_id):
+    """Update player properties (admin)."""
+    database = get_db()
+    data = request.get_json()
+
+    # Update player basic data
+    player_updates = {}
+    for field in ['character_name', 'race', 'class', 'level', 'experience', 'gold', 'current_location_id']:
+        if field in data:
+            player_updates[field] = data[field]
+
+    if player_updates:
+        database.update_player(player_id, player_updates)
+
+    # Update stats
+    if 'stats' in data:
+        database.update_player_stats(player_id, data['stats'])
+
+    return jsonify({'success': True, 'message': f'Player {player_id} updated'})
+
+@app.route('/api/master/player/<int:player_id>', methods=['DELETE'])
+def delete_master_player(player_id):
+    """Delete a player (admin)."""
+    database = get_db()
+
+    with database._get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM players WHERE id = ?", (player_id,))
+        conn.commit()
+
+        if cursor.rowcount == 0:
+            return jsonify({'error': 'Player not found'}), 404
+
+    return jsonify({'success': True, 'message': f'Player {player_id} deleted'})
+
+@app.route('/api/master/simulation/step', methods=['POST'])
+def master_simulation_step():
+    """Manually advance simulation by one step."""
+    w = get_or_create_world()
+
+    # Advance time by 30 minutes (one simulation step)
+    w.update(30)
+
+    return jsonify({
+        'success': True,
+        'message': 'Simulation advanced by 30 minutes',
+        'current_time': w.time_manager.get_time_string(),
+        'current_day': w.time_manager.current_day
+    })
+
+@app.route('/api/master/events/clear', methods=['POST'])
+def master_clear_events():
+    """Clear event history."""
+    w = get_or_create_world()
+
+    count = len(w.event_system.event_history)
+    w.event_system.event_history.clear()
+
+    return jsonify({
+        'success': True,
+        'message': f'Cleared {count} events'
+    })
+
+# ============================================================================
 # WebSocket Events
 # ============================================================================
 
