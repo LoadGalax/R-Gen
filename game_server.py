@@ -70,12 +70,23 @@ def login_required(f):
 @app.route('/')
 def serve_game():
     """Serve the main game page."""
-    return send_from_directory('Client', 'index.html')
+    response = send_from_directory('Client', 'index.html')
+    # Prevent caching during development
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
 
 @app.route('/<path:path>')
 def serve_static(path):
     """Serve static files."""
-    return send_from_directory('Client', path)
+    response = send_from_directory('Client', path)
+    # Prevent caching for JS files during development
+    if path.endswith('.js'):
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+    return response
 
 # ============================================================================
 # REST API Endpoints
