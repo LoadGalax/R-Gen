@@ -390,31 +390,80 @@ class RGenGame {
         if (!this.player || !this.player.inventory) return;
 
         const inventory = this.player.inventory;
-        const itemList = document.querySelector('[data-page="inventory"] .item-list');
 
-        if (!itemList) return;
+        // Get all section elements
+        const equippedSection = document.getElementById('inventory-equipped-section');
+        const equippedList = document.getElementById('inventory-equipped-list');
+        const weaponsSection = document.getElementById('inventory-weapons-section');
+        const weaponsList = document.getElementById('inventory-weapons-list');
+        const consumablesSection = document.getElementById('inventory-consumables-section');
+        const consumablesList = document.getElementById('inventory-consumables-list');
+        const otherSection = document.getElementById('inventory-other-section');
+        const otherList = document.getElementById('inventory-other-list');
+        const emptySection = document.getElementById('inventory-empty');
 
-        // Separate equipped and unequipped items
+        // Categorize items
         const equippedItems = inventory.filter(item => item.equipped);
-        const unequippedItems = inventory.filter(item => !item.equipped);
+        const weaponItems = inventory.filter(item => !item.equipped &&
+            ['weapon', 'armor', 'shield', 'helmet', 'boots', 'gloves'].some(type =>
+                item.item_type.toLowerCase().includes(type)));
+        const consumableItems = inventory.filter(item => !item.equipped &&
+            ['consumable', 'potion', 'scroll', 'food'].some(type =>
+                item.item_type.toLowerCase().includes(type)));
+        const otherItems = inventory.filter(item => !item.equipped &&
+            !weaponItems.includes(item) && !consumableItems.includes(item));
 
-        // Clear the item list
-        itemList.innerHTML = '';
+        // Clear all lists
+        if (equippedList) equippedList.innerHTML = '';
+        if (weaponsList) weaponsList.innerHTML = '';
+        if (consumablesList) consumablesList.innerHTML = '';
+        if (otherList) otherList.innerHTML = '';
 
-        // Add equipped items section
-        if (equippedItems.length > 0) {
+        // Populate equipped section
+        if (equippedItems.length > 0 && equippedList) {
             equippedItems.forEach(item => {
-                const itemDiv = this.createInventoryItemElement(item);
-                itemList.appendChild(itemDiv);
+                equippedList.appendChild(this.createInventoryItemElement(item));
             });
+            if (equippedSection) equippedSection.style.display = 'block';
+        } else {
+            if (equippedSection) equippedSection.style.display = 'none';
         }
 
-        // Add unequipped items section
-        if (unequippedItems.length > 0) {
-            unequippedItems.forEach(item => {
-                const itemDiv = this.createInventoryItemElement(item);
-                itemList.appendChild(itemDiv);
+        // Populate weapons section
+        if (weaponItems.length > 0 && weaponsList) {
+            weaponItems.forEach(item => {
+                weaponsList.appendChild(this.createInventoryItemElement(item));
             });
+            if (weaponsSection) weaponsSection.style.display = 'block';
+        } else {
+            if (weaponsSection) weaponsSection.style.display = 'none';
+        }
+
+        // Populate consumables section
+        if (consumableItems.length > 0 && consumablesList) {
+            consumableItems.forEach(item => {
+                consumablesList.appendChild(this.createInventoryItemElement(item));
+            });
+            if (consumablesSection) consumablesSection.style.display = 'block';
+        } else {
+            if (consumablesSection) consumablesSection.style.display = 'none';
+        }
+
+        // Populate other items section
+        if (otherItems.length > 0 && otherList) {
+            otherItems.forEach(item => {
+                otherList.appendChild(this.createInventoryItemElement(item));
+            });
+            if (otherSection) otherSection.style.display = 'block';
+        } else {
+            if (otherSection) otherSection.style.display = 'none';
+        }
+
+        // Show/hide empty message
+        if (inventory.length === 0) {
+            if (emptySection) emptySection.style.display = 'block';
+        } else {
+            if (emptySection) emptySection.style.display = 'none';
         }
 
         // Update subtitle with count
@@ -931,7 +980,22 @@ class RGenGame {
         const subtitle = document.getElementById('right-inventory-subtitle');
         const content = document.getElementById('right-inventory-content');
 
-        const rarity = item.rarity || 'Common';
+        // Normalize item data (handle both demo and database structures)
+        const itemData = item.item_data || {};
+        const name = item.item_name || item.name || 'Unknown Item';
+        const type = item.item_type || item.type || 'Item';
+        const rarity = itemData.rarity || item.rarity || 'Common';
+        const damage = itemData.damage || item.damage;
+        const defense = itemData.defense || item.defense;
+        const magic_power = itemData.magic_power || item.magic_power;
+        const value = itemData.value || item.value;
+        const weight = itemData.weight || item.weight;
+        const description = itemData.description || item.description || 'A mysterious item with unknown properties.';
+        const special_effects = itemData.special_effects || item.special_effects;
+        const quantity = item.quantity || 1;
+        const equipped = item.equipped;
+        const itemId = item.id;
+
         const rarityColor = {
             'Legendary': '#ffd700',
             'Rare': '#6495ed',
@@ -939,42 +1003,64 @@ class RGenGame {
             'Common': '#b8a485'
         };
 
-        if (title) title.textContent = `⚔ ${item.name} ⚔`;
-        if (subtitle) subtitle.innerHTML = `~ <span style="color: ${rarityColor[rarity] || '#b8a485'}">${rarity}</span> ${item.type || 'Item'} ~`;
+        if (title) title.textContent = `⚔ ${name} ⚔`;
+        if (subtitle) subtitle.innerHTML = `~ <span style="color: ${rarityColor[rarity] || '#b8a485'}">${rarity}</span> ${type} ~`;
+
+        // Determine if item is consumable
+        const isConsumable = type.toLowerCase().includes('consumable') ||
+                            type.toLowerCase().includes('potion') ||
+                            type.toLowerCase().includes('food') ||
+                            type.toLowerCase().includes('scroll');
+
+        // Determine if item is equippable
+        const isEquippable = type.toLowerCase().includes('weapon') ||
+                            type.toLowerCase().includes('armor') ||
+                            type.toLowerCase().includes('shield') ||
+                            type.toLowerCase().includes('helmet') ||
+                            type.toLowerCase().includes('boots') ||
+                            type.toLowerCase().includes('gloves') ||
+                            type.toLowerCase().includes('ring') ||
+                            type.toLowerCase().includes('amulet');
 
         if (content) {
             content.innerHTML = `
                 <div class="section">
                     <div class="section-title">Item Statistics</div>
                     <div class="info-box">
-                        ${item.damage ? `
+                        ${damage ? `
                         <div class="info-row">
                             <span class="label">⚔️ Damage:</span>
-                            <span>+${item.damage}</span>
+                            <span>+${damage}</span>
                         </div>
                         ` : ''}
-                        ${item.defense ? `
+                        ${defense ? `
                         <div class="info-row">
                             <span class="label">🛡️ Defense:</span>
-                            <span>+${item.defense}</span>
+                            <span>+${defense}</span>
                         </div>
                         ` : ''}
-                        ${item.magic_power ? `
+                        ${magic_power ? `
                         <div class="info-row">
                             <span class="label">✨ Magic Power:</span>
-                            <span>+${item.magic_power}</span>
+                            <span>+${magic_power}</span>
                         </div>
                         ` : ''}
-                        ${item.value ? `
+                        ${value ? `
                         <div class="info-row">
                             <span class="label">💰 Value:</span>
-                            <span>${item.value} Gold</span>
+                            <span>${value} Gold</span>
                         </div>
                         ` : ''}
-                        ${item.weight ? `
+                        ${weight ? `
                         <div class="info-row">
                             <span class="label">⚖️ Weight:</span>
-                            <span>${item.weight} lbs</span>
+                            <span>${weight} lbs</span>
+                        </div>
+                        ` : ''}
+                        ${quantity > 1 ? `
+                        <div class="info-row">
+                            <span class="label">📦 Quantity:</span>
+                            <span>${quantity}</span>
                         </div>
                         ` : ''}
                     </div>
@@ -983,36 +1069,36 @@ class RGenGame {
                 <div class="section">
                     <div class="section-title">Description</div>
                     <div class="description">
-                        ${item.description || 'A mysterious item with unknown properties.'}
+                        ${description}
                     </div>
                 </div>
 
-                ${item.special_effects ? `
+                ${special_effects ? `
                 <div class="section">
                     <div class="section-title">Special Effects</div>
                     <div class="description" style="text-indent: 0; color: #d4af37;">
-                        ${item.special_effects}
+                        ${special_effects}
                     </div>
                 </div>
                 ` : ''}
 
                 <div class="section" style="margin-top: auto;">
                     <div class="action-grid">
-                        ${item.equipped ? `
-                        <button class="btn" onclick="game.unequipItem('${item.id}')">
+                        ${equipped ? `
+                        <button class="btn" onclick="game.unequipItem(${itemId})">
                             ❌ Unequip
                         </button>
-                        ` : item.type !== 'Consumable' ? `
-                        <button class="btn" onclick="game.equipItem('${item.id}')">
+                        ` : isEquippable ? `
+                        <button class="btn" onclick="game.equipItem(${itemId})">
                             ⚔️ Equip
                         </button>
                         ` : ''}
-                        ${item.type === 'Consumable' ? `
-                        <button class="btn" onclick="game.useItem('${item.id}')">
+                        ${isConsumable ? `
+                        <button class="btn" onclick="game.useItem(${itemId})">
                             🍖 Use
                         </button>
                         ` : ''}
-                        <button class="btn" onclick="game.discardItem('${item.id}')">
+                        <button class="btn" onclick="game.discardItem(${itemId})">
                             🗑️ Discard
                         </button>
                     </div>

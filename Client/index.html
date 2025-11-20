@@ -1065,38 +1065,32 @@
                 <div class="page-content hidden" data-page="inventory">
                     <div class="page-header">
                         <div class="page-title">⚔ Inventory ⚔</div>
-                        <div class="page-subtitle">~ Carrying 5 of 20 items ~</div>
+                        <div class="page-subtitle">~ Carrying 0 items ~</div>
                     </div>
 
-                    <div class="section">
+                    <div id="inventory-equipped-section" class="section" style="display: none;">
                         <div class="section-title">Equipped</div>
-                        <div class="item-list">
-                            <div class="item legendary" onclick="game.showItemDetailsOnRightPage({id: 'sword1', name: 'Flaming Greatsword', rarity: 'Legendary', type: 'Weapon', damage: 25, value: 500, weight: 8, description: 'A magnificent greatsword wreathed in eternal flames. Forged by ancient dragon smiths in the heart of a volcano.', special_effects: 'Deals additional fire damage on hit. Illuminates dark areas.', equipped: true})">⚔️ Legendary Flaming Greatsword (+25 DMG)</div>
-                            <div class="item rare" onclick="game.showItemDetailsOnRightPage({id: 'shield1', name: 'Mithril Shield', rarity: 'Rare', type: 'Armor', defense: 15, value: 200, weight: 5, description: 'A lightweight but incredibly strong shield crafted from pure mithril.', special_effects: 'Reflects 10% of damage back to attacker.', equipped: true})">🛡️ Rare Mithril Shield (+15 DEF)</div>
-                        </div>
+                        <div id="inventory-equipped-list" class="item-list"></div>
                     </div>
 
-                    <div class="section">
+                    <div id="inventory-weapons-section" class="section" style="display: none;">
+                        <div class="section-title">Weapons & Armor</div>
+                        <div id="inventory-weapons-list" class="item-list"></div>
+                    </div>
+
+                    <div id="inventory-consumables-section" class="section" style="display: none;">
                         <div class="section-title">Consumables</div>
-                        <div class="item-list">
-                            <div class="item" onclick="game.showItemDetailsOnRightPage({id: 'potion1', name: 'Health Potion', rarity: 'Common', type: 'Consumable', value: 25, weight: 0.5, description: 'A red potion that restores 50 health points when consumed.', special_effects: 'Instantly restores 50 HP.'})">🧪 Health Potion × 3</div>
-                            <div class="item" onclick="game.showItemDetailsOnRightPage({id: 'scroll1', name: 'Scroll of Fireball', rarity: 'Uncommon', type: 'Consumable', magic_power: 30, value: 50, weight: 0.2, description: 'A magical scroll inscribed with arcane runes. When read, it unleashes a devastating fireball.', special_effects: 'Deals 30 fire damage in an area. Single use.'})">📜 Scroll of Fireball</div>
-                        </div>
+                        <div id="inventory-consumables-list" class="item-list"></div>
                     </div>
 
-                    <div class="section">
-                        <div class="section-title">Key Items</div>
-                        <div class="item-list">
-                            <div class="item" onclick="game.showItemDetailsOnRightPage({id: 'key1', name: 'Mysterious Key', rarity: 'Rare', type: 'Key Item', value: 0, weight: 0.1, description: 'An ancient key covered in strange symbols. It seems to pulse with magical energy. What door does it unlock?', special_effects: 'Opens a mysterious door somewhere in the world.'})">🗝️ Mysterious Key</div>
-                        </div>
+                    <div id="inventory-other-section" class="section" style="display: none;">
+                        <div class="section-title">Other Items</div>
+                        <div id="inventory-other-list" class="item-list"></div>
                     </div>
 
-                    <div class="section">
-                        <div class="action-grid">
-                            <button class="btn">🔍 Examine</button>
-                            <button class="btn">🍖 Use Item</button>
-                            <button class="btn">⚔️ Equip</button>
-                            <button class="btn">🗑️ Discard</button>
+                    <div id="inventory-empty" class="section">
+                        <div class="description" style="text-align: center; color: #b8a485; padding: 2rem;">
+                            Your inventory is empty. Explore the world to find items!
                         </div>
                     </div>
                 </div>
@@ -1403,6 +1397,10 @@
                 // Handle special page loads
                 if (targetPage === 'map' && window.game) {
                     game.showMapPage();
+                } else if (targetPage === 'inventory' && window.game) {
+                    game.updateInventoryPage();
+                } else if (targetPage === 'craft' && window.game) {
+                    game.updateCraftPage();
                 }
             });
         });

@@ -567,6 +567,16 @@ def get_player_inventory():
     player_id = session['player_id']
 
     inventory = database.get_player_inventory(player_id)
+
+    # Parse JSON data field for each item
+    for item in inventory:
+        if 'data' in item and isinstance(item['data'], str):
+            try:
+                item['item_data'] = json.loads(item['data'])
+                del item['data']  # Remove the raw JSON string
+            except json.JSONDecodeError:
+                item['item_data'] = {}
+
     return jsonify({'inventory': inventory})
 
 @app.route('/api/player/inventory', methods=['POST'])
