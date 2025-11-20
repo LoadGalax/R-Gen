@@ -22,7 +22,8 @@ from functools import wraps
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-from GenerationEngine import ContentGenerator, DatabaseManager
+from GenerationEngine import ContentGenerator
+from game_database import GameDatabase
 
 app = Flask(__name__, static_folder='Client', static_url_path='')
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(32))
@@ -36,10 +37,10 @@ db = None
 world = None
 
 def get_db():
-    """Get or create database instance."""
+    """Get or create game database instance."""
     global db
     if db is None:
-        db = DatabaseManager()
+        db = GameDatabase()
     return db
 
 def get_or_create_world():
@@ -618,11 +619,49 @@ def update_player_inventory_item(inventory_id):
 # Profession Endpoints
 # ========================================================================
 
+# Icon mapping for professions
+PROFESSION_ICONS = {
+    'blacksmith': '⚒️', 'alchemist': '🧪', 'enchanter': '✨', 'leatherworker': '🦌',
+    'tailor': '🧵', 'jeweler': '💎', 'cook': '🍳', 'carpenter': '🪓',
+    'engineer': '⚙️', 'scribe': '📜', 'miner': '⛏️', 'herbalist': '🌿',
+    'skinner': '🔪', 'fisherman': '🎣', 'fisher': '🎣', 'archaeologist': '🏺',
+    'armorer': '🛡️', 'weaponsmith': '⚔️', 'brewer': '🍺', 'baker': '🍞',
+    'potter': '🏺', 'glassblower': '🫧', 'mason': '🧱', 'chandler': '🕯️',
+    'tanner': '🦌', 'bowyer': '🏹', 'fletcher': '🎯', 'saddler': '🐴',
+    'cobbler': '👞', 'cartographer': '🗺️', 'astrologer': '⭐', 'apothecary': '💊',
+    'sage': '📚', 'bard': '🎵', 'painter': '🎨', 'sculptor': '🗿', 'architect': '🏛️',
+    'guard': '🛡️', 'merchant': '💰', 'mage': '🔮', 'innkeeper': '🍺',
+    'hermit': '🧙', 'cleric': '⛪', 'druid': '🌳', 'thief': '🗡️',
+    'assassin': '⚔️', 'farmer': '🌾', 'hunter': '🏹', 'scholar': '📚',
+    'healer': '💊', 'knight': '⚔️', 'soldier': '⚔️', 'archer': '🏹',
+    'smuggler': '💼', 'necromancer': '💀', 'ranger': '🌲', 'paladin': '⚔️',
+    'warlock': '🔥', 'monk': '🥋', 'barbarian': '⚡', 'spy': '🕵️',
+    'navigator': '🧭', 'diplomat': '🤝', 'gladiator': '⚔️', 'fortune_teller': '🔮',
+    'sailor': '⚓', 'pirate': '☠️'
+}
+
 @app.route('/api/professions', methods=['GET'])
 def get_all_professions():
-    """Get all available professions."""
-    database = get_db()
-    professions = database.get_all_professions()
+    """Get all available professions from GenerationEngine."""
+    professions_data = generator.professions
+
+    # Convert to list format expected by frontend
+    professions = []
+    for prof_name, prof_data in professions_data.items():
+        profession = {
+            'id': prof_name.lower(),
+            'name': prof_name.title(),
+            'icon': PROFESSION_ICONS.get(prof_name.lower(), '🔨'),
+            'description': prof_data.get('description_templates', [f"A skilled {prof_name}."])[0] if prof_data.get('description_templates') else f"A skilled {prof_name}.",
+            'skills': prof_data.get('skills', []),
+            'base_stats': prof_data.get('base_stats', {}),
+            'typical_inventory': prof_data.get('typical_inventory', []),
+            'typical_locations': prof_data.get('typical_locations', []),
+            'possible_races': prof_data.get('possible_races', []),
+            'dialogue_hooks': prof_data.get('dialogue_hooks', [])
+        }
+        professions.append(profession)
+
     return jsonify({'professions': professions})
 
 @app.route('/api/player/professions', methods=['GET'])
@@ -632,7 +671,33 @@ def get_player_professions():
     database = get_db()
     player_id = session['player_id']
 
-    professions = database.get_player_professions(player_id)
+    # Get player data
+    player = database.get_player_by_id(player_id)
+    if not player:
+        return jsonify({'error': 'Player not found'}), 404
+
+    # Get player professions from game database
+    player_professions_data = database.get_player_professions(player_id)
+
+    # Enrich with profession info from GenerationEngine
+    professions = []
+    for prof_record in player_professions_data:
+        prof_id = prof_record['profession_id']
+        if prof_id in generator.professions:
+            prof_data = generator.professions[prof_id]
+            professions.append({
+                'id': prof_record['id'],
+                'profession_id': prof_id,
+                'name': prof_id.title(),
+                'icon': PROFESSION_ICONS.get(prof_id.lower(), '🔨'),
+                'level': prof_record['level'],
+                'experience': prof_record['experience'],
+                'description': prof_data.get('description_templates', [f"A skilled {prof_id}."])[0] if prof_data.get('description_templates') else f"A skilled {prof_id}.",
+                'skills': prof_data.get('skills', []),
+                'created_at': prof_record['created_at'],
+                'updated_at': prof_record['updated_at']
+            })
+
     return jsonify({'professions': professions})
 
 @app.route('/api/player/professions', methods=['POST'])
@@ -647,16 +712,21 @@ def add_player_profession():
     if not profession_id:
         return jsonify({'error': 'profession_id required'}), 400
 
+    # Verify profession exists in GenerationEngine
+    if profession_id not in generator.professions:
+        return jsonify({'error': 'Invalid profession'}), 400
+
     level = data.get('level', 1)
     experience = data.get('experience', 0)
 
     try:
+        # Add profession to player in game database
         player_prof_id = database.add_player_profession(player_id, profession_id, level, experience)
-        return jsonify({'success': True, 'player_profession_id': player_prof_id})
+        return jsonify({'success': True, 'id': player_prof_id, 'profession_id': profession_id})
     except Exception as e:
         return jsonify({'error': f'Failed to add profession: {str(e)}'}), 500
 
-@app.route('/api/player/professions/<int:profession_id>', methods=['PATCH'])
+@app.route('/api/player/professions/<profession_id>', methods=['PATCH'])
 @login_required
 def update_player_profession(profession_id):
     """Update player's profession level or XP."""
@@ -664,6 +734,11 @@ def update_player_profession(profession_id):
     database = get_db()
     player_id = session['player_id']
 
+    # Verify profession exists in GenerationEngine
+    if profession_id not in generator.professions:
+        return jsonify({'error': 'Invalid profession'}), 400
+
+    # Update profession in game database
     level = data.get('level')
     experience = data.get('experience')
 
@@ -679,122 +754,30 @@ def update_player_profession(profession_id):
 
 @app.route('/api/recipes', methods=['GET'])
 def get_all_recipes():
-    """Get all recipes, optionally filtered by profession."""
-    database = get_db()
-    profession_id = request.args.get('profession_id', type=int)
-
-    if profession_id:
-        recipes = database.get_recipes_by_profession(profession_id)
-    else:
-        # Get all recipes by querying all professions
-        professions = database.get_all_professions()
-        recipes = []
-        for prof in professions:
-            recipes.extend(database.get_recipes_by_profession(prof['id']))
-
-    return jsonify({'recipes': recipes})
+    """Get all recipes (placeholder - to be generated from GenerationEngine)."""
+    # TODO: Generate recipes dynamically from GenerationEngine
+    return jsonify({'recipes': []})
 
 @app.route('/api/player/recipes', methods=['GET'])
 @login_required
 def get_player_recipes():
-    """Get player's known recipes."""
-    database = get_db()
-    player_id = session['player_id']
-
-    recipes = database.get_player_recipes(player_id)
-    return jsonify({'recipes': recipes})
+    """Get player's known recipes (placeholder)."""
+    # TODO: Generate recipes based on player professions
+    return jsonify({'recipes': []})
 
 @app.route('/api/player/recipes', methods=['POST'])
 @login_required
 def add_player_recipe():
-    """Add a recipe to player's known recipes."""
-    data = request.get_json()
-    database = get_db()
-    player_id = session['player_id']
-
-    recipe_id = data.get('recipe_id')
-    if not recipe_id:
-        return jsonify({'error': 'recipe_id required'}), 400
-
-    try:
-        player_recipe_id = database.add_player_recipe(player_id, recipe_id)
-        return jsonify({'success': True, 'player_recipe_id': player_recipe_id})
-    except Exception as e:
-        return jsonify({'error': f'Failed to add recipe: {str(e)}'}), 500
+    """Add a recipe to player's known recipes (placeholder)."""
+    # TODO: Implement recipe learning
+    return jsonify({'success': True, 'message': 'Recipe system coming soon'})
 
 @app.route('/api/craft', methods=['POST'])
 @login_required
 def craft_item():
-    """Craft an item from a recipe."""
-    data = request.get_json()
-    database = get_db()
-    player_id = session['player_id']
-
-    recipe_id = data.get('recipe_id')
-    if not recipe_id:
-        return jsonify({'error': 'recipe_id required'}), 400
-
-    # Get recipe details
-    player_recipes = database.get_player_recipes(player_id)
-    recipe = next((r for r in player_recipes if r['id'] == recipe_id), None)
-
-    if not recipe:
-        return jsonify({'error': 'Recipe not known'}), 403
-
-    # Check profession level
-    player_professions = database.get_player_professions(player_id)
-    prof = next((p for p in player_professions if p['profession_id'] == recipe['profession_id']), None)
-
-    if not prof or prof['level'] < recipe['required_level']:
-        return jsonify({'error': 'Insufficient profession level'}), 403
-
-    # Check materials in inventory
-    inventory = database.get_player_inventory(player_id)
-    for ingredient in recipe['ingredients']:
-        inv_item = next((i for i in inventory if i['item_name'] == ingredient['ingredient_name']), None)
-        if not inv_item or inv_item['quantity'] < ingredient['quantity']:
-            return jsonify({'error': f'Insufficient materials: {ingredient["ingredient_name"]}'}), 400
-
-    # Consume materials
-    for ingredient in recipe['ingredients']:
-        inv_item = next(i for i in inventory if i['item_name'] == ingredient['ingredient_name'])
-        database.remove_from_inventory(player_id, inv_item['id'], ingredient['quantity'])
-
-    # Add crafted item to inventory
-    item_data = {
-        'crafted': True,
-        'recipe_id': recipe_id,
-        'profession': recipe['profession_name']
-    }
-
-    database.add_to_inventory(
-        player_id=player_id,
-        item_name=recipe['result_item_name'],
-        item_type='Crafted',
-        quantity=recipe['result_quantity'],
-        item_data=item_data
-    )
-
-    # Grant profession XP (10 * required_level)
-    xp_gain = 10 * recipe['required_level']
-    new_xp = prof['experience'] + xp_gain
-
-    # Simple leveling: 100 XP per level
-    new_level = prof['level']
-    xp_per_level = 100
-    while new_xp >= xp_per_level * new_level:
-        new_xp -= xp_per_level * new_level
-        new_level += 1
-
-    database.update_player_profession(player_id, recipe['profession_id'], new_level, new_xp)
-
-    return jsonify({
-        'success': True,
-        'message': f'Crafted {recipe["result_item_name"]}',
-        'xp_gained': xp_gain,
-        'new_level': new_level,
-        'new_experience': new_xp
-    })
+    """Craft an item from a recipe (placeholder)."""
+    # TODO: Implement crafting with GenerationEngine
+    return jsonify({'success': False, 'message': 'Crafting system coming soon'})
 
 @app.route('/api/player/update', methods=['PATCH'])
 @login_required
