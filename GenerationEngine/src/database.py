@@ -141,6 +141,63 @@ class DatabaseManager:
                 )
             """)
 
+            # Create players table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS players (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    username TEXT UNIQUE NOT NULL,
+                    password_hash TEXT NOT NULL,
+                    email TEXT UNIQUE,
+                    character_name TEXT NOT NULL,
+                    race TEXT,
+                    class TEXT,
+                    level INTEGER DEFAULT 1,
+                    experience INTEGER DEFAULT 0,
+                    gold INTEGER DEFAULT 100,
+                    current_location_id TEXT,
+                    data TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+
+            # Create player_inventory table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS player_inventory (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    player_id INTEGER NOT NULL,
+                    item_name TEXT NOT NULL,
+                    item_type TEXT NOT NULL,
+                    quantity INTEGER DEFAULT 1,
+                    equipped INTEGER DEFAULT 0,
+                    data TEXT NOT NULL,
+                    acquired_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE
+                )
+            """)
+
+            # Create player_stats table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS player_stats (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    player_id INTEGER UNIQUE NOT NULL,
+                    health INTEGER DEFAULT 100,
+                    max_health INTEGER DEFAULT 100,
+                    mana INTEGER DEFAULT 100,
+                    max_mana INTEGER DEFAULT 100,
+                    energy INTEGER DEFAULT 100,
+                    max_energy INTEGER DEFAULT 100,
+                    strength INTEGER DEFAULT 10,
+                    dexterity INTEGER DEFAULT 10,
+                    intelligence INTEGER DEFAULT 10,
+                    constitution INTEGER DEFAULT 10,
+                    wisdom INTEGER DEFAULT 10,
+                    charisma INTEGER DEFAULT 10,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE
+                )
+            """)
+
             # Create indices
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_items_type ON items(type)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_items_quality ON items(quality)")
@@ -153,6 +210,11 @@ class DatabaseManager:
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_flora_category ON flora(category)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_history_type ON generation_history(content_type)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_history_created ON generation_history(created_at)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_players_username ON players(username)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_players_email ON players(email)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_player_inventory_player_id ON player_inventory(player_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_player_inventory_item_type ON player_inventory(item_type)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_player_stats_player_id ON player_stats(player_id)")
 
             conn.commit()
 
@@ -234,6 +296,63 @@ class DatabaseManager:
                 )
             """)
 
+            # Create players table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS players (
+                    id SERIAL PRIMARY KEY,
+                    username TEXT UNIQUE NOT NULL,
+                    password_hash TEXT NOT NULL,
+                    email TEXT UNIQUE,
+                    character_name TEXT NOT NULL,
+                    race TEXT,
+                    class TEXT,
+                    level INTEGER DEFAULT 1,
+                    experience INTEGER DEFAULT 0,
+                    gold INTEGER DEFAULT 100,
+                    current_location_id TEXT,
+                    data JSONB NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+
+            # Create player_inventory table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS player_inventory (
+                    id SERIAL PRIMARY KEY,
+                    player_id INTEGER NOT NULL,
+                    item_name TEXT NOT NULL,
+                    item_type TEXT NOT NULL,
+                    quantity INTEGER DEFAULT 1,
+                    equipped BOOLEAN DEFAULT FALSE,
+                    data JSONB NOT NULL,
+                    acquired_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE
+                )
+            """)
+
+            # Create player_stats table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS player_stats (
+                    id SERIAL PRIMARY KEY,
+                    player_id INTEGER UNIQUE NOT NULL,
+                    health INTEGER DEFAULT 100,
+                    max_health INTEGER DEFAULT 100,
+                    mana INTEGER DEFAULT 100,
+                    max_mana INTEGER DEFAULT 100,
+                    energy INTEGER DEFAULT 100,
+                    max_energy INTEGER DEFAULT 100,
+                    strength INTEGER DEFAULT 10,
+                    dexterity INTEGER DEFAULT 10,
+                    intelligence INTEGER DEFAULT 10,
+                    constitution INTEGER DEFAULT 10,
+                    wisdom INTEGER DEFAULT 10,
+                    charisma INTEGER DEFAULT 10,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE
+                )
+            """)
+
             # Create indices
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_items_type ON items(type)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_items_quality ON items(quality)")
@@ -242,6 +361,11 @@ class DatabaseManager:
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_locations_type ON locations(type)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_history_type ON generation_history(content_type)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_history_created ON generation_history(created_at)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_players_username ON players(username)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_players_email ON players(email)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_player_inventory_player_id ON player_inventory(player_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_player_inventory_item_type ON player_inventory(item_type)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_player_stats_player_id ON player_stats(player_id)")
 
             conn.commit()
 
@@ -799,3 +923,516 @@ class DatabaseManager:
                 cursor.execute("DELETE FROM generation_history")
 
             conn.commit()
+
+    # Player Management Methods
+
+    def create_player(self, username: str, password_hash: str, character_name: str,
+                     email: Optional[str] = None, race: Optional[str] = None,
+                     character_class: Optional[str] = None, starting_location: Optional[str] = None) -> int:
+        """
+        Create a new player account.
+
+        Args:
+            username: Unique username for login
+            password_hash: Hashed password
+            character_name: Character's display name
+            email: Optional email address
+            race: Optional character race
+            character_class: Optional character class
+            starting_location: Optional starting location ID
+
+        Returns:
+            Database ID of created player
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            player_data = {
+                "character_name": character_name,
+                "race": race,
+                "class": character_class,
+                "created_at": datetime.now().isoformat()
+            }
+            data_str = json.dumps(player_data)
+
+            try:
+                if self.db_type == "sqlite":
+                    cursor.execute("""
+                        INSERT INTO players (username, password_hash, email, character_name, race, class, current_location_id, data)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (username, password_hash, email, character_name, race, character_class, starting_location, data_str))
+                    player_id = cursor.lastrowid
+                else:  # postgresql
+                    cursor.execute("""
+                        INSERT INTO players (username, password_hash, email, character_name, race, class, current_location_id, data)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                        RETURNING id
+                    """, (username, password_hash, email, character_name, race, character_class, starting_location, data_str))
+                    player_id = cursor.fetchone()[0]
+
+                # Create default stats for the player
+                if self.db_type == "sqlite":
+                    cursor.execute("""
+                        INSERT INTO player_stats (player_id) VALUES (?)
+                    """, (player_id,))
+                else:
+                    cursor.execute("""
+                        INSERT INTO player_stats (player_id) VALUES (%s)
+                    """, (player_id,))
+
+                conn.commit()
+                return player_id
+            except Exception as e:
+                conn.rollback()
+                raise e
+
+    def get_player_by_username(self, username: str) -> Optional[Dict[str, Any]]:
+        """
+        Retrieve a player by username.
+
+        Args:
+            username: Username to search for
+
+        Returns:
+            Player dictionary or None if not found
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            if self.db_type == "sqlite":
+                cursor.execute("""
+                    SELECT id, username, password_hash, email, character_name, race, class,
+                           level, experience, gold, current_location_id, data, created_at, last_login
+                    FROM players WHERE username = ?
+                """, (username,))
+            else:
+                cursor.execute("""
+                    SELECT id, username, password_hash, email, character_name, race, class,
+                           level, experience, gold, current_location_id, data, created_at, last_login
+                    FROM players WHERE username = %s
+                """, (username,))
+
+            row = cursor.fetchone()
+            if row:
+                if self.db_type == "sqlite":
+                    return {
+                        "id": row[0],
+                        "username": row[1],
+                        "password_hash": row[2],
+                        "email": row[3],
+                        "character_name": row[4],
+                        "race": row[5],
+                        "class": row[6],
+                        "level": row[7],
+                        "experience": row[8],
+                        "gold": row[9],
+                        "current_location_id": row[10],
+                        "data": json.loads(row[11]),
+                        "created_at": row[12],
+                        "last_login": row[13]
+                    }
+                else:
+                    return {
+                        "id": row["id"],
+                        "username": row["username"],
+                        "password_hash": row["password_hash"],
+                        "email": row["email"],
+                        "character_name": row["character_name"],
+                        "race": row["race"],
+                        "class": row["class"],
+                        "level": row["level"],
+                        "experience": row["experience"],
+                        "gold": row["gold"],
+                        "current_location_id": row["current_location_id"],
+                        "data": row["data"],
+                        "created_at": row["created_at"],
+                        "last_login": row["last_login"]
+                    }
+            return None
+
+    def get_player_by_id(self, player_id: int) -> Optional[Dict[str, Any]]:
+        """
+        Retrieve a player by ID.
+
+        Args:
+            player_id: Player ID to search for
+
+        Returns:
+            Player dictionary or None if not found
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            if self.db_type == "sqlite":
+                cursor.execute("""
+                    SELECT id, username, password_hash, email, character_name, race, class,
+                           level, experience, gold, current_location_id, data, created_at, last_login
+                    FROM players WHERE id = ?
+                """, (player_id,))
+            else:
+                cursor.execute("""
+                    SELECT id, username, password_hash, email, character_name, race, class,
+                           level, experience, gold, current_location_id, data, created_at, last_login
+                    FROM players WHERE id = %s
+                """, (player_id,))
+
+            row = cursor.fetchone()
+            if row:
+                if self.db_type == "sqlite":
+                    return {
+                        "id": row[0],
+                        "username": row[1],
+                        "password_hash": row[2],
+                        "email": row[3],
+                        "character_name": row[4],
+                        "race": row[5],
+                        "class": row[6],
+                        "level": row[7],
+                        "experience": row[8],
+                        "gold": row[9],
+                        "current_location_id": row[10],
+                        "data": json.loads(row[11]),
+                        "created_at": row[12],
+                        "last_login": row[13]
+                    }
+                else:
+                    return {
+                        "id": row["id"],
+                        "username": row["username"],
+                        "password_hash": row["password_hash"],
+                        "email": row["email"],
+                        "character_name": row["character_name"],
+                        "race": row["race"],
+                        "class": row["class"],
+                        "level": row["level"],
+                        "experience": row["experience"],
+                        "gold": row["gold"],
+                        "current_location_id": row["current_location_id"],
+                        "data": row["data"],
+                        "created_at": row["created_at"],
+                        "last_login": row["last_login"]
+                    }
+            return None
+
+    def update_player(self, player_id: int, updates: Dict[str, Any]) -> bool:
+        """
+        Update player data.
+
+        Args:
+            player_id: Player ID
+            updates: Dictionary of fields to update
+
+        Returns:
+            True if successful, False otherwise
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            allowed_fields = ['character_name', 'race', 'class', 'level', 'experience',
+                            'gold', 'current_location_id', 'email', 'last_login']
+
+            set_clauses = []
+            params = []
+
+            for field, value in updates.items():
+                if field in allowed_fields:
+                    set_clauses.append(f"{field} = {'?' if self.db_type == 'sqlite' else '%s'}")
+                    params.append(value)
+
+            if not set_clauses:
+                return False
+
+            params.append(player_id)
+            query = f"UPDATE players SET {', '.join(set_clauses)} WHERE id = {'?' if self.db_type == 'sqlite' else '%s'}"
+
+            cursor.execute(query, params)
+            conn.commit()
+            return cursor.rowcount > 0
+
+    def add_to_inventory(self, player_id: int, item_name: str, item_type: str,
+                        item_data: Dict[str, Any], quantity: int = 1) -> int:
+        """
+        Add an item to player's inventory.
+
+        Args:
+            player_id: Player ID
+            item_name: Name of the item
+            item_type: Type of the item
+            item_data: Full item data dictionary
+            quantity: Quantity to add
+
+        Returns:
+            Database ID of inventory entry
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            data_str = json.dumps(item_data)
+
+            if self.db_type == "sqlite":
+                cursor.execute("""
+                    INSERT INTO player_inventory (player_id, item_name, item_type, quantity, data)
+                    VALUES (?, ?, ?, ?, ?)
+                """, (player_id, item_name, item_type, quantity, data_str))
+                inventory_id = cursor.lastrowid
+            else:
+                cursor.execute("""
+                    INSERT INTO player_inventory (player_id, item_name, item_type, quantity, data)
+                    VALUES (%s, %s, %s, %s, %s)
+                    RETURNING id
+                """, (player_id, item_name, item_type, quantity, data_str))
+                inventory_id = cursor.fetchone()[0]
+
+            conn.commit()
+            return inventory_id
+
+    def remove_from_inventory(self, player_id: int, inventory_id: int, quantity: Optional[int] = None) -> bool:
+        """
+        Remove an item from player's inventory.
+
+        Args:
+            player_id: Player ID
+            inventory_id: Inventory entry ID
+            quantity: If specified, reduce quantity by this amount. If None, remove entirely.
+
+        Returns:
+            True if successful, False otherwise
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            if quantity is not None:
+                # Reduce quantity
+                if self.db_type == "sqlite":
+                    cursor.execute("""
+                        UPDATE player_inventory
+                        SET quantity = quantity - ?
+                        WHERE id = ? AND player_id = ? AND quantity >= ?
+                    """, (quantity, inventory_id, player_id, quantity))
+                else:
+                    cursor.execute("""
+                        UPDATE player_inventory
+                        SET quantity = quantity - %s
+                        WHERE id = %s AND player_id = %s AND quantity >= %s
+                    """, (quantity, inventory_id, player_id, quantity))
+
+                rows_updated = cursor.rowcount
+
+                # Delete if quantity reaches 0
+                if self.db_type == "sqlite":
+                    cursor.execute("""
+                        DELETE FROM player_inventory
+                        WHERE id = ? AND player_id = ? AND quantity <= 0
+                    """, (inventory_id, player_id))
+                else:
+                    cursor.execute("""
+                        DELETE FROM player_inventory
+                        WHERE id = %s AND player_id = %s AND quantity <= 0
+                    """, (inventory_id, player_id))
+
+                conn.commit()
+                return rows_updated > 0
+            else:
+                # Remove entirely
+                if self.db_type == "sqlite":
+                    cursor.execute("""
+                        DELETE FROM player_inventory
+                        WHERE id = ? AND player_id = ?
+                    """, (inventory_id, player_id))
+                else:
+                    cursor.execute("""
+                        DELETE FROM player_inventory
+                        WHERE id = %s AND player_id = %s
+                    """, (inventory_id, player_id))
+
+                conn.commit()
+                return cursor.rowcount > 0
+
+    def get_player_inventory(self, player_id: int) -> List[Dict[str, Any]]:
+        """
+        Get all items in player's inventory.
+
+        Args:
+            player_id: Player ID
+
+        Returns:
+            List of inventory items
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            if self.db_type == "sqlite":
+                cursor.execute("""
+                    SELECT id, item_name, item_type, quantity, equipped, data, acquired_at
+                    FROM player_inventory
+                    WHERE player_id = ?
+                    ORDER BY acquired_at DESC
+                """, (player_id,))
+            else:
+                cursor.execute("""
+                    SELECT id, item_name, item_type, quantity, equipped, data, acquired_at
+                    FROM player_inventory
+                    WHERE player_id = %s
+                    ORDER BY acquired_at DESC
+                """, (player_id,))
+
+            results = []
+            for row in cursor.fetchall():
+                if self.db_type == "sqlite":
+                    results.append({
+                        "id": row[0],
+                        "item_name": row[1],
+                        "item_type": row[2],
+                        "quantity": row[3],
+                        "equipped": bool(row[4]),
+                        "data": json.loads(row[5]),
+                        "acquired_at": row[6]
+                    })
+                else:
+                    results.append({
+                        "id": row["id"],
+                        "item_name": row["item_name"],
+                        "item_type": row["item_type"],
+                        "quantity": row["quantity"],
+                        "equipped": row["equipped"],
+                        "data": row["data"],
+                        "acquired_at": row["acquired_at"]
+                    })
+
+            return results
+
+    def update_inventory_item(self, inventory_id: int, player_id: int, updates: Dict[str, Any]) -> bool:
+        """
+        Update an inventory item.
+
+        Args:
+            inventory_id: Inventory entry ID
+            player_id: Player ID
+            updates: Dictionary of fields to update (quantity, equipped)
+
+        Returns:
+            True if successful, False otherwise
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            allowed_fields = ['quantity', 'equipped']
+            set_clauses = []
+            params = []
+
+            for field, value in updates.items():
+                if field in allowed_fields:
+                    set_clauses.append(f"{field} = {'?' if self.db_type == 'sqlite' else '%s'}")
+                    params.append(value)
+
+            if not set_clauses:
+                return False
+
+            params.extend([inventory_id, player_id])
+            query = f"UPDATE player_inventory SET {', '.join(set_clauses)} WHERE id = {'?' if self.db_type == 'sqlite' else '%s'} AND player_id = {'?' if self.db_type == 'sqlite' else '%s'}"
+
+            cursor.execute(query, params)
+            conn.commit()
+            return cursor.rowcount > 0
+
+    def get_player_stats(self, player_id: int) -> Optional[Dict[str, Any]]:
+        """
+        Get player's stats.
+
+        Args:
+            player_id: Player ID
+
+        Returns:
+            Stats dictionary or None if not found
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            if self.db_type == "sqlite":
+                cursor.execute("""
+                    SELECT health, max_health, mana, max_mana, energy, max_energy,
+                           strength, dexterity, intelligence, constitution, wisdom, charisma, updated_at
+                    FROM player_stats
+                    WHERE player_id = ?
+                """, (player_id,))
+            else:
+                cursor.execute("""
+                    SELECT health, max_health, mana, max_mana, energy, max_energy,
+                           strength, dexterity, intelligence, constitution, wisdom, charisma, updated_at
+                    FROM player_stats
+                    WHERE player_id = %s
+                """, (player_id,))
+
+            row = cursor.fetchone()
+            if row:
+                if self.db_type == "sqlite":
+                    return {
+                        "health": row[0],
+                        "max_health": row[1],
+                        "mana": row[2],
+                        "max_mana": row[3],
+                        "energy": row[4],
+                        "max_energy": row[5],
+                        "strength": row[6],
+                        "dexterity": row[7],
+                        "intelligence": row[8],
+                        "constitution": row[9],
+                        "wisdom": row[10],
+                        "charisma": row[11],
+                        "updated_at": row[12]
+                    }
+                else:
+                    return {
+                        "health": row["health"],
+                        "max_health": row["max_health"],
+                        "mana": row["mana"],
+                        "max_mana": row["max_mana"],
+                        "energy": row["energy"],
+                        "max_energy": row["max_energy"],
+                        "strength": row["strength"],
+                        "dexterity": row["dexterity"],
+                        "intelligence": row["intelligence"],
+                        "constitution": row["constitution"],
+                        "wisdom": row["wisdom"],
+                        "charisma": row["charisma"],
+                        "updated_at": row["updated_at"]
+                    }
+            return None
+
+    def update_player_stats(self, player_id: int, updates: Dict[str, Any]) -> bool:
+        """
+        Update player's stats.
+
+        Args:
+            player_id: Player ID
+            updates: Dictionary of stats to update
+
+        Returns:
+            True if successful, False otherwise
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+
+            allowed_fields = ['health', 'max_health', 'mana', 'max_mana', 'energy', 'max_energy',
+                            'strength', 'dexterity', 'intelligence', 'constitution', 'wisdom', 'charisma']
+
+            set_clauses = []
+            params = []
+
+            for field, value in updates.items():
+                if field in allowed_fields:
+                    set_clauses.append(f"{field} = {'?' if self.db_type == 'sqlite' else '%s'}")
+                    params.append(value)
+
+            if not set_clauses:
+                return False
+
+            set_clauses.append(f"updated_at = {'?' if self.db_type == 'sqlite' else '%s'}")
+            params.append(datetime.now())
+            params.append(player_id)
+
+            query = f"UPDATE player_stats SET {', '.join(set_clauses)} WHERE player_id = {'?' if self.db_type == 'sqlite' else '%s'}"
+
+            cursor.execute(query, params)
+            conn.commit()
+            return cursor.rowcount > 0

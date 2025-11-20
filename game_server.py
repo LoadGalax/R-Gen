@@ -4,16 +4,19 @@ R-Gen Game Server - Flask + WebSocket server for the web game
 Provides REST API and real-time simulation updates via WebSocket
 """
 
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, session
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit
+from werkzeug.security import generate_password_hash, check_password_hash
 import json
 import os
 import sys
 import threading
 import time
+import secrets
 from pathlib import Path
 from datetime import datetime
+from functools import wraps
 
 # Add engines to path
 project_root = Path(__file__).parent
@@ -23,7 +26,9 @@ from GenerationEngine import ContentGenerator, DatabaseManager
 from SimulationEngine import World, WorldSimulator
 
 app = Flask(__name__, static_folder='Client', static_url_path='')
-CORS(app)
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(32))
+app.config['SESSION_TYPE'] = 'filesystem'
+CORS(app, supports_credentials=True)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 # Global state
@@ -50,6 +55,15 @@ def get_or_create_world():
         simulator = WorldSimulator(world)
         print(f"World created with {len(world.locations)} locations and {len(world.npcs)} NPCs")
     return world, simulator
+
+def login_required(f):
+    """Decorator to require player login."""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'player_id' not in session:
+            return jsonify({'error': 'Authentication required'}), 401
+        return f(*args, **kwargs)
+    return decorated_function
 
 # ============================================================================
 # Static File Serving
@@ -312,22 +326,28 @@ def get_events():
     })
 
 @app.route('/api/player/travel', methods=['POST'])
+@login_required
 def player_travel():
     """Move player to a new location."""
     data = request.get_json()
     target_location = data.get('location_id')
 
     w, sim = get_or_create_world()
+    database = get_db()
 
     if target_location not in w.locations:
         return jsonify({'error': 'Location not found'}), 404
 
-    # In a real game, you'd track player position
-    # For now, just return the new location details
+    # Update player location in database
+    player_id = session['player_id']
+    database.update_player(player_id, {'current_location_id': target_location})
+
     location = w.locations[target_location]
+    player = database.get_player_by_id(player_id)
 
     # Broadcast to all clients that player moved
     socketio.emit('player_moved', {
+        'player_name': player['character_name'],
         'location_id': target_location,
         'location_name': location.get_name(),
         'timestamp': datetime.now().isoformat()
@@ -338,6 +358,280 @@ def player_travel():
         'location_id': target_location,
         'message': f'Traveled to {location.get_name()}'
     })
+
+# ============================================================================
+# Player Management Endpoints
+# ============================================================================
+
+@app.route('/api/player/register', methods=['POST'])
+def register_player():
+    """Register a new player account."""
+    data = request.get_json()
+
+    required_fields = ['username', 'password', 'character_name']
+    for field in required_fields:
+        if field not in data:
+            return jsonify({'error': f'Missing required field: {field}'}), 400
+
+    username = data['username']
+    password = data['password']
+    character_name = data['character_name']
+    email = data.get('email')
+    race = data.get('race', 'Human')
+    character_class = data.get('class', 'Adventurer')
+
+    database = get_db()
+    w, sim = get_or_create_world()
+
+    # Check if username already exists
+    existing_player = database.get_player_by_username(username)
+    if existing_player:
+        return jsonify({'error': 'Username already exists'}), 400
+
+    # Hash password
+    password_hash = generate_password_hash(password)
+
+    # Get starting location (first location in the world)
+    starting_location = list(w.locations.keys())[0] if w.locations else None
+
+    try:
+        # Create player in database
+        player_id = database.create_player(
+            username=username,
+            password_hash=password_hash,
+            character_name=character_name,
+            email=email,
+            race=race,
+            character_class=character_class,
+            starting_location=starting_location
+        )
+
+        # Log the player in automatically
+        session['player_id'] = player_id
+        session['username'] = username
+
+        # Get player data to return
+        player = database.get_player_by_id(player_id)
+        stats = database.get_player_stats(player_id)
+
+        return jsonify({
+            'success': True,
+            'message': 'Player registered successfully',
+            'player': {
+                'id': player['id'],
+                'username': player['username'],
+                'character_name': player['character_name'],
+                'race': player['race'],
+                'class': player['class'],
+                'level': player['level'],
+                'gold': player['gold'],
+                'current_location_id': player['current_location_id'],
+                'stats': stats
+            }
+        }), 201
+
+    except Exception as e:
+        return jsonify({'error': f'Registration failed: {str(e)}'}), 500
+
+@app.route('/api/player/login', methods=['POST'])
+def login_player():
+    """Login a player."""
+    data = request.get_json()
+
+    if 'username' not in data or 'password' not in data:
+        return jsonify({'error': 'Missing username or password'}), 400
+
+    username = data['username']
+    password = data['password']
+
+    database = get_db()
+
+    # Get player from database
+    player = database.get_player_by_username(username)
+    if not player:
+        return jsonify({'error': 'Invalid username or password'}), 401
+
+    # Check password
+    if not check_password_hash(player['password_hash'], password):
+        return jsonify({'error': 'Invalid username or password'}), 401
+
+    # Update last login time
+    database.update_player(player['id'], {'last_login': datetime.now()})
+
+    # Set session
+    session['player_id'] = player['id']
+    session['username'] = player['username']
+
+    # Get player stats
+    stats = database.get_player_stats(player['id'])
+
+    return jsonify({
+        'success': True,
+        'message': 'Login successful',
+        'player': {
+            'id': player['id'],
+            'username': player['username'],
+            'character_name': player['character_name'],
+            'race': player['race'],
+            'class': player['class'],
+            'level': player['level'],
+            'experience': player['experience'],
+            'gold': player['gold'],
+            'current_location_id': player['current_location_id'],
+            'stats': stats
+        }
+    })
+
+@app.route('/api/player/logout', methods=['POST'])
+@login_required
+def logout_player():
+    """Logout the current player."""
+    session.clear()
+    return jsonify({'success': True, 'message': 'Logged out successfully'})
+
+@app.route('/api/player/me', methods=['GET'])
+@login_required
+def get_current_player():
+    """Get current player data."""
+    database = get_db()
+    player_id = session['player_id']
+
+    player = database.get_player_by_id(player_id)
+    if not player:
+        return jsonify({'error': 'Player not found'}), 404
+
+    stats = database.get_player_stats(player_id)
+    inventory = database.get_player_inventory(player_id)
+
+    return jsonify({
+        'player': {
+            'id': player['id'],
+            'username': player['username'],
+            'character_name': player['character_name'],
+            'race': player['race'],
+            'class': player['class'],
+            'level': player['level'],
+            'experience': player['experience'],
+            'gold': player['gold'],
+            'current_location_id': player['current_location_id'],
+            'stats': stats,
+            'inventory': inventory
+        }
+    })
+
+@app.route('/api/player/stats', methods=['GET'])
+@login_required
+def get_player_stats():
+    """Get player stats."""
+    database = get_db()
+    player_id = session['player_id']
+
+    stats = database.get_player_stats(player_id)
+    if not stats:
+        return jsonify({'error': 'Stats not found'}), 404
+
+    return jsonify({'stats': stats})
+
+@app.route('/api/player/stats', methods=['PATCH'])
+@login_required
+def update_player_stats():
+    """Update player stats."""
+    data = request.get_json()
+    database = get_db()
+    player_id = session['player_id']
+
+    success = database.update_player_stats(player_id, data)
+    if not success:
+        return jsonify({'error': 'Failed to update stats'}), 500
+
+    stats = database.get_player_stats(player_id)
+    return jsonify({'success': True, 'stats': stats})
+
+@app.route('/api/player/inventory', methods=['GET'])
+@login_required
+def get_player_inventory():
+    """Get player inventory."""
+    database = get_db()
+    player_id = session['player_id']
+
+    inventory = database.get_player_inventory(player_id)
+    return jsonify({'inventory': inventory})
+
+@app.route('/api/player/inventory', methods=['POST'])
+@login_required
+def add_to_player_inventory():
+    """Add an item to player inventory."""
+    data = request.get_json()
+    database = get_db()
+    player_id = session['player_id']
+
+    required_fields = ['item_name', 'item_type', 'item_data']
+    for field in required_fields:
+        if field not in data:
+            return jsonify({'error': f'Missing required field: {field}'}), 400
+
+    try:
+        inventory_id = database.add_to_inventory(
+            player_id=player_id,
+            item_name=data['item_name'],
+            item_type=data['item_type'],
+            item_data=data['item_data'],
+            quantity=data.get('quantity', 1)
+        )
+
+        return jsonify({
+            'success': True,
+            'message': 'Item added to inventory',
+            'inventory_id': inventory_id
+        }), 201
+
+    except Exception as e:
+        return jsonify({'error': f'Failed to add item: {str(e)}'}), 500
+
+@app.route('/api/player/inventory/<int:inventory_id>', methods=['DELETE'])
+@login_required
+def remove_from_player_inventory(inventory_id):
+    """Remove an item from player inventory."""
+    database = get_db()
+    player_id = session['player_id']
+
+    data = request.get_json() or {}
+    quantity = data.get('quantity')
+
+    success = database.remove_from_inventory(player_id, inventory_id, quantity)
+    if not success:
+        return jsonify({'error': 'Failed to remove item'}), 500
+
+    return jsonify({'success': True, 'message': 'Item removed from inventory'})
+
+@app.route('/api/player/inventory/<int:inventory_id>', methods=['PATCH'])
+@login_required
+def update_player_inventory_item(inventory_id):
+    """Update an inventory item (e.g., equip/unequip)."""
+    data = request.get_json()
+    database = get_db()
+    player_id = session['player_id']
+
+    success = database.update_inventory_item(inventory_id, player_id, data)
+    if not success:
+        return jsonify({'error': 'Failed to update item'}), 500
+
+    return jsonify({'success': True, 'message': 'Item updated'})
+
+@app.route('/api/player/update', methods=['PATCH'])
+@login_required
+def update_player_data():
+    """Update player data (level, experience, gold, etc.)."""
+    data = request.get_json()
+    database = get_db()
+    player_id = session['player_id']
+
+    success = database.update_player(player_id, data)
+    if not success:
+        return jsonify({'error': 'Failed to update player'}), 500
+
+    player = database.get_player_by_id(player_id)
+    return jsonify({'success': True, 'player': player})
 
 # ============================================================================
 # Simulation Control
