@@ -33,14 +33,14 @@ The game uses a unique **open grimoire** interface with bookmark navigation:
 
 ```bash
 # Install Python dependencies
-pip install -r requirements_game.txt
+pip install -r Game/requirements_game.txt
 ```
 
 ### 2. Start the Game Server
 
 ```bash
 # From the R-Gen root directory
-python game_server.py
+python Game/game_server.py
 ```
 
 You should see:
@@ -110,7 +110,7 @@ The game will automatically:
 
 ### Architecture
 
-**Backend** (`game_server.py`):
+**Backend** (`Game/game_server.py`):
 - Flask REST API for game data
 - Flask-SocketIO for real-time communication
 - SimulationEngine runs in background thread
@@ -153,8 +153,10 @@ POST /api/simulation/stop     - Stop simulation
 
 ```
 R-Gen/
-├── game_server.py              # Flask+WebSocket game server
-├── requirements_game.txt       # Python dependencies
+├── Game/
+│   ├── game_server.py         # Flask+WebSocket game server
+│   ├── game_database.py       # Game database management
+│   └── requirements_game.txt  # Python dependencies
 └── Client/
     ├── index.html             # Main game interface
     ├── game.js                # Game client logic
@@ -165,7 +167,7 @@ R-Gen/
 
 **Adding New Features**:
 
-1. **New API Endpoints** - Add to `game_server.py`
+1. **New API Endpoints** - Add to `Game/game_server.py`
 2. **New UI Pages** - Add page content to `index.html`
 3. **New Actions** - Add functions to `game.js`
 4. **New Bookmarks** - Add bookmark HTML and page content
@@ -177,7 +179,7 @@ The simulation runs automatically with:
 - 5-second intervals (real time)
 - Background thread
 
-To customize: Edit `run_simulation_loop()` in `game_server.py`
+To customize: Edit `run_simulation_loop()` in `Game/game_server.py`
 
 ## Troubleshooting
 
