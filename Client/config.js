@@ -43,15 +43,10 @@ const CONFIG = {
         }
     },
 
-    // External Dependencies
+    // External Dependencies (reference only - update index.html script tags to change)
     external: {
         socketIoUrl: 'https://cdn.socket.io/4.5.4/socket.io.min.js',
         socketIoVersion: '4.5.4'
-    },
-
-    // Cache Configuration
-    cache: {
-        gamejsVersion: '20251120-2'  // Cache-busting version for game.js
     }
 };
 
