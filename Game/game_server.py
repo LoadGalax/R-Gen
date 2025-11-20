@@ -25,14 +25,18 @@ sys.path.insert(0, str(project_root))
 from GenerationEngine import ContentGenerator
 from game_database import GameDatabase
 
-app = Flask(__name__, static_folder='Client', static_url_path='')
+# Client folder is at the root level, not in Game/
+client_folder = project_root / "Client"
+app = Flask(__name__, static_folder=str(client_folder), static_url_path='')
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(32))
 app.config['SESSION_TYPE'] = 'filesystem'
 CORS(app, supports_credentials=True)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 # Global state
-generator = ContentGenerator()
+# Point to the GenerationEngine data directory
+data_dir = project_root / "GenerationEngine" / "data"
+generator = ContentGenerator(data_dir=str(data_dir))
 db = None
 world = None
 
@@ -70,7 +74,7 @@ def login_required(f):
 @app.route('/')
 def serve_game():
     """Serve the main game page."""
-    response = send_from_directory('Client', 'index.html')
+    response = send_from_directory(client_folder, 'index.html')
     # Prevent caching during development
     response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     response.headers['Pragma'] = 'no-cache'
@@ -80,7 +84,7 @@ def serve_game():
 @app.route('/<path:path>')
 def serve_static(path):
     """Serve static files."""
-    response = send_from_directory('Client', path)
+    response = send_from_directory(client_folder, path)
     # Prevent caching for JS files during development
     if path.endswith('.js'):
         response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
