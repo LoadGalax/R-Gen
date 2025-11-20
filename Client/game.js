@@ -59,9 +59,6 @@ class RGenGame {
             await this.setLocation(this.locations[0].id);
         }
 
-        // Start simulation
-        await this.startSimulation();
-
         // Update character page with player data
         this.updateCharacterPage();
 
@@ -385,20 +382,6 @@ class RGenGame {
         if (data && data.events) {
             this.events = data.events;
             this.updateEventsDisplay();
-        }
-    }
-
-    async startSimulation() {
-        const data = await this.apiPost('/simulation/start', {});
-        if (data && data.success) {
-            console.log('Simulation started');
-        }
-    }
-
-    async stopSimulation() {
-        const data = await this.apiPost('/simulation/stop', {});
-        if (data && data.success) {
-            console.log('Simulation stopped');
         }
     }
 
