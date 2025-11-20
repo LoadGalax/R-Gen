@@ -488,7 +488,9 @@ class RGenGame {
         }
 
         npcList.innerHTML = npcsHere.map(npcData => `
-            <div class="npc-card" data-npc-id="${npcData.id}" onclick="game.showNPCDialogue('${npcData.id}')">
+            <div class="npc-card" data-npc-id="${npcData.id}"
+                 onclick="game.showNPCDetailsOnRightPage('${npcData.id}')"
+                 ondblclick="game.showNPCDialogue('${npcData.id}')">
                 <div class="npc-name">${this.getNPCIcon(npcData.profession)} ${npcData.name}</div>
                 <div class="npc-detail">Level ${npcData.level || 1} ${npcData.profession} • ${npcData.current_activity || 'Idle'}</div>
             </div>
@@ -572,6 +574,268 @@ class RGenGame {
         const dialogueText = document.querySelector('.dialogue-text');
         if (dialogueText) {
             dialogueText.textContent = `"${this.selectedNPC.dialogues[option]}"`;
+        }
+    }
+
+    // ========================================================================
+    // Right Page Detail Views
+    // ========================================================================
+
+    async showNPCDetailsOnRightPage(npcId) {
+        const data = await this.apiGet(`/npc/${npcId}/dialogue`);
+        if (!data) return;
+
+        const title = document.getElementById('right-world-title');
+        const subtitle = document.getElementById('right-world-subtitle');
+        const content = document.getElementById('right-world-content');
+
+        if (title) title.textContent = `⚔ ${data.npc_name} ⚔`;
+        if (subtitle) subtitle.textContent = `~ ${data.profession} ~`;
+
+        if (content) {
+            content.innerHTML = `
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <div style="font-size: 64px; margin-bottom: 10px;">
+                        ${this.getNPCIcon(data.profession)}
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Character Info</div>
+                    <div class="info-box">
+                        <div class="info-row">
+                            <span class="label">Level:</span>
+                            <span>${data.level || 1}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Profession:</span>
+                            <span>${data.profession}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Mood:</span>
+                            <span>${data.mood || 'Neutral'}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">Activity:</span>
+                            <span>${data.current_activity || 'Idle'}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Greeting</div>
+                    <div class="description" style="font-style: italic;">
+                        "${data.dialogues?.greeting || 'Hello there, traveler.'}"
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">About Their Work</div>
+                    <div class="description" style="font-style: italic; text-indent: 0;">
+                        "${data.dialogues?.profession || 'I do my work with pride.'}"
+                    </div>
+                </div>
+
+                <div class="section" style="margin-top: auto;">
+                    <button class="btn" onclick="game.showNPCDialogue('${npcId}')" style="width: 100%;">
+                        💬 Start Conversation
+                    </button>
+                </div>
+            `;
+        }
+    }
+
+    showLocationDetailsOnRightPage(location) {
+        const title = document.getElementById('right-map-title');
+        const subtitle = document.getElementById('right-map-subtitle');
+        const content = document.getElementById('right-map-content');
+
+        if (title) title.textContent = `⚔ ${location.name} ⚔`;
+        if (subtitle) subtitle.textContent = `~ ${location.template} ~`;
+
+        if (content) {
+            const isCurrent = location.id === this.currentLocation?.id;
+            content.innerHTML = `
+                <div class="section">
+                    <div class="section-title">Location Details</div>
+                    <div class="info-box">
+                        <div class="info-row">
+                            <span class="label">Type:</span>
+                            <span>${location.template}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="label">NPCs Present:</span>
+                            <span>${location.npc_count || 0}</span>
+                        </div>
+                        ${isCurrent ? `
+                        <div class="info-row">
+                            <span class="label">Status:</span>
+                            <span style="color: #d4af37; font-weight: bold;">📍 Current Location</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Description</div>
+                    <div class="description">
+                        ${location.description || 'A mysterious location awaits your discovery.'}
+                    </div>
+                </div>
+
+                ${!isCurrent ? `
+                <div class="section" style="margin-top: auto;">
+                    <button class="btn" onclick="game.travelToLocation('${location.id}')" style="width: 100%;">
+                        🗺️ Travel Here
+                    </button>
+                </div>
+                ` : `
+                <div class="section" style="margin-top: auto;">
+                    <div class="description" style="text-align: center; color: #d4af37;">
+                        You are currently at this location
+                    </div>
+                </div>
+                `}
+            `;
+        }
+    }
+
+    showEventDetailsOnRightPage(event, index) {
+        const title = document.getElementById('right-events-title');
+        const subtitle = document.getElementById('right-events-subtitle');
+        const content = document.getElementById('right-events-content');
+
+        const eventText = typeof event === 'string' ? event : event.description || JSON.stringify(event);
+        const eventTime = event.timestamp ? new Date(event.timestamp).toLocaleString() : 'Recently';
+
+        if (title) title.textContent = `⚔ Event #${index + 1} ⚔`;
+        if (subtitle) subtitle.textContent = `~ ${eventTime} ~`;
+
+        if (content) {
+            content.innerHTML = `
+                <div class="section">
+                    <div class="section-title">Event Description</div>
+                    <div class="description">
+                        ${eventText}
+                    </div>
+                </div>
+
+                ${event.location ? `
+                <div class="section">
+                    <div class="section-title">Location</div>
+                    <div class="info-box">
+                        <div class="info-row">
+                            <span class="label">Where:</span>
+                            <span>${event.location}</span>
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+
+                ${event.details ? `
+                <div class="section">
+                    <div class="section-title">Additional Details</div>
+                    <div class="description" style="text-indent: 0;">
+                        ${event.details}
+                    </div>
+                </div>
+                ` : ''}
+            `;
+        }
+    }
+
+    showItemDetailsOnRightPage(item) {
+        const title = document.getElementById('right-inventory-title');
+        const subtitle = document.getElementById('right-inventory-subtitle');
+        const content = document.getElementById('right-inventory-content');
+
+        const rarity = item.rarity || 'Common';
+        const rarityColor = {
+            'Legendary': '#ffd700',
+            'Rare': '#6495ed',
+            'Uncommon': '#32cd32',
+            'Common': '#b8a485'
+        };
+
+        if (title) title.textContent = `⚔ ${item.name} ⚔`;
+        if (subtitle) subtitle.innerHTML = `~ <span style="color: ${rarityColor[rarity] || '#b8a485'}">${rarity}</span> ${item.type || 'Item'} ~`;
+
+        if (content) {
+            content.innerHTML = `
+                <div class="section">
+                    <div class="section-title">Item Statistics</div>
+                    <div class="info-box">
+                        ${item.damage ? `
+                        <div class="info-row">
+                            <span class="label">⚔️ Damage:</span>
+                            <span>+${item.damage}</span>
+                        </div>
+                        ` : ''}
+                        ${item.defense ? `
+                        <div class="info-row">
+                            <span class="label">🛡️ Defense:</span>
+                            <span>+${item.defense}</span>
+                        </div>
+                        ` : ''}
+                        ${item.magic_power ? `
+                        <div class="info-row">
+                            <span class="label">✨ Magic Power:</span>
+                            <span>+${item.magic_power}</span>
+                        </div>
+                        ` : ''}
+                        ${item.value ? `
+                        <div class="info-row">
+                            <span class="label">💰 Value:</span>
+                            <span>${item.value} Gold</span>
+                        </div>
+                        ` : ''}
+                        ${item.weight ? `
+                        <div class="info-row">
+                            <span class="label">⚖️ Weight:</span>
+                            <span>${item.weight} lbs</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Description</div>
+                    <div class="description">
+                        ${item.description || 'A mysterious item with unknown properties.'}
+                    </div>
+                </div>
+
+                ${item.special_effects ? `
+                <div class="section">
+                    <div class="section-title">Special Effects</div>
+                    <div class="description" style="text-indent: 0; color: #d4af37;">
+                        ${item.special_effects}
+                    </div>
+                </div>
+                ` : ''}
+
+                <div class="section" style="margin-top: auto;">
+                    <div class="action-grid">
+                        ${item.equipped ? `
+                        <button class="btn" onclick="game.unequipItem('${item.id}')">
+                            ❌ Unequip
+                        </button>
+                        ` : item.type !== 'Consumable' ? `
+                        <button class="btn" onclick="game.equipItem('${item.id}')">
+                            ⚔️ Equip
+                        </button>
+                        ` : ''}
+                        ${item.type === 'Consumable' ? `
+                        <button class="btn" onclick="game.useItem('${item.id}')">
+                            🍖 Use
+                        </button>
+                        ` : ''}
+                        <button class="btn" onclick="game.discardItem('${item.id}')">
+                            🗑️ Discard
+                        </button>
+                    </div>
+                </div>
+            `;
         }
     }
 
@@ -716,9 +980,10 @@ class RGenGame {
 
         // Show most recent first
         const reversed = [...this.events].reverse();
-        eventList.innerHTML = reversed.map(event => {
+        eventList.innerHTML = reversed.map((event, index) => {
             const eventText = typeof event === 'string' ? event : event.description || JSON.stringify(event);
-            return `<div class="event">${eventText}</div>`;
+            const eventJson = JSON.stringify(event).replace(/"/g, '&quot;');
+            return `<div class="event" onclick="game.showEventDetailsOnRightPage(JSON.parse('${eventJson}'), ${index})" style="cursor: pointer;">${eventText}</div>`;
         }).join('');
     }
 
@@ -738,16 +1003,20 @@ class RGenGame {
         section.innerHTML = `
             <div class="section-title">Discovered Locations</div>
             <div class="map-grid">
-                ${this.locations.map(loc => `
+                ${this.locations.map(loc => {
+                    const locJson = JSON.stringify(loc).replace(/"/g, '&quot;');
+                    return `
                     <div class="map-location ${loc.id === this.currentLocation?.id ? 'current' : ''}"
-                         onclick="game.travelToLocation('${loc.id}')">
+                         onclick="game.showLocationDetailsOnRightPage(JSON.parse('${locJson}'))"
+                         ondblclick="game.travelToLocation('${loc.id}')">
                         <div class="map-location-name">📍 ${loc.name}</div>
                         <div class="map-location-info">
                             <span>Type: ${loc.template}</span>
                             <span>NPCs: ${loc.npc_count || 0}</span>
                         </div>
                     </div>
-                `).join('')}
+                    `;
+                }).join('')}
             </div>
         `;
     }
@@ -771,6 +1040,37 @@ class RGenGame {
             notification.classList.remove('notification-show');
             setTimeout(() => notification.remove(), 300);
         }, 3000);
+    }
+
+    // ========================================================================
+    // Item Management (Placeholders)
+    // ========================================================================
+
+    async equipItem(itemId) {
+        this.showNotification('Equipping item...', 'info');
+        // TODO: Implement item equipping via API
+        console.log('Equip item:', itemId);
+    }
+
+    async unequipItem(itemId) {
+        this.showNotification('Unequipping item...', 'info');
+        // TODO: Implement item unequipping via API
+        console.log('Unequip item:', itemId);
+    }
+
+    async useItem(itemId) {
+        this.showNotification('Using item...', 'info');
+        // TODO: Implement item usage via API
+        console.log('Use item:', itemId);
+    }
+
+    async discardItem(itemId) {
+        const confirmed = confirm('Are you sure you want to discard this item?');
+        if (confirmed) {
+            this.showNotification('Item discarded', 'warning');
+            // TODO: Implement item discarding via API
+            console.log('Discard item:', itemId);
+        }
     }
 }
 
