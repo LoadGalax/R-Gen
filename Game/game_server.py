@@ -841,15 +841,6 @@ def get_master_world_data():
         'name': w.name,
         'seed': w.seed,
         'description': w.description,
-        'total_simulation_time': w.total_simulation_time,
-        'time': {
-            'current_day': w.time_manager.current_day,
-            'current_season': w.time_manager.current_season,
-            'time_string': w.time_manager.get_time_string(),
-            'is_daytime': w.time_manager.is_daytime,
-            'is_working_hours': w.time_manager.is_working_hours,
-            'current_time_of_day': w.time_manager.current_time_of_day
-        },
         'stats': {
             'total_locations': len(w.locations),
             'total_npcs': len(w.npcs),
@@ -867,14 +858,6 @@ def update_master_world_data():
         w.name = data['name']
     if 'description' in data:
         w.description = data['description']
-
-    # Time updates
-    if 'time' in data:
-        time_data = data['time']
-        if 'current_day' in time_data:
-            w.time_manager.current_day = time_data['current_day']
-        if 'current_season' in time_data:
-            w.time_manager.current_season = time_data['current_season']
 
     return jsonify({'success': True, 'message': 'World updated'})
 
@@ -1116,21 +1099,6 @@ def delete_master_player(player_id):
             return jsonify({'error': 'Player not found'}), 404
 
     return jsonify({'success': True, 'message': f'Player {player_id} deleted'})
-
-@app.route('/api/master/simulation/step', methods=['POST'])
-def master_simulation_step():
-    """Manually advance simulation by one step."""
-    w = get_or_create_world()
-
-    # Advance time by 30 minutes (one simulation step)
-    w.update(30)
-
-    return jsonify({
-        'success': True,
-        'message': 'Simulation advanced by 30 minutes',
-        'current_time': w.time_manager.get_time_string(),
-        'current_day': w.time_manager.current_day
-    })
 
 @app.route('/api/master/events/clear', methods=['POST'])
 def master_clear_events():
