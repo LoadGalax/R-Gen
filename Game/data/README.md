@@ -11,14 +11,15 @@ The game server uses these JSON files to generate dynamic content such as:
 - **Quests** (objectives, rewards, storylines)
 - **World elements** (weather, economy, factions)
 
-## Detached from GenerationEngine
+## Fully Detached from GenerationEngine
 
-These JSON files are **independent copies** from the GenerationEngine. This means:
+This game instance is **completely independent** from the GenerationEngine module:
 
-✅ **You can customize these files** for your specific game without affecting the GenerationEngine
-✅ **The GenerationEngine remains a standalone library** that can be used in other projects
-✅ **Multiple games can have different configurations** by maintaining their own copies
-✅ **Changes to these files only affect this game instance**
+✅ **JSON files are independent copies** - Customize without affecting the original engine
+✅ **ContentGenerator source is local** - Located in `Game/src/content_generator.py`
+✅ **No module dependencies** - Game runs without requiring GenerationEngine installation
+✅ **Self-contained** - All generation logic and data is in the Game folder
+✅ **Multiple games can coexist** - Each with different configurations and customizations
 
 ## File Categories
 
@@ -88,12 +89,18 @@ cp -r GenerationEngine/data/*.json Game/data/
 
 ## Integration
 
-The game server (`game_server.py`) loads these files at startup using:
+The game server (`game_server.py`) uses a local copy of ContentGenerator:
 
 ```python
+# Import from local src module (not GenerationEngine)
+from src import ContentGenerator
+
+# Load data from local data directory
 data_dir = project_root / "Game" / "data"
 generator = ContentGenerator(data_dir=str(data_dir))
 ```
+
+The ContentGenerator source code is located in `Game/src/content_generator.py`, making the game completely self-contained.
 
 Any changes to these JSON files require a server restart to take effect.
 
