@@ -981,7 +981,7 @@ def create_master_npc():
     data = request.get_json()
 
     name = data.get('name', 'Unknown NPC')
-    professions = data.get('professions', ['wanderer'])
+    professions = data.get('professions', None)
     location_id = data.get('location_id')
     entity_type = data.get('entity_type', 'npc')
 
