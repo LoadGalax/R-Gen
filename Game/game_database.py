@@ -105,6 +105,17 @@ class GameDatabase:
                 )
             """)
 
+            # Standalone generated items table (items not owned by anyone yet)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS generated_items (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    item_name TEXT NOT NULL,
+                    item_type TEXT NOT NULL,
+                    item_data TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+
             conn.commit()
 
     # ===================================================================
@@ -411,5 +422,50 @@ class GameDatabase:
             """
 
             cursor.execute(query, params)
+            conn.commit()
+            return cursor.rowcount > 0
+
+    # ===================================================================
+    # Generated Items Management
+    # ===================================================================
+
+    def save_generated_item(self, item_name: str, item_type: str, item_data: Dict[str, Any]) -> int:
+        """Save a generated item to the database."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO generated_items (item_name, item_type, item_data)
+                VALUES (?, ?, ?)
+            """, (item_name, item_type, json.dumps(item_data)))
+
+            conn.commit()
+            return cursor.lastrowid
+
+    def get_all_generated_items(self) -> List[Dict[str, Any]]:
+        """Get all generated items."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT id, item_name, item_type, item_data, created_at
+                FROM generated_items
+                ORDER BY created_at DESC
+            """)
+
+            items = []
+            for row in cursor.fetchall():
+                item = dict(row)
+                try:
+                    item['data'] = json.loads(item['item_data'])
+                except:
+                    item['data'] = {}
+                items.append(item)
+
+            return items
+
+    def delete_generated_item(self, item_id: int) -> bool:
+        """Delete a generated item."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM generated_items WHERE id = ?", (item_id,))
             conn.commit()
             return cursor.rowcount > 0

@@ -1397,12 +1397,17 @@ def save_generated_items():
         return jsonify({'error': 'No items provided'}), 400
 
     try:
+        database = get_db()
         saved_count = 0
         saved_ids = []
 
         for item in items:
-            # Save to GenerationEngine database
-            item_id = generator.database.save_item(item)
+            # Save to game database
+            item_name = item.get('name', 'Unknown Item')
+            item_type = item.get('type', 'misc')
+            item_data = item  # Store the entire item object as data
+
+            item_id = database.save_generated_item(item_name, item_type, item_data)
             saved_ids.append(item_id)
             saved_count += 1
 
@@ -1469,21 +1474,12 @@ def get_all_items():
 
 @app.route('/api/master/items/saved', methods=['GET'])
 def get_saved_items():
-    """Get all saved items from the GenerationEngine database."""
+    """Get all saved/generated items from the game database."""
     try:
-        # Get filters from query parameters
-        filters = {}
-        if request.args.get('type'):
-            filters['type'] = request.args.get('type')
-        if request.args.get('quality'):
-            filters['quality'] = request.args.get('quality')
-        if request.args.get('rarity'):
-            filters['rarity'] = request.args.get('rarity')
+        database = get_db()
 
-        limit = int(request.args.get('limit', 100))
-
-        # Search items from GenerationEngine database
-        items = generator.database.search_items(filters, limit)
+        # Get all generated items
+        items = database.get_all_generated_items()
 
         return jsonify({
             'success': True,
@@ -1493,6 +1489,22 @@ def get_saved_items():
 
     except Exception as e:
         return jsonify({'error': f'Failed to get saved items: {str(e)}'}), 500
+
+@app.route('/api/master/items/generated', methods=['GET'])
+def get_generated_items():
+    """Get all generated items (for loot table selection, etc)."""
+    try:
+        database = get_db()
+        items = database.get_all_generated_items()
+
+        return jsonify({
+            'success': True,
+            'items': items,
+            'count': len(items)
+        }), 200
+
+    except Exception as e:
+        return jsonify({'error': f'Failed to get generated items: {str(e)}'}), 500
 
 @app.route('/api/master/loot_tables', methods=['GET'])
 def get_loot_tables():
