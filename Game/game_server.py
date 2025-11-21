@@ -882,6 +882,13 @@ def get_master_npcs():
             'work_start_hour': npc.work_start_hour,
             'work_end_hour': npc.work_end_hour,
             'work_location_id': npc.work_location_id,
+            'entity_type': npc.entity_type,
+            'max_health': npc.max_health,
+            'current_health': npc.current_health,
+            'attack_power': npc.attack_power,
+            'defense': npc.defense,
+            'experience_reward': npc.experience_reward,
+            'loot_table_id': npc.loot_table_id,
             'data': npc.data
         }
         npcs_list.append(npc_dict)
@@ -926,6 +933,20 @@ def update_master_npc(npc_id):
         npc.work_end_hour = int(data['work_end_hour'])
     if 'work_location_id' in data:
         npc.work_location_id = data['work_location_id']
+    if 'entity_type' in data:
+        npc.entity_type = data['entity_type']
+    if 'max_health' in data:
+        npc.max_health = int(data['max_health'])
+    if 'current_health' in data:
+        npc.current_health = int(data['current_health'])
+    if 'attack_power' in data:
+        npc.attack_power = int(data['attack_power'])
+    if 'defense' in data:
+        npc.defense = int(data['defense'])
+    if 'experience_reward' in data:
+        npc.experience_reward = int(data['experience_reward'])
+    if 'loot_table_id' in data:
+        npc.loot_table_id = data['loot_table_id']
 
     # Update nested data properties
     if 'data' in data:
@@ -952,6 +973,115 @@ def delete_master_npc(npc_id):
     del w.npcs[npc_id]
 
     return jsonify({'success': True, 'message': f'NPC {npc_id} deleted'})
+
+@app.route('/api/master/npc', methods=['POST'])
+def create_master_npc():
+    """Create a new NPC or Enemy."""
+    w = get_or_create_world()
+    data = request.get_json()
+
+    name = data.get('name', 'Unknown NPC')
+    professions = data.get('professions', ['wanderer'])
+    location_id = data.get('location_id')
+    entity_type = data.get('entity_type', 'npc')
+
+    # Generate NPC data
+    if w.generator_adapter:
+        npc_data = w.generator_adapter.generate(
+            template='npc',
+            constraints={'professions': professions}
+        )
+        # Override name if provided
+        npc_data['name'] = name
+        npc_data['location'] = location_id
+        npc_data['entity_type'] = entity_type
+
+        # Set enemy-specific properties if creating an enemy
+        if entity_type == 'enemy':
+            npc_data['max_health'] = data.get('max_health', 100)
+            npc_data['current_health'] = npc_data['max_health']
+            npc_data['attack_power'] = data.get('attack_power', 15)
+            npc_data['defense'] = data.get('defense', 8)
+            npc_data['experience_reward'] = data.get('experience_reward', 100)
+            npc_data['loot_table_id'] = data.get('loot_table_id')
+
+        # Create NPC entity
+        npc = w.spawn_npc(npc_data)
+
+        return jsonify({
+            'success': True,
+            'message': f'{entity_type.title()} {name} created',
+            'npc_id': npc.id
+        })
+    else:
+        return jsonify({'error': 'Generator not available'}), 500
+
+@app.route('/api/master/npc/<npc_id>/inventory', methods=['GET'])
+def get_npc_inventory(npc_id):
+    """Get NPC inventory."""
+    w = get_or_create_world()
+
+    if npc_id not in w.npcs:
+        return jsonify({'error': 'NPC not found'}), 404
+
+    npc = w.npcs[npc_id]
+    inventory = npc.data.get('inventory', [])
+
+    return jsonify({'inventory': inventory})
+
+@app.route('/api/master/npc/<npc_id>/inventory', methods=['POST'])
+def add_npc_inventory_item(npc_id):
+    """Add item to NPC inventory."""
+    w = get_or_create_world()
+
+    if npc_id not in w.npcs:
+        return jsonify({'error': 'NPC not found'}), 404
+
+    npc = w.npcs[npc_id]
+    data = request.get_json()
+
+    item = {
+        'name': data.get('name', 'Unknown Item'),
+        'type': data.get('type', 'misc'),
+        'subtype': data.get('subtype'),
+        'quality': data.get('quality', 'common'),
+        'quantity': data.get('quantity', 1),
+        'value': data.get('value', 0),
+    }
+
+    # Add optional fields if present
+    if 'material' in data:
+        item['material'] = data['material']
+    if 'rarity' in data:
+        item['rarity'] = data['rarity']
+
+    if 'inventory' not in npc.data:
+        npc.data['inventory'] = []
+
+    npc.data['inventory'].append(item)
+
+    return jsonify({'success': True, 'message': 'Item added to NPC inventory'})
+
+@app.route('/api/master/npc/<npc_id>/inventory/<int:item_index>', methods=['DELETE'])
+def delete_npc_inventory_item(npc_id, item_index):
+    """Remove item from NPC inventory."""
+    w = get_or_create_world()
+
+    if npc_id not in w.npcs:
+        return jsonify({'error': 'NPC not found'}), 404
+
+    npc = w.npcs[npc_id]
+    inventory = npc.data.get('inventory', [])
+
+    if item_index < 0 or item_index >= len(inventory):
+        return jsonify({'error': 'Invalid item index'}), 400
+
+    removed_item = inventory.pop(item_index)
+
+    return jsonify({
+        'success': True,
+        'message': f'Removed {removed_item.get("name", "item")} from inventory'
+    })
 
 @app.route('/api/master/locations', methods=['GET'])
 def get_master_locations():
@@ -1031,6 +1161,52 @@ def delete_master_location(location_id):
     del w.locations[location_id]
 
     return jsonify({'success': True, 'message': f'Location {location_id} deleted'})
+
+@app.route('/api/master/location', methods=['POST'])
+def create_master_location():
+    """Create a new location."""
+    w = get_or_create_world()
+    data = request.get_json()
+
+    name = data.get('name', 'Unknown Location')
+    template = data.get('template', 'settlement')
+    description = data.get('description', '')
+    connections = data.get('connections', [])
+    npc_ids = data.get('npc_ids', [])
+
+    # Generate location data
+    if w.generator_adapter:
+        location_data = w.generator_adapter.generate(
+            template='location',
+            constraints={'template': template}
+        )
+        # Override properties if provided
+        location_data['name'] = name
+        location_data['description'] = description
+        location_data['connections'] = connections
+
+        # Create location entity
+        location = w.spawn_location(location_data)
+
+        # Assign NPCs to this location
+        for npc_id in npc_ids:
+            if npc_id in w.npcs:
+                npc = w.npcs[npc_id]
+                old_location = npc.current_location_id
+                npc.current_location_id = location.id
+
+                # Update location tracking
+                if old_location and old_location in w.locations:
+                    w.locations[old_location].npc_ids.discard(npc_id)
+                location.npc_ids.add(npc_id)
+
+        return jsonify({
+            'success': True,
+            'message': f'Location {name} created',
+            'location_id': location.id
+        })
+    else:
+        return jsonify({'error': 'Generator not available'}), 500
 
 @app.route('/api/master/players', methods=['GET'])
 def get_master_players():
@@ -1213,6 +1389,35 @@ def generate_items():
     except Exception as e:
         return jsonify({'error': f'Failed to generate items: {str(e)}'}), 500
 
+@app.route('/api/master/items/save', methods=['POST'])
+def save_generated_items():
+    """Save generated items to the database."""
+    data = request.get_json()
+    items = data.get('items', [])
+
+    if not items:
+        return jsonify({'error': 'No items provided'}), 400
+
+    try:
+        saved_count = 0
+        saved_ids = []
+
+        for item in items:
+            # Save to GenerationEngine database
+            item_id = generator.database.save_item(item)
+            saved_ids.append(item_id)
+            saved_count += 1
+
+        return jsonify({
+            'success': True,
+            'message': f'Saved {saved_count} items',
+            'count': saved_count,
+            'ids': saved_ids
+        }), 200
+
+    except Exception as e:
+        return jsonify({'error': f'Failed to save items: {str(e)}'}), 500
+
 @app.route('/api/master/items/templates', methods=['GET'])
 def get_item_templates():
     """Get available item templates."""
@@ -1263,6 +1468,118 @@ def get_all_items():
 
     except Exception as e:
         return jsonify({'error': f'Failed to get items: {str(e)}'}), 500
+
+@app.route('/api/master/items/saved', methods=['GET'])
+def get_saved_items():
+    """Get all saved items from the GenerationEngine database."""
+    try:
+        # Get filters from query parameters
+        filters = {}
+        if request.args.get('type'):
+            filters['type'] = request.args.get('type')
+        if request.args.get('quality'):
+            filters['quality'] = request.args.get('quality')
+        if request.args.get('rarity'):
+            filters['rarity'] = request.args.get('rarity')
+
+        limit = int(request.args.get('limit', 100))
+
+        # Search items from GenerationEngine database
+        items = generator.database.search_items(filters, limit)
+
+        return jsonify({
+            'success': True,
+            'items': items,
+            'count': len(items)
+        }), 200
+
+    except Exception as e:
+        return jsonify({'error': f'Failed to get saved items: {str(e)}'}), 500
+
+@app.route('/api/master/loot_tables', methods=['GET'])
+def get_loot_tables():
+    """Get all loot tables."""
+    w = get_or_create_world()
+
+    # Initialize loot_tables if not exists
+    if not hasattr(w, 'loot_tables'):
+        w.loot_tables = {}
+
+    return jsonify({
+        'success': True,
+        'loot_tables': w.loot_tables
+    })
+
+@app.route('/api/master/loot_table', methods=['POST'])
+def create_loot_table():
+    """Create a new loot table."""
+    w = get_or_create_world()
+    data = request.get_json()
+
+    # Initialize loot_tables if not exists
+    if not hasattr(w, 'loot_tables'):
+        w.loot_tables = {}
+
+    loot_table_id = data.get('id') or f"loot_table_{len(w.loot_tables) + 1}"
+
+    loot_table = {
+        'id': loot_table_id,
+        'name': data.get('name', 'Unnamed Loot Table'),
+        'description': data.get('description', ''),
+        'items': data.get('items', [])  # List of {item_name, drop_chance, quantity_min, quantity_max}
+    }
+
+    w.loot_tables[loot_table_id] = loot_table
+
+    return jsonify({
+        'success': True,
+        'message': f'Loot table {loot_table["name"]} created',
+        'loot_table_id': loot_table_id
+    })
+
+@app.route('/api/master/loot_table/<loot_table_id>', methods=['PATCH'])
+def update_loot_table(loot_table_id):
+    """Update an existing loot table."""
+    w = get_or_create_world()
+    data = request.get_json()
+
+    if not hasattr(w, 'loot_tables'):
+        w.loot_tables = {}
+
+    if loot_table_id not in w.loot_tables:
+        return jsonify({'error': 'Loot table not found'}), 404
+
+    loot_table = w.loot_tables[loot_table_id]
+
+    if 'name' in data:
+        loot_table['name'] = data['name']
+    if 'description' in data:
+        loot_table['description'] = data['description']
+    if 'items' in data:
+        loot_table['items'] = data['items']
+
+    return jsonify({
+        'success': True,
+        'message': f'Loot table {loot_table_id} updated'
+    })
+
+@app.route('/api/master/loot_table/<loot_table_id>', methods=['DELETE'])
+def delete_loot_table(loot_table_id):
+    """Delete a loot table."""
+    w = get_or_create_world()
+
+    if not hasattr(w, 'loot_tables'):
+        w.loot_tables = {}
+
+    if loot_table_id not in w.loot_tables:
+        return jsonify({'error': 'Loot table not found'}), 404
+
+    del w.loot_tables[loot_table_id]
+
+    return jsonify({
+        'success': True,
+        'message': f'Loot table {loot_table_id} deleted'
+    })
 
 @app.route('/api/master/items/<int:item_id>', methods=['DELETE'])
 def delete_item(item_id):
