@@ -21,8 +21,8 @@ from functools import wraps
 # Set up paths
 project_root = Path(__file__).parent.parent  # Go up one level from Game/ to R-Gen/
 
-# Import local ContentGenerator (detached from GenerationEngine)
-from src import ContentGenerator
+# Import all game logic from local src module (fully self-contained)
+from src import ContentGenerator, World, LivingNPC as NPC, LivingLocation as Location
 from game_database import GameDatabase
 
 # Client folder is at the root level, not in Game/
@@ -53,8 +53,7 @@ def get_or_create_world():
     global world
     if world is None:
         print("Creating new world...")
-        # Import World here to avoid requiring SimulationEngine at module level
-        from SimulationEngine import World
+        # World is imported from local src module
         world = World.create_new(num_locations=10, seed=42, name="Fantasy Realm")
         print(f"World created with {len(world.locations)} locations and {len(world.npcs)} NPCs")
     return world
@@ -1815,8 +1814,7 @@ def import_database():
                 for npc_data in world_data['npcs']:
                     npc_id = npc_data['id']
                     if npc_id not in w.npcs:
-                        # Create new NPC
-                        from SimulationEngine import NPC
+                        # Create new NPC (imported from local src module)
                         npc = NPC(
                             id=npc_id,
                             name=npc_data['name'],
@@ -1851,7 +1849,7 @@ def import_database():
                 for loc_data in world_data['locations']:
                     loc_id = loc_data['id']
                     if loc_id not in w.locations:
-                        from SimulationEngine import Location
+                        # Location imported from local src module
                         loc = Location(
                             id=loc_id,
                             name=loc_data['name'],
