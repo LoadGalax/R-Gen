@@ -1113,6 +1113,78 @@ def master_clear_events():
         'message': f'Cleared {count} events'
     })
 
+@app.route('/api/master/player/<int:player_id>/inventory', methods=['GET'])
+def get_master_player_inventory(player_id):
+    """Get player inventory (admin)."""
+    database = get_db()
+    inventory = database.get_player_inventory(player_id)
+
+    # Parse JSON data field for each item
+    for item in inventory:
+        if 'data' in item and isinstance(item['data'], str):
+            try:
+                item['item_data'] = json.loads(item['data'])
+            except json.JSONDecodeError:
+                item['item_data'] = {}
+
+    return jsonify({'success': True, 'inventory': inventory})
+
+@app.route('/api/master/player/<int:player_id>/inventory', methods=['POST'])
+def add_master_player_inventory(player_id):
+    """Add item to player inventory (admin)."""
+    database = get_db()
+    data = request.get_json()
+
+    required_fields = ['item_name', 'item_type', 'item_data']
+    for field in required_fields:
+        if field not in data:
+            return jsonify({'error': f'Missing required field: {field}'}), 400
+
+    try:
+        inventory_id = database.add_to_inventory(
+            player_id=player_id,
+            item_name=data['item_name'],
+            item_type=data['item_type'],
+            item_data=data['item_data'],
+            quantity=data.get('quantity', 1)
+        )
+
+        # Update equipped status if specified
+        if 'equipped' in data and data['equipped']:
+            database.update_inventory_item(inventory_id, player_id, {'equipped': 1})
+
+        return jsonify({
+            'success': True,
+            'message': 'Item added to inventory',
+            'inventory_id': inventory_id
+        }), 201
+
+    except Exception as e:
+        return jsonify({'error': f'Failed to add item: {str(e)}'}), 500
+
+@app.route('/api/master/player/<int:player_id>/inventory/<int:inventory_id>', methods=['PATCH'])
+def update_master_player_inventory(player_id, inventory_id):
+    """Update inventory item (admin)."""
+    database = get_db()
+    data = request.get_json()
+
+    success = database.update_inventory_item(inventory_id, player_id, data)
+    if not success:
+        return jsonify({'error': 'Failed to update item'}), 500
+
+    return jsonify({'success': True, 'message': 'Item updated'})
+
+@app.route('/api/master/player/<int:player_id>/inventory/<int:inventory_id>', methods=['DELETE'])
+def delete_master_player_inventory(player_id, inventory_id):
+    """Delete inventory item (admin)."""
+    database = get_db()
+
+    success = database.remove_from_inventory(player_id, inventory_id)
+    if not success:
+        return jsonify({'error': 'Failed to delete item'}), 500
+
+    return jsonify({'success': True, 'message': 'Item deleted'})
+
 # ============================================================================
 # WebSocket Events
 # ============================================================================

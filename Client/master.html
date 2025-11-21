@@ -413,9 +413,110 @@
                     </div>
                 </div>
 
+                <h3>Inventory Management</h3>
+                <div class="inventory-section">
+                    <div class="inventory-header">
+                        <button type="button" class="btn btn-primary" id="add-item-btn">➕ Add New Item</button>
+                    </div>
+                    <div class="inventory-list" id="player-inventory-list">
+                        <p class="loading">Loading inventory...</p>
+                    </div>
+                </div>
+
                 <div class="form-actions">
                     <button type="submit" class="btn btn-success">💾 Save Changes</button>
                     <button type="button" class="btn btn-danger" id="delete-player-btn">🗑️ Delete Player</button>
+                    <button type="button" class="btn btn-secondary modal-close-btn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Item Modal -->
+    <div id="add-item-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h2>Add Item to Inventory</h2>
+            <form id="add-item-form">
+                <input type="hidden" id="add-item-player-id">
+
+                <div class="form-group">
+                    <label>Item Name:</label>
+                    <input type="text" id="add-item-name" class="form-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Item Type:</label>
+                    <select id="add-item-type" class="form-input" required>
+                        <option value="">-- Select Type --</option>
+                        <option value="weapon_melee">Melee Weapon</option>
+                        <option value="weapon_ranged">Ranged Weapon</option>
+                        <option value="armor">Armor</option>
+                        <option value="helmet">Helmet</option>
+                        <option value="chest">Chest Armor</option>
+                        <option value="gloves">Gloves</option>
+                        <option value="legs">Leg Armor</option>
+                        <option value="boots">Boots</option>
+                        <option value="belt">Belt</option>
+                        <option value="ring">Ring</option>
+                        <option value="earring">Earring</option>
+                        <option value="collar">Collar/Amulet</option>
+                        <option value="jewelry">Jewelry</option>
+                        <option value="potion">Potion</option>
+                        <option value="scroll">Scroll</option>
+                        <option value="material">Material/Resource</option>
+                        <option value="consumable">Consumable</option>
+                        <option value="quest">Quest Item</option>
+                        <option value="misc">Miscellaneous</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Quantity:</label>
+                        <input type="number" id="add-item-quantity" class="form-input" min="1" value="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Equipped:</label>
+                        <input type="checkbox" id="add-item-equipped" class="form-checkbox">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Description:</label>
+                    <textarea id="add-item-description" class="form-input" rows="3"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Damage (weapons only):</label>
+                        <input type="number" id="add-item-damage" class="form-input" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Defense (armor only):</label>
+                        <input type="number" id="add-item-defense" class="form-input" min="0">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Rarity:</label>
+                        <select id="add-item-rarity" class="form-input">
+                            <option value="common">Common</option>
+                            <option value="uncommon">Uncommon</option>
+                            <option value="rare">Rare</option>
+                            <option value="epic">Epic</option>
+                            <option value="legendary">Legendary</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Value (gold):</label>
+                        <input type="number" id="add-item-value" class="form-input" min="0" value="0">
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-success">➕ Add Item</button>
                     <button type="button" class="btn btn-secondary modal-close-btn">Cancel</button>
                 </div>
             </form>
