@@ -987,13 +987,12 @@ def create_master_npc():
 
     # Generate NPC data
     if w.generator_adapter:
-        npc_data = w.generator_adapter.generate(
-            template='npc',
-            constraints={'professions': professions}
+        npc_data = w.generator_adapter.spawn_npc(
+            professions=professions,
+            location_id=location_id
         )
         # Override name if provided
         npc_data['name'] = name
-        npc_data['location'] = location_id
         npc_data['entity_type'] = entity_type
 
         # Set enemy-specific properties if creating an enemy
@@ -1176,9 +1175,8 @@ def create_master_location():
 
     # Generate location data
     if w.generator_adapter:
-        location_data = w.generator_adapter.generate(
-            template='location',
-            constraints={'template': template}
+        location_data = w.generator_adapter.spawn_location(
+            template=template
         )
         # Override properties if provided
         location_data['name'] = name
