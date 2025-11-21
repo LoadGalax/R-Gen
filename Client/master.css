@@ -638,3 +638,124 @@ body {
         transform: rotate(360deg);
     }
 }
+
+/* Inventory Management Styles */
+.inventory-section {
+    background: #0f3460;
+    padding: 20px;
+    border-radius: 10px;
+    margin: 20px 0;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.inventory-header {
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.inventory-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.inventory-item {
+    background: #16213e;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 3px solid #e94560;
+    transition: all 0.3s ease;
+}
+
+.inventory-item:hover {
+    background: #1a2642;
+    border-left-width: 5px;
+    box-shadow: 0 2px 8px rgba(233, 69, 96, 0.2);
+}
+
+.item-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.item-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.item-name.rarity-common {
+    color: #b0b0b0;
+}
+
+.item-name.rarity-uncommon {
+    color: #1eff00;
+}
+
+.item-name.rarity-rare {
+    color: #0070dd;
+}
+
+.item-name.rarity-epic {
+    color: #a335ee;
+}
+
+.item-name.rarity-legendary {
+    color: #ff8000;
+}
+
+.item-type {
+    font-size: 12px;
+}
+
+.item-details {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+    color: #b0b0b0;
+    font-size: 13px;
+}
+
+.item-details span {
+    background: #0f3460;
+    padding: 4px 10px;
+    border-radius: 4px;
+}
+
+.item-description {
+    font-size: 13px;
+    color: #b0b0b0;
+    font-style: italic;
+    margin-bottom: 10px;
+    line-height: 1.4;
+}
+
+.item-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.btn-sm {
+    padding: 6px 14px;
+    font-size: 12px;
+}
+
+.inventory-list .loading,
+.inventory-list .error {
+    text-align: center;
+    padding: 30px;
+    color: #b0b0b0;
+    font-style: italic;
+}
+
+.inventory-list .error {
+    color: #dc3545;
+}

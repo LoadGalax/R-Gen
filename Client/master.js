@@ -88,6 +88,10 @@ function setupEventListeners() {
     // Player Edit Form
     document.getElementById('player-edit-form').addEventListener('submit', savePlayerChanges);
     document.getElementById('delete-player-btn').addEventListener('click', deletePlayer);
+
+    // Add Item Form
+    document.getElementById('add-item-btn').addEventListener('click', showAddItemModal);
+    document.getElementById('add-item-form').addEventListener('submit', addItemToInventory);
 }
 
 // ============================================================================
@@ -528,6 +532,9 @@ function editPlayer(playerId) {
         document.getElementById('edit-player-cha').value = player.stats.charisma;
     }
 
+    // Load player inventory
+    loadPlayerInventory(playerId);
+
     showModal('player-modal');
 }
 
@@ -601,6 +608,193 @@ async function deletePlayer() {
     } catch (error) {
         console.error('Error deleting player:', error);
         showToast('Error deleting player', 'error');
+    }
+}
+
+// ============================================================================
+// Player Inventory Management
+// ============================================================================
+
+async function loadPlayerInventory(playerId) {
+    try {
+        const response = await fetch(`${API_BASE}/player/${playerId}/inventory`);
+        const data = await response.json();
+
+        if (data.success === false) {
+            throw new Error(data.error || 'Failed to load inventory');
+        }
+
+        renderInventoryList(data.inventory || []);
+    } catch (error) {
+        console.error('Error loading inventory:', error);
+        document.getElementById('player-inventory-list').innerHTML = '<p class="error">Failed to load inventory</p>';
+    }
+}
+
+function renderInventoryList(inventory) {
+    const listElement = document.getElementById('player-inventory-list');
+
+    if (inventory.length === 0) {
+        listElement.innerHTML = '<p class="loading">No items in inventory</p>';
+        return;
+    }
+
+    listElement.innerHTML = inventory.map(item => {
+        // Parse item data
+        let itemData = {};
+        try {
+            itemData = typeof item.data === 'string' ? JSON.parse(item.data) : item.data;
+        } catch (e) {
+            console.error('Error parsing item data:', e);
+        }
+
+        const rarity = itemData.rarity || 'common';
+        const equipped = item.equipped ? '<span class="badge badge-success">Equipped</span>' : '';
+
+        return `
+            <div class="inventory-item" data-item-id="${item.id}">
+                <div class="item-header">
+                    <strong class="item-name rarity-${rarity}">${escapeHtml(item.item_name)}</strong>
+                    <span class="item-type badge badge-secondary">${escapeHtml(item.item_type)}</span>
+                    ${equipped}
+                </div>
+                <div class="item-details">
+                    <span>Qty: ${item.quantity}</span>
+                    ${itemData.damage ? `<span>Damage: ${itemData.damage}</span>` : ''}
+                    ${itemData.defense ? `<span>Defense: ${itemData.defense}</span>` : ''}
+                    ${itemData.value ? `<span>Value: ${itemData.value}g</span>` : ''}
+                </div>
+                ${itemData.description ? `<div class="item-description">${escapeHtml(itemData.description)}</div>` : ''}
+                <div class="item-actions">
+                    <button class="btn btn-sm btn-primary" onclick="editInventoryItem(${item.id}, ${item.equipped}, ${item.quantity})">Edit</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteInventoryItem(${item.id})">Delete</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function showAddItemModal() {
+    const playerId = document.getElementById('edit-player-id').value;
+    document.getElementById('add-item-player-id').value = playerId;
+
+    // Reset form
+    document.getElementById('add-item-form').reset();
+    document.getElementById('add-item-quantity').value = 1;
+    document.getElementById('add-item-value').value = 0;
+
+    showModal('add-item-modal');
+}
+
+async function addItemToInventory(e) {
+    e.preventDefault();
+
+    const playerId = parseInt(document.getElementById('add-item-player-id').value);
+    const itemName = document.getElementById('add-item-name').value;
+    const itemType = document.getElementById('add-item-type').value;
+    const quantity = parseInt(document.getElementById('add-item-quantity').value);
+    const equipped = document.getElementById('add-item-equipped').checked;
+    const description = document.getElementById('add-item-description').value;
+    const damage = document.getElementById('add-item-damage').value;
+    const defense = document.getElementById('add-item-defense').value;
+    const rarity = document.getElementById('add-item-rarity').value;
+    const value = parseInt(document.getElementById('add-item-value').value);
+
+    // Build item data
+    const itemData = {
+        description,
+        rarity,
+        value
+    };
+
+    if (damage) itemData.damage = parseInt(damage);
+    if (defense) itemData.defense = parseInt(defense);
+
+    try {
+        const response = await fetch(`${API_BASE}/player/${playerId}/inventory`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                item_name: itemName,
+                item_type: itemType,
+                quantity: quantity,
+                equipped: equipped ? 1 : 0,
+                item_data: itemData
+            })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            showToast('Item added successfully', 'success');
+            await loadPlayerInventory(playerId);
+            closeAllModals();
+        } else {
+            showToast(data.error || 'Error adding item', 'error');
+        }
+    } catch (error) {
+        console.error('Error adding item:', error);
+        showToast('Error adding item', 'error');
+    }
+}
+
+async function editInventoryItem(itemId, currentEquipped, currentQuantity) {
+    const newQuantity = prompt(`Enter new quantity for item:`, currentQuantity);
+    if (newQuantity === null) return;
+
+    const quantity = parseInt(newQuantity);
+    if (isNaN(quantity) || quantity < 0) {
+        showToast('Invalid quantity', 'error');
+        return;
+    }
+
+    const equipped = confirm('Is this item equipped?');
+    const playerId = parseInt(document.getElementById('edit-player-id').value);
+
+    try {
+        const response = await fetch(`${API_BASE}/player/${playerId}/inventory/${itemId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                quantity: quantity,
+                equipped: equipped ? 1 : 0
+            })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            showToast('Item updated successfully', 'success');
+            await loadPlayerInventory(playerId);
+        } else {
+            showToast(data.error || 'Error updating item', 'error');
+        }
+    } catch (error) {
+        console.error('Error updating item:', error);
+        showToast('Error updating item', 'error');
+    }
+}
+
+async function deleteInventoryItem(itemId) {
+    if (!confirm('Are you sure you want to delete this item?')) {
+        return;
+    }
+
+    const playerId = parseInt(document.getElementById('edit-player-id').value);
+
+    try {
+        const response = await fetch(`${API_BASE}/player/${playerId}/inventory/${itemId}`, {
+            method: 'DELETE'
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            showToast('Item deleted successfully', 'success');
+            await loadPlayerInventory(playerId);
+        } else {
+            showToast(data.error || 'Error deleting item', 'error');
+        }
+    } catch (error) {
+        console.error('Error deleting item:', error);
+        showToast('Error deleting item', 'error');
     }
 }
 
