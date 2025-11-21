@@ -985,3 +985,49 @@ body {
     background: rgba(255, 152, 0, 0.2);
     color: #ffb74d;
 }
+
+/* Modal Large for wider modals */
+.modal-large .modal-content {
+    max-width: 900px;
+    width: 90%;
+}
+
+/* Loot item row styling */
+.loot-item-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr auto;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: center;
+}
+
+.loot-item-row input {
+    width: 100%;
+}
+
+/* Toolbar radio button styling */
+.toolbar label {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-right: 10px;
+}
+
+.toolbar label:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.toolbar input[type="radio"] {
+    cursor: pointer;
+}
+
+/* Button small variant */
+.btn-small {
+    padding: 5px 10px;
+    font-size: 12px;
+}
