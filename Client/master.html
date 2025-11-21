@@ -165,11 +165,43 @@
 
             <!-- Items Tab -->
             <section id="items-tab" class="tab-content">
-                <h2>Item Generation</h2>
+                <h2>Item Management</h2>
+
+                <!-- Existing Items Section -->
+                <div class="items-section">
+                    <h3>Existing Items in Database</h3>
+                    <div class="toolbar">
+                        <input type="text" id="item-search" class="form-input search-input" placeholder="🔍 Search items...">
+                        <span id="item-count-display">0 items</span>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table" id="items-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Item Name</th>
+                                    <th>Type</th>
+                                    <th>Owner</th>
+                                    <th>Quantity</th>
+                                    <th>Quality</th>
+                                    <th>Rarity</th>
+                                    <th>Value</th>
+                                    <th>Equipped</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="items-table-body">
+                                <tr><td colspan="10" class="loading">Loading Items...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <hr style="margin: 40px 0; border: none; border-top: 1px solid rgba(255,255,255,0.1);">
 
                 <!-- Generation Form -->
                 <div class="form-section">
-                    <h3>Generate Items</h3>
+                    <h3>Generate New Items</h3>
                     <div class="form-group">
                         <label for="item-template">Item Template:</label>
                         <select id="item-template" class="form-input">

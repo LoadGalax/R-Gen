@@ -258,6 +258,28 @@ class GameDatabase:
 
             return [dict(row) for row in cursor.fetchall()]
 
+    def get_all_items(self) -> List[Dict[str, Any]]:
+        """Get all items from all player inventories."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT
+                    i.id,
+                    i.player_id,
+                    p.character_name as player_name,
+                    i.item_name,
+                    i.item_type,
+                    i.quantity,
+                    i.equipped,
+                    i.data,
+                    i.acquired_at
+                FROM player_inventory i
+                LEFT JOIN players p ON i.player_id = p.id
+                ORDER BY i.acquired_at DESC
+            """)
+
+            return [dict(row) for row in cursor.fetchall()]
+
     def add_to_inventory(self, player_id: int, item_name: str, item_type: str,
                         item_data: Dict[str, Any], quantity: int = 1) -> int:
         """Add item to inventory."""

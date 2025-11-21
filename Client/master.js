@@ -9,10 +9,12 @@ const state = {
     npcs: [],
     locations: [],
     players: [],
+    items: [],
     currentTab: 'dashboard',
     filteredNPCs: [],
     filteredLocations: [],
-    filteredPlayers: []
+    filteredPlayers: [],
+    filteredItems: []
 };
 
 // API Base URL
@@ -58,6 +60,7 @@ function setupEventListeners() {
     document.getElementById('npc-search').addEventListener('input', (e) => filterNPCs(e.target.value));
     document.getElementById('location-search').addEventListener('input', (e) => filterLocations(e.target.value));
     document.getElementById('player-search').addEventListener('input', (e) => filterPlayers(e.target.value));
+    document.getElementById('item-search').addEventListener('input', (e) => filterItems(e.target.value));
 
     // Simulation controls
     document.getElementById('sim-clear-events-btn').addEventListener('click', clearEvents);
@@ -109,7 +112,8 @@ async function loadAllData() {
             loadWorldData(),
             loadNPCs(),
             loadLocations(),
-            loadPlayers()
+            loadPlayers(),
+            loadItems()
         ]);
 
         updateDashboard();
@@ -159,6 +163,15 @@ async function loadPlayers() {
     state.filteredPlayers = data.players;
 
     renderPlayersTable();
+}
+
+async function loadItems() {
+    const response = await fetch(`${API_BASE}/items`);
+    const data = await response.json();
+    state.items = data.items || [];
+    state.filteredItems = data.items || [];
+
+    renderItemsTable();
 }
 
 // ============================================================================
@@ -826,6 +839,94 @@ async function clearEvents() {
     } catch (error) {
         console.error('Error clearing events:', error);
         showToast('Error clearing events', 'error');
+    }
+}
+
+// ============================================================================
+// Items Management
+// ============================================================================
+
+function renderItemsTable() {
+    const tbody = document.getElementById('items-table-body');
+    const countDisplay = document.getElementById('item-count-display');
+
+    if (!state.filteredItems || state.filteredItems.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" class="loading">No items found</td></tr>';
+        countDisplay.textContent = '0 items';
+        return;
+    }
+
+    countDisplay.textContent = `${state.filteredItems.length} item${state.filteredItems.length !== 1 ? 's' : ''}`;
+
+    let html = '';
+    state.filteredItems.forEach(item => {
+        const data = item.data || {};
+        const quality = data.quality || 'common';
+        const rarity = data.rarity || 'common';
+        const value = data.value || 0;
+        const equipped = item.equipped ? 'Yes' : 'No';
+        const owner = item.player_name || 'Unknown';
+
+        html += `
+            <tr>
+                <td>${item.id}</td>
+                <td><strong>${escapeHtml(item.item_name)}</strong></td>
+                <td>${escapeHtml(item.item_type)}</td>
+                <td>${escapeHtml(owner)}</td>
+                <td>${item.quantity}</td>
+                <td><span class="quality-badge quality-${quality}">${escapeHtml(quality)}</span></td>
+                <td><span class="rarity-badge rarity-${rarity}">${escapeHtml(rarity)}</span></td>
+                <td>${value} gold</td>
+                <td>${equipped}</td>
+                <td>
+                    <button class="btn btn-danger btn-sm" onclick="deleteItemConfirm(${item.id})">🗑️ Delete</button>
+                </td>
+            </tr>
+        `;
+    });
+
+    tbody.innerHTML = html;
+}
+
+function filterItems(query) {
+    const lowerQuery = query.toLowerCase();
+    state.filteredItems = state.items.filter(item =>
+        item.item_name.toLowerCase().includes(lowerQuery) ||
+        item.item_type.toLowerCase().includes(lowerQuery) ||
+        (item.player_name && item.player_name.toLowerCase().includes(lowerQuery)) ||
+        (item.data && JSON.stringify(item.data).toLowerCase().includes(lowerQuery))
+    );
+    renderItemsTable();
+}
+
+async function deleteItemConfirm(itemId) {
+    const item = state.items.find(i => i.id === itemId);
+    if (!item) return;
+
+    if (!confirm(`Are you sure you want to delete "${item.item_name}"?`)) {
+        return;
+    }
+
+    await deleteItemFromDB(itemId);
+}
+
+async function deleteItemFromDB(itemId) {
+    try {
+        const response = await fetch(`${API_BASE}/items/${itemId}`, {
+            method: 'DELETE'
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            showToast('Item deleted successfully', 'success');
+            await loadItems();
+        } else {
+            showToast(result.error || 'Failed to delete item', 'error');
+        }
+    } catch (error) {
+        console.error('Error deleting item:', error);
+        showToast('Error deleting item', 'error');
     }
 }
 

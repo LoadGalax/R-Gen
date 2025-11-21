@@ -1239,6 +1239,56 @@ def get_item_templates():
     except Exception as e:
         return jsonify({'error': f'Failed to get templates: {str(e)}'}), 500
 
+@app.route('/api/master/items', methods=['GET'])
+def get_all_items():
+    """Get all items from all player inventories."""
+    database = get_db()
+
+    try:
+        items = database.get_all_items()
+
+        # Parse JSON data field for each item
+        for item in items:
+            if item.get('data'):
+                try:
+                    item['data'] = json.loads(item['data'])
+                except:
+                    item['data'] = {}
+
+        return jsonify({
+            'success': True,
+            'items': items,
+            'count': len(items)
+        }), 200
+
+    except Exception as e:
+        return jsonify({'error': f'Failed to get items: {str(e)}'}), 500
+
+@app.route('/api/master/items/<int:item_id>', methods=['DELETE'])
+def delete_item(item_id):
+    """Delete an item from inventory (admin)."""
+    database = get_db()
+
+    try:
+        # Get item to find player_id
+        with database._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT player_id FROM player_inventory WHERE id = ?", (item_id,))
+            row = cursor.fetchone()
+            if not row:
+                return jsonify({'error': 'Item not found'}), 404
+            player_id = row['player_id']
+
+        # Delete the item
+        success = database.remove_from_inventory(player_id, item_id)
+        if not success:
+            return jsonify({'error': 'Failed to delete item'}), 500
+
+        return jsonify({'success': True, 'message': 'Item deleted'}), 200
+
+    except Exception as e:
+        return jsonify({'error': f'Failed to delete item: {str(e)}'}), 500
+
 # ============================================================================
 # WebSocket Events
 # ============================================================================
