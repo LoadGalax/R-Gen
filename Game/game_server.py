@@ -34,8 +34,9 @@ CORS(app, supports_credentials=True)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 # Global state
-# Point to the GenerationEngine data directory
-data_dir = project_root / "GenerationEngine" / "data"
+# Use the Game's own data directory (detached from GenerationEngine)
+# These JSONs are copied from GenerationEngine and can be customized per game
+data_dir = project_root / "Game" / "data"
 generator = ContentGenerator(data_dir=str(data_dir))
 db = None
 world = None
@@ -1425,8 +1426,8 @@ def save_generated_items():
 def get_item_templates():
     """Get available item templates."""
     try:
-        # Read item templates file
-        templates_file = project_root / "data" / "item_templates.json"
+        # Read item templates file from Game's data directory
+        templates_file = project_root / "Game" / "data" / "item_templates.json"
         with open(templates_file, 'r') as f:
             templates = json.load(f)
 
