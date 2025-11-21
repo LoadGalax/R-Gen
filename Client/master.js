@@ -10,11 +10,14 @@ const state = {
     locations: [],
     players: [],
     items: [],
+    lootTables: {},
+    generatedItems: [],
     currentTab: 'dashboard',
     filteredNPCs: [],
     filteredLocations: [],
     filteredPlayers: [],
-    filteredItems: []
+    filteredItems: [],
+    entityTypeFilter: 'all'
 };
 
 // API Base URL
@@ -98,6 +101,29 @@ function setupEventListeners() {
 
     // Item Generation
     document.getElementById('generate-items-btn').addEventListener('click', generateItems);
+
+    // NEW: Create NPC/Enemy buttons
+    document.getElementById('create-npc-btn').addEventListener('click', () => showCreateNPCModal('npc'));
+    document.getElementById('create-enemy-btn').addEventListener('click', () => showCreateNPCModal('enemy'));
+    document.getElementById('create-npc-form').addEventListener('submit', createNPC);
+
+    // NEW: Entity type filter
+    document.querySelectorAll('input[name="entity-type-filter"]').forEach(radio => {
+        radio.addEventListener('change', (e) => filterNPCsByType(e.target.value));
+    });
+
+    // NEW: Create Location button
+    document.getElementById('create-location-btn').addEventListener('click', showCreateLocationModal);
+    document.getElementById('create-location-form').addEventListener('submit', createLocation);
+
+    // NEW: Save Generated Items
+    document.getElementById('save-generated-items-btn').addEventListener('click', saveGeneratedItems);
+
+    // NEW: Loot Tables
+    document.getElementById('create-loot-table-btn').addEventListener('click', showCreateLootTableModal);
+    document.getElementById('loot-table-form').addEventListener('submit', saveLootTable);
+    document.getElementById('add-loot-item-btn').addEventListener('click', addLootTableItem);
+    document.getElementById('delete-loot-table-btn').addEventListener('click', deleteLootTable);
 }
 
 // ============================================================================
@@ -113,7 +139,8 @@ async function loadAllData() {
             loadNPCs(),
             loadLocations(),
             loadPlayers(),
-            loadItems()
+            loadItems(),
+            loadLootTables()
         ]);
 
         updateDashboard();
@@ -244,9 +271,14 @@ async function saveWorldSettings(e) {
 
 function renderNPCsTable() {
     const tbody = document.getElementById('npcs-table-body');
-    const npcs = state.filteredNPCs;
+    let npcs = state.filteredNPCs;
 
-    document.getElementById('npc-count').textContent = `${npcs.length} NPCs`;
+    // Apply entity type filter
+    if (state.entityTypeFilter !== 'all') {
+        npcs = npcs.filter(npc => (npc.entity_type || 'npc') === state.entityTypeFilter);
+    }
+
+    document.getElementById('npc-count').textContent = `${npcs.length} ${state.entityTypeFilter === 'all' ? 'NPCs/Enemies' : state.entityTypeFilter === 'npc' ? 'NPCs' : 'Enemies'}`;
 
     if (npcs.length === 0) {
         tbody.innerHTML = '<tr><td colspan="9" class="loading">No NPCs found</td></tr>';
@@ -957,7 +989,9 @@ async function generateItems() {
         const result = await response.json();
 
         if (response.ok && result.success) {
+            state.generatedItems = result.items;
             displayGeneratedItems(result.items);
+            document.getElementById('save-generated-items-btn').style.display = 'inline-block';
             showToast(`Successfully generated ${result.count} item(s)`, 'success');
         } else {
             showToast(result.error || 'Failed to generate items', 'error');
@@ -1039,6 +1073,365 @@ function showToast(message, type = 'info') {
     setTimeout(() => {
         toast.classList.remove('show');
     }, 3000);
+}
+
+// ============================================================================
+// NEW: Create NPC/Enemy Functions
+// ============================================================================
+
+function showCreateNPCModal(entityType) {
+    const modal = document.getElementById('create-npc-modal');
+    const title = document.getElementById('create-npc-modal-title');
+    const entityTypeInput = document.getElementById('create-entity-type');
+    const enemyFields = document.getElementById('enemy-fields');
+
+    // Set entity type
+    entityTypeInput.value = entityType;
+    title.textContent = entityType === 'enemy' ? 'Create Enemy' : 'Create NPC';
+
+    // Show/hide enemy fields
+    enemyFields.style.display = entityType === 'enemy' ? 'block' : 'none';
+
+    // Populate locations dropdown
+    const locationSelect = document.getElementById('create-npc-location');
+    locationSelect.innerHTML = '<option value="">Select Location...</option>';
+    state.locations.forEach(loc => {
+        const option = document.createElement('option');
+        option.value = loc.id;
+        option.textContent = loc.name;
+        locationSelect.appendChild(option);
+    });
+
+    // Populate loot tables dropdown (for enemies)
+    if (entityType === 'enemy') {
+        const lootTableSelect = document.getElementById('create-enemy-loot-table');
+        lootTableSelect.innerHTML = '<option value="">None</option>';
+        Object.values(state.lootTables).forEach(table => {
+            const option = document.createElement('option');
+            option.value = table.id;
+            option.textContent = table.name;
+            lootTableSelect.appendChild(option);
+        });
+    }
+
+    // Reset form
+    document.getElementById('create-npc-form').reset();
+    entityTypeInput.value = entityType;
+
+    showModal('create-npc-modal');
+}
+
+async function createNPC(e) {
+    e.preventDefault();
+
+    const entityType = document.getElementById('create-entity-type').value;
+    const name = document.getElementById('create-npc-name').value;
+    const profession = document.getElementById('create-npc-profession').value;
+    const location_id = document.getElementById('create-npc-location').value;
+
+    const data = {
+        name,
+        professions: [profession],
+        location_id,
+        entity_type: entityType
+    };
+
+    // Add enemy-specific properties
+    if (entityType === 'enemy') {
+        data.max_health = parseInt(document.getElementById('create-enemy-health').value);
+        data.attack_power = parseInt(document.getElementById('create-enemy-attack').value);
+        data.defense = parseInt(document.getElementById('create-enemy-defense').value);
+        data.experience_reward = parseInt(document.getElementById('create-enemy-xp').value);
+        data.loot_table_id = document.getElementById('create-enemy-loot-table').value || null;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/npc`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            showToast(result.message, 'success');
+            closeAllModals();
+            await loadNPCs();
+            renderNPCsTable();
+        } else {
+            showToast(result.error || 'Error creating ' + entityType, 'error');
+        }
+    } catch (error) {
+        console.error('Error creating ' + entityType + ':', error);
+        showToast('Error creating ' + entityType, 'error');
+    }
+}
+
+function filterNPCsByType(type) {
+    state.entityTypeFilter = type;
+    renderNPCsTable();
+}
+
+// ============================================================================
+// NEW: Create Location Functions
+// ============================================================================
+
+function showCreateLocationModal() {
+    const modal = document.getElementById('create-location-modal');
+
+    // Populate NPCs select
+    const npcsSelect = document.getElementById('create-location-npcs');
+    npcsSelect.innerHTML = '';
+    state.npcs.forEach(npc => {
+        const option = document.createElement('option');
+        option.value = npc.id;
+        option.textContent = `${npc.name} (${npc.profession})`;
+        npcsSelect.appendChild(option);
+    });
+
+    // Reset form
+    document.getElementById('create-location-form').reset();
+
+    showModal('create-location-modal');
+}
+
+async function createLocation(e) {
+    e.preventDefault();
+
+    const name = document.getElementById('create-location-name').value;
+    const description = document.getElementById('create-location-description').value;
+    const template = document.getElementById('create-location-template').value;
+
+    // Get selected NPCs
+    const npcsSelect = document.getElementById('create-location-npcs');
+    const npc_ids = Array.from(npcsSelect.selectedOptions).map(opt => opt.value);
+
+    const data = {
+        name,
+        description,
+        template,
+        npc_ids
+    };
+
+    try {
+        const response = await fetch(`${API_BASE}/location`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            showToast(result.message, 'success');
+            closeAllModals();
+            await Promise.all([loadLocations(), loadNPCs()]);
+            renderLocationsTable();
+        } else {
+            showToast(result.error || 'Error creating location', 'error');
+        }
+    } catch (error) {
+        console.error('Error creating location:', error);
+        showToast('Error creating location', 'error');
+    }
+}
+
+// ============================================================================
+// NEW: Save Generated Items
+// ============================================================================
+
+async function saveGeneratedItems() {
+    if (!state.generatedItems || state.generatedItems.length === 0) {
+        showToast('No generated items to save', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/items/save`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ items: state.generatedItems })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            showToast(result.message, 'success');
+            state.generatedItems = [];
+            document.getElementById('save-generated-items-btn').style.display = 'none';
+        } else {
+            showToast(result.error || 'Error saving items', 'error');
+        }
+    } catch (error) {
+        console.error('Error saving items:', error);
+        showToast('Error saving items', 'error');
+    }
+}
+
+// ============================================================================
+// NEW: Loot Tables Functions
+// ============================================================================
+
+async function loadLootTables() {
+    try {
+        const response = await fetch(`${API_BASE}/loot_tables`);
+        const data = await response.json();
+
+        if (data.success) {
+            state.lootTables = data.loot_tables;
+            renderLootTablesTable();
+        }
+    } catch (error) {
+        console.error('Error loading loot tables:', error);
+    }
+}
+
+function renderLootTablesTable() {
+    const tbody = document.getElementById('loot-tables-table-body');
+    const tables = Object.values(state.lootTables);
+
+    if (tables.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty">No loot tables found</td></tr>';
+        document.getElementById('loot-table-count').textContent = '0 Loot Tables';
+        return;
+    }
+
+    let html = '';
+    tables.forEach(table => {
+        html += `
+            <tr>
+                <td>${escapeHtml(table.id)}</td>
+                <td>${escapeHtml(table.name)}</td>
+                <td>${escapeHtml(table.description || '')}</td>
+                <td>${table.items ? table.items.length : 0}</td>
+                <td>
+                    <button class="btn btn-small btn-primary" onclick="editLootTable('${escapeHtml(table.id)}')">✏️ Edit</button>
+                </td>
+            </tr>
+        `;
+    });
+
+    tbody.innerHTML = html;
+    document.getElementById('loot-table-count').textContent = `${tables.length} Loot Tables`;
+}
+
+function showCreateLootTableModal() {
+    document.getElementById('loot-table-modal-title').textContent = 'Create Loot Table';
+    document.getElementById('edit-loot-table-id').value = '';
+    document.getElementById('loot-table-form').reset();
+    document.getElementById('loot-table-items-container').innerHTML = '';
+    document.getElementById('delete-loot-table-btn').style.display = 'none';
+    showModal('loot-table-modal');
+}
+
+function editLootTable(lootTableId) {
+    const table = state.lootTables[lootTableId];
+    if (!table) return;
+
+    document.getElementById('loot-table-modal-title').textContent = 'Edit Loot Table';
+    document.getElementById('edit-loot-table-id').value = table.id;
+    document.getElementById('loot-table-name').value = table.name;
+    document.getElementById('loot-table-description').value = table.description || '';
+
+    // Populate items
+    const container = document.getElementById('loot-table-items-container');
+    container.innerHTML = '';
+    if (table.items) {
+        table.items.forEach((item, index) => {
+            addLootTableItemRow(item, index);
+        });
+    }
+
+    document.getElementById('delete-loot-table-btn').style.display = 'inline-block';
+    showModal('loot-table-modal');
+}
+
+function addLootTableItem() {
+    addLootTableItemRow(null, Date.now());
+}
+
+function addLootTableItemRow(item, index) {
+    const container = document.getElementById('loot-table-items-container');
+
+    const div = document.createElement('div');
+    div.className = 'loot-item-row';
+    div.style.cssText = 'display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 10px; margin-bottom: 10px;';
+
+    div.innerHTML = `
+        <input type="text" class="form-input loot-item-name" placeholder="Item Name" value="${item ? escapeHtml(item.item_name) : ''}" required>
+        <input type="number" class="form-input loot-item-drop-chance" placeholder="Drop %" min="0" max="100" value="${item ? item.drop_chance : 50}" required>
+        <input type="number" class="form-input loot-item-qty-min" placeholder="Min Qty" min="1" value="${item ? item.quantity_min : 1}" required>
+        <input type="number" class="form-input loot-item-qty-max" placeholder="Max Qty" min="1" value="${item ? item.quantity_max : 1}" required>
+        <button type="button" class="btn btn-small btn-danger" onclick="this.parentElement.remove()">🗑️</button>
+    `;
+
+    container.appendChild(div);
+}
+
+async function saveLootTable(e) {
+    e.preventDefault();
+
+    const id = document.getElementById('edit-loot-table-id').value;
+    const name = document.getElementById('loot-table-name').value;
+    const description = document.getElementById('loot-table-description').value;
+
+    // Collect items
+    const items = [];
+    document.querySelectorAll('.loot-item-row').forEach(row => {
+        items.push({
+            item_name: row.querySelector('.loot-item-name').value,
+            drop_chance: parseFloat(row.querySelector('.loot-item-drop-chance').value),
+            quantity_min: parseInt(row.querySelector('.loot-item-qty-min').value),
+            quantity_max: parseInt(row.querySelector('.loot-item-qty-max').value)
+        });
+    });
+
+    const data = { name, description, items };
+    if (id) data.id = id;
+
+    try {
+        const url = id ? `${API_BASE}/loot_table/${id}` : `${API_BASE}/loot_table`;
+        const method = id ? 'PATCH' : 'POST';
+
+        const response = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            showToast(result.message, 'success');
+            closeAllModals();
+            await loadLootTables();
+        } else {
+            showToast(result.error || 'Error saving loot table', 'error');
+        }
+    } catch (error) {
+        console.error('Error saving loot table:', error);
+        showToast('Error saving loot table', 'error');
+    }
+}
+
+async function deleteLootTable() {
+    const id = document.getElementById('edit-loot-table-id').value;
+    if (!id || !confirm('Are you sure you want to delete this loot table?')) return;
+
+    try {
+        const response = await fetch(`${API_BASE}/loot_table/${id}`, {
+            method: 'DELETE'
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            showToast(result.message, 'success');
+            closeAllModals();
+            await loadLootTables();
+        } else {
+            showToast(result.error || 'Error deleting loot table', 'error');
+        }
+    } catch (error) {
+        console.error('Error deleting loot table:', error);
+        showToast('Error deleting loot table', 'error');
+    }
 }
 
 function escapeHtml(text) {

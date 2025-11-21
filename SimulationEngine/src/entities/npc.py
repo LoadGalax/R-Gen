@@ -72,6 +72,100 @@ class LivingNPC(BaseEntity):
         self.work_end_hour = 17
         self.work_location_id = self.current_location_id  # Where they work
 
+        # Entity type (npc or enemy)
+        self.entity_type = data.get("entity_type", "npc") if data else "npc"
+
+        # Combat stats (mainly for enemies)
+        self.max_health = data.get("max_health", 100) if data else 100
+        self.current_health = data.get("current_health", self.max_health) if data else self.max_health
+        self.attack_power = data.get("attack_power", 10) if data else 10
+        self.defense = data.get("defense", 5) if data else 5
+        self.experience_reward = data.get("experience_reward", 50) if data else 50
+        self.loot_table_id = data.get("loot_table_id") if data else None
+
+        # Initialize inventory based on profession if not already set
+        if data and "inventory" not in data:
+            self._initialize_inventory()
+
+    def _initialize_inventory(self):
+        """Initialize NPC inventory based on their profession/class."""
+        if not self.data:
+            self.data = {}
+
+        self.data["inventory"] = []
+        professions = self.data.get("professions", [])
+
+        # Basic items for all NPCs
+        basic_items = [
+            {"name": "Cloth Tunic", "type": "armor", "subtype": "chest", "quality": "common", "value": 5},
+            {"name": "Simple Pants", "type": "armor", "subtype": "legs", "quality": "common", "value": 3},
+        ]
+
+        # Profession-specific items
+        profession_items = {
+            "blacksmith": [
+                {"name": "Smithing Hammer", "type": "tool", "quality": "fine", "value": 25},
+                {"name": "Iron Ingots", "type": "material", "quantity": 10, "value": 50},
+                {"name": "Steel Sword", "type": "weapon", "subtype": "melee", "quality": "fine", "value": 100},
+            ],
+            "merchant": [
+                {"name": "Ledger", "type": "tool", "quality": "common", "value": 10},
+                {"name": "Coin Purse", "type": "accessory", "quality": "common", "value": 15},
+                {"name": "Trade Goods", "type": "material", "quantity": 5, "value": 75},
+            ],
+            "guard": [
+                {"name": "Iron Sword", "type": "weapon", "subtype": "melee", "quality": "common", "value": 50},
+                {"name": "Leather Shield", "type": "armor", "subtype": "shield", "quality": "common", "value": 30},
+                {"name": "Chain Mail", "type": "armor", "subtype": "chest", "quality": "fine", "value": 80},
+            ],
+            "alchemist": [
+                {"name": "Mortar and Pestle", "type": "tool", "quality": "fine", "value": 20},
+                {"name": "Health Potion", "type": "consumable", "quantity": 3, "value": 75},
+                {"name": "Mana Potion", "type": "consumable", "quantity": 2, "value": 60},
+                {"name": "Herbs", "type": "material", "quantity": 10, "value": 30},
+            ],
+            "enchanter": [
+                {"name": "Enchanting Staff", "type": "weapon", "subtype": "staff", "quality": "fine", "value": 120},
+                {"name": "Magic Scroll", "type": "scroll", "quantity": 5, "value": 100},
+                {"name": "Soul Gem", "type": "material", "quantity": 3, "value": 150},
+            ],
+            "innkeeper": [
+                {"name": "Room Keys", "type": "tool", "quantity": 5, "value": 25},
+                {"name": "Ale Barrel", "type": "consumable", "quantity": 10, "value": 50},
+                {"name": "Food Supplies", "type": "consumable", "quantity": 20, "value": 40},
+            ],
+            "farmer": [
+                {"name": "Hoe", "type": "tool", "quality": "common", "value": 10},
+                {"name": "Seeds", "type": "material", "quantity": 20, "value": 20},
+                {"name": "Wheat", "type": "material", "quantity": 15, "value": 30},
+            ],
+            "miner": [
+                {"name": "Pickaxe", "type": "tool", "quality": "fine", "value": 35},
+                {"name": "Iron Ore", "type": "material", "quantity": 10, "value": 50},
+                {"name": "Copper Ore", "type": "material", "quantity": 8, "value": 32},
+            ],
+            "priest": [
+                {"name": "Holy Symbol", "type": "accessory", "quality": "fine", "value": 40},
+                {"name": "Prayer Book", "type": "tool", "quality": "common", "value": 20},
+                {"name": "Healing Scroll", "type": "scroll", "quantity": 3, "value": 90},
+            ],
+            "thief": [
+                {"name": "Lockpicks", "type": "tool", "quality": "fine", "value": 25},
+                {"name": "Dagger", "type": "weapon", "subtype": "melee", "quality": "common", "value": 30},
+                {"name": "Smoke Bomb", "type": "consumable", "quantity": 2, "value": 40},
+            ],
+        }
+
+        # Add basic items
+        self.data["inventory"].extend(basic_items)
+
+        # Add profession-specific items
+        for profession in professions:
+            profession_lower = profession.lower()
+            if profession_lower in profession_items:
+                self.data["inventory"].extend(profession_items[profession_lower])
+                break  # Only add items for primary profession
+
     def update(self, delta_time: float, world_context: Any):
         """
         Update NPC state each simulation tick.
@@ -390,6 +484,13 @@ class LivingNPC(BaseEntity):
             "work_end_hour": self.work_end_hour,
             "work_location_id": self.work_location_id,
             "active": self.active,
+            "entity_type": self.entity_type,
+            "max_health": self.max_health,
+            "current_health": self.current_health,
+            "attack_power": self.attack_power,
+            "defense": self.defense,
+            "experience_reward": self.experience_reward,
+            "loot_table_id": self.loot_table_id,
         }
 
     @classmethod
@@ -414,5 +515,12 @@ class LivingNPC(BaseEntity):
         npc.work_end_hour = data.get("work_end_hour", 17)
         npc.work_location_id = data.get("work_location_id")
         npc.active = data.get("active", True)
+        npc.entity_type = data.get("entity_type", "npc")
+        npc.max_health = data.get("max_health", 100)
+        npc.current_health = data.get("current_health", npc.max_health)
+        npc.attack_power = data.get("attack_power", 10)
+        npc.defense = data.get("defense", 5)
+        npc.experience_reward = data.get("experience_reward", 50)
+        npc.loot_table_id = data.get("loot_table_id")
 
         return npc

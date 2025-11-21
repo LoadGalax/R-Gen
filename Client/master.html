@@ -25,6 +25,7 @@
             <button class="tab-btn" data-tab="locations">📍 Locations</button>
             <button class="tab-btn" data-tab="players">🎮 Players</button>
             <button class="tab-btn" data-tab="items">⚔️ Items</button>
+            <button class="tab-btn" data-tab="loot">📦 Loot Tables</button>
             <button class="tab-btn" data-tab="simulation">⚙️ Simulation</button>
         </nav>
 
@@ -84,6 +85,20 @@
                 <div class="toolbar">
                     <input type="text" id="npc-search" class="form-input search-input" placeholder="🔍 Search NPCs...">
                     <span id="npc-count">0 NPCs</span>
+                    <button class="btn btn-success" id="create-npc-btn">➕ Create NPC</button>
+                    <button class="btn btn-danger" id="create-enemy-btn">⚔️ Create Enemy</button>
+                </div>
+                <!-- Filter by entity type -->
+                <div class="toolbar">
+                    <label>
+                        <input type="radio" name="entity-type-filter" value="all" checked> Show All
+                    </label>
+                    <label>
+                        <input type="radio" name="entity-type-filter" value="npc"> NPCs Only
+                    </label>
+                    <label>
+                        <input type="radio" name="entity-type-filter" value="enemy"> Enemies Only
+                    </label>
                 </div>
                 <div class="table-container">
                     <table class="data-table" id="npcs-table">
@@ -113,6 +128,7 @@
                 <div class="toolbar">
                     <input type="text" id="location-search" class="form-input search-input" placeholder="🔍 Search Locations...">
                     <span id="location-count">0 Locations</span>
+                    <button class="btn btn-success" id="create-location-btn">➕ Create Location</button>
                 </div>
                 <div class="table-container">
                     <table class="data-table" id="locations-table">
@@ -265,10 +281,38 @@
 
                 <!-- Generated Items Display -->
                 <div class="items-section">
-                    <h3>Generated Items</h3>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3>Generated Items</h3>
+                        <button class="btn btn-primary" id="save-generated-items-btn" style="display: none;">💾 Save Generated Items</button>
+                    </div>
                     <div id="generated-items-container">
                         <p class="help-text">No items generated yet. Use the form above to generate items.</p>
                     </div>
+                </div>
+            </section>
+
+            <!-- Loot Tables Tab -->
+            <section id="loot-tab" class="tab-content">
+                <h2>Loot Tables Management</h2>
+                <div class="toolbar">
+                    <button class="btn btn-success" id="create-loot-table-btn">➕ Create Loot Table</button>
+                    <span id="loot-table-count">0 Loot Tables</span>
+                </div>
+                <div class="table-container">
+                    <table class="data-table" id="loot-tables-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Description</th>
+                                <th>Items Count</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="loot-tables-table-body">
+                            <tr><td colspan="5" class="loading">Loading Loot Tables...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </section>
 
@@ -630,6 +674,232 @@
                     <button type="button" class="btn btn-secondary modal-close-btn">Cancel</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Create NPC/Enemy Modal -->
+    <div id="create-npc-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h2 id="create-npc-modal-title">Create NPC</h2>
+            <form id="create-npc-form">
+                <input type="hidden" id="create-entity-type" value="npc">
+
+                <div class="form-group">
+                    <label>Name:</label>
+                    <input type="text" id="create-npc-name" class="form-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Profession:</label>
+                    <select id="create-npc-profession" class="form-input">
+                        <option value="wanderer">Wanderer</option>
+                        <option value="blacksmith">Blacksmith</option>
+                        <option value="merchant">Merchant</option>
+                        <option value="guard">Guard</option>
+                        <option value="alchemist">Alchemist</option>
+                        <option value="enchanter">Enchanter</option>
+                        <option value="innkeeper">Innkeeper</option>
+                        <option value="farmer">Farmer</option>
+                        <option value="miner">Miner</option>
+                        <option value="priest">Priest</option>
+                        <option value="thief">Thief</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Starting Location:</label>
+                    <select id="create-npc-location" class="form-input">
+                        <!-- Will be populated dynamically -->
+                    </select>
+                </div>
+
+                <!-- Enemy-specific fields (hidden for NPCs) -->
+                <div id="enemy-fields" style="display: none;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Max Health:</label>
+                            <input type="number" id="create-enemy-health" class="form-input" value="100" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label>Attack Power:</label>
+                            <input type="number" id="create-enemy-attack" class="form-input" value="15" min="0">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Defense:</label>
+                            <input type="number" id="create-enemy-defense" class="form-input" value="8" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Experience Reward:</label>
+                            <input type="number" id="create-enemy-xp" class="form-input" value="100" min="0">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Loot Table:</label>
+                        <select id="create-enemy-loot-table" class="form-input">
+                            <option value="">None</option>
+                            <!-- Will be populated dynamically -->
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-success">➕ Create</button>
+                    <button type="button" class="btn btn-secondary modal-close-btn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Location Modal -->
+    <div id="create-location-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h2>Create Location</h2>
+            <form id="create-location-form">
+                <div class="form-group">
+                    <label>Name:</label>
+                    <input type="text" id="create-location-name" class="form-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Description:</label>
+                    <textarea id="create-location-description" class="form-input" rows="3"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Template:</label>
+                    <select id="create-location-template" class="form-input">
+                        <option value="settlement">Settlement</option>
+                        <option value="dungeon">Dungeon</option>
+                        <option value="wilderness">Wilderness</option>
+                        <option value="cave">Cave</option>
+                        <option value="castle">Castle</option>
+                        <option value="temple">Temple</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Assign NPCs:</label>
+                    <select id="create-location-npcs" class="form-input" multiple size="5">
+                        <!-- Will be populated dynamically -->
+                    </select>
+                    <p class="help-text">Hold Ctrl/Cmd to select multiple NPCs</p>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-success">➕ Create Location</button>
+                    <button type="button" class="btn btn-secondary modal-close-btn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create/Edit Loot Table Modal -->
+    <div id="loot-table-modal" class="modal">
+        <div class="modal-content modal-large">
+            <span class="modal-close">&times;</span>
+            <h2 id="loot-table-modal-title">Create Loot Table</h2>
+            <form id="loot-table-form">
+                <input type="hidden" id="edit-loot-table-id">
+
+                <div class="form-group">
+                    <label>Name:</label>
+                    <input type="text" id="loot-table-name" class="form-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Description:</label>
+                    <textarea id="loot-table-description" class="form-input" rows="2"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Items:</label>
+                    <div id="loot-table-items-container">
+                        <!-- Will be populated dynamically -->
+                    </div>
+                    <button type="button" class="btn btn-small btn-primary" id="add-loot-item-btn">➕ Add Item</button>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-success">💾 Save Loot Table</button>
+                    <button type="button" class="btn btn-danger" id="delete-loot-table-btn" style="display: none;">🗑️ Delete</button>
+                    <button type="button" class="btn btn-secondary modal-close-btn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- NPC Inventory Modal -->
+    <div id="npc-inventory-modal" class="modal">
+        <div class="modal-content modal-large">
+            <span class="modal-close">&times;</span>
+            <h2>NPC Inventory</h2>
+            <h3 id="npc-inventory-name"></h3>
+            <input type="hidden" id="npc-inventory-id">
+
+            <div class="toolbar">
+                <button class="btn btn-success" id="add-npc-item-btn">➕ Add Item</button>
+            </div>
+
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Quality</th>
+                            <th>Quantity</th>
+                            <th>Value</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="npc-inventory-table-body">
+                        <tr><td colspan="6" class="loading">Loading inventory...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary modal-close-btn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Existing Item to Player Modal -->
+    <div id="add-existing-item-modal" class="modal">
+        <div class="modal-content modal-large">
+            <span class="modal-close">&times;</span>
+            <h2>Add Existing Item</h2>
+
+            <div class="form-group">
+                <label>Search Items:</label>
+                <input type="text" id="existing-item-search" class="form-input" placeholder="Search by name...">
+            </div>
+
+            <div class="table-container" style="max-height: 400px; overflow-y: auto;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Quality</th>
+                            <th>Rarity</th>
+                            <th>Value</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="existing-items-table-body">
+                        <tr><td colspan="6" class="loading">Loading items...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary modal-close-btn">Cancel</button>
+            </div>
         </div>
     </div>
 
