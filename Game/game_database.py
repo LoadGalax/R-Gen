@@ -270,7 +270,7 @@ class GameDatabase:
             return [dict(row) for row in cursor.fetchall()]
 
     def get_all_items(self) -> List[Dict[str, Any]]:
-        """Get all items from all player inventories."""
+        """Get all items from both player inventories and generated items."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
@@ -283,10 +283,25 @@ class GameDatabase:
                     i.quantity,
                     i.equipped,
                     i.data,
-                    i.acquired_at
+                    i.acquired_at as timestamp
                 FROM player_inventory i
                 LEFT JOIN players p ON i.player_id = p.id
-                ORDER BY i.acquired_at DESC
+
+                UNION ALL
+
+                SELECT
+                    g.id,
+                    NULL as player_id,
+                    'Generated' as player_name,
+                    g.item_name,
+                    g.item_type,
+                    1 as quantity,
+                    0 as equipped,
+                    g.item_data as data,
+                    g.created_at as timestamp
+                FROM generated_items g
+
+                ORDER BY timestamp DESC
             """)
 
             return [dict(row) for row in cursor.fetchall()]

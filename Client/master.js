@@ -775,6 +775,8 @@ async function addItemToInventory(e) {
         if (data.success) {
             showToast('Item added successfully', 'success');
             await loadPlayerInventory(playerId);
+            // Refresh the item list to show the newly added item
+            await loadItems();
             closeAllModals();
         } else {
             showToast(data.error || 'Error adding item', 'error');
@@ -1270,6 +1272,8 @@ async function saveGeneratedItems() {
             showToast(result.message, 'success');
             state.generatedItems = [];
             document.getElementById('save-generated-items-btn').style.display = 'none';
+            // Refresh the item list to show the newly saved generated items
+            await loadItems();
         } else {
             showToast(result.error || 'Error saving items', 'error');
         }
