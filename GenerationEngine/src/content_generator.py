@@ -21,17 +21,19 @@ class ContentGenerator:
     Items, NPCs, and Locations with cross-referencing support.
     """
 
-    def __init__(self, data_dir: str = "data", seed: Optional[int] = None):
+    def __init__(self, data_dir: str = "data", seed: Optional[int] = None, database=None):
         """
         Initialize the ContentGenerator.
 
         Args:
             data_dir: Path to directory containing JSON configuration files
             seed: Random seed for reproducible generation. If None, uses system random.
+            database: Optional DatabaseManager instance for saving/loading content
         """
         self.data_dir = Path(data_dir)
         self.seed = seed
         self.rng = random.Random(seed)  # Dedicated random number generator
+        self.database = database  # Optional database for persisting content
 
         # Load separated attribute configuration files
         self.quality = self._load_json("quality.json")

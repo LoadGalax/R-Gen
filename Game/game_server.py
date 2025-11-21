@@ -23,6 +23,7 @@ project_root = Path(__file__).parent.parent  # Go up one level from Game/ to R-G
 sys.path.insert(0, str(project_root))
 
 from GenerationEngine import ContentGenerator
+from GenerationEngine.src.database import DatabaseManager
 from game_database import GameDatabase
 
 # Client folder is at the root level, not in Game/
@@ -36,7 +37,10 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 # Global state
 # Point to the GenerationEngine data directory
 data_dir = project_root / "GenerationEngine" / "data"
-generator = ContentGenerator(data_dir=str(data_dir))
+# Create DatabaseManager for content generation
+gen_db_path = project_root / "r_gen_content.db"
+gen_database = DatabaseManager(db_path=str(gen_db_path))
+generator = ContentGenerator(data_dir=str(data_dir), database=gen_database)
 db = None
 world = None
 
