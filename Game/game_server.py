@@ -1185,6 +1185,60 @@ def delete_master_player_inventory(player_id, inventory_id):
 
     return jsonify({'success': True, 'message': 'Item deleted'})
 
+@app.route('/api/master/items/generate', methods=['POST'])
+def generate_items():
+    """Generate random items using the GenerationEngine."""
+    data = request.get_json()
+
+    template = data.get('template', 'weapon_melee')
+    count = int(data.get('count', 1))
+    constraints = data.get('constraints', {})
+
+    # Validate count
+    if count < 1 or count > 100:
+        return jsonify({'error': 'Count must be between 1 and 100'}), 400
+
+    try:
+        generated_items = []
+        for _ in range(count):
+            item = generator.generate_item(template, constraints)
+            generated_items.append(item)
+
+        return jsonify({
+            'success': True,
+            'items': generated_items,
+            'count': len(generated_items)
+        }), 200
+
+    except Exception as e:
+        return jsonify({'error': f'Failed to generate items: {str(e)}'}), 500
+
+@app.route('/api/master/items/templates', methods=['GET'])
+def get_item_templates():
+    """Get available item templates."""
+    try:
+        # Read item templates file
+        templates_file = project_root / "data" / "item_templates.json"
+        with open(templates_file, 'r') as f:
+            templates = json.load(f)
+
+        # Return template names and basic info
+        template_info = {}
+        for name, template in templates.items():
+            template_info[name] = {
+                'type': template.get('type', 'unknown'),
+                'subtype': template.get('subtype', ''),
+                'base_names': template.get('base_names', [])
+            }
+
+        return jsonify({
+            'success': True,
+            'templates': template_info
+        }), 200
+
+    except Exception as e:
+        return jsonify({'error': f'Failed to get templates: {str(e)}'}), 500
+
 # ============================================================================
 # WebSocket Events
 # ============================================================================

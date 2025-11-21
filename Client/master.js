@@ -92,6 +92,9 @@ function setupEventListeners() {
     // Add Item Form
     document.getElementById('add-item-btn').addEventListener('click', showAddItemModal);
     document.getElementById('add-item-form').addEventListener('submit', addItemToInventory);
+
+    // Item Generation
+    document.getElementById('generate-items-btn').addEventListener('click', generateItems);
 }
 
 // ============================================================================
@@ -824,6 +827,92 @@ async function clearEvents() {
         console.error('Error clearing events:', error);
         showToast('Error clearing events', 'error');
     }
+}
+
+// ============================================================================
+// Item Generation
+// ============================================================================
+
+async function generateItems() {
+    const template = document.getElementById('item-template').value;
+    const count = parseInt(document.getElementById('item-count').value);
+    const minQuality = document.getElementById('min-quality').value;
+    const minRarity = document.getElementById('min-rarity').value;
+    const minValue = document.getElementById('min-value').value;
+
+    // Build constraints object
+    const constraints = {};
+    if (minQuality) constraints.min_quality = minQuality;
+    if (minRarity) constraints.min_rarity = minRarity;
+    if (minValue) constraints.min_value = parseInt(minValue);
+
+    try {
+        const response = await fetch(`${API_BASE}/items/generate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ template, count, constraints })
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            displayGeneratedItems(result.items);
+            showToast(`Successfully generated ${result.count} item(s)`, 'success');
+        } else {
+            showToast(result.error || 'Failed to generate items', 'error');
+        }
+    } catch (error) {
+        console.error('Error generating items:', error);
+        showToast('Error generating items', 'error');
+    }
+}
+
+function displayGeneratedItems(items) {
+    const container = document.getElementById('generated-items-container');
+
+    if (!items || items.length === 0) {
+        container.innerHTML = '<p class="help-text">No items generated.</p>';
+        return;
+    }
+
+    let html = '<div class="generated-items-grid">';
+
+    items.forEach((item, index) => {
+        // Get rarity color class
+        const rarityClass = item.rarity ? `rarity-${item.rarity.toLowerCase()}` : 'rarity-common';
+
+        // Format stats
+        const stats = item.stats || {};
+        const statsHtml = Object.entries(stats)
+            .map(([key, value]) => `<span class="stat-badge">${key}: +${value}</span>`)
+            .join(' ');
+
+        // Format properties
+        const damage = item.stats?.damage ? `<div class="item-stat">Damage: ${item.stats.damage}</div>` : '';
+        const defense = item.stats?.defense ? `<div class="item-stat">Defense: ${item.stats.defense}</div>` : '';
+
+        html += `
+            <div class="item-card ${rarityClass}">
+                <div class="item-header">
+                    <h4>${escapeHtml(item.name)}</h4>
+                    <span class="item-rarity">${escapeHtml(item.rarity || 'common')}</span>
+                </div>
+                <div class="item-body">
+                    <div class="item-type">${escapeHtml(item.type)} ${item.subtype ? '- ' + escapeHtml(item.subtype) : ''}</div>
+                    <div class="item-quality">Quality: ${escapeHtml(item.quality || 'common')}</div>
+                    ${item.material ? `<div class="item-material">Material: ${escapeHtml(item.material)}</div>` : ''}
+                    ${damage}
+                    ${defense}
+                    ${statsHtml ? `<div class="item-stats">${statsHtml}</div>` : ''}
+                    <div class="item-value">Value: ${item.value || 0} gold</div>
+                    ${item.description ? `<div class="item-description">${escapeHtml(item.description)}</div>` : ''}
+                </div>
+            </div>
+        `;
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
 }
 
 // ============================================================================

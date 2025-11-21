@@ -24,6 +24,7 @@
             <button class="tab-btn" data-tab="npcs">👥 NPCs</button>
             <button class="tab-btn" data-tab="locations">📍 Locations</button>
             <button class="tab-btn" data-tab="players">🎮 Players</button>
+            <button class="tab-btn" data-tab="items">⚔️ Items</button>
             <button class="tab-btn" data-tab="simulation">⚙️ Simulation</button>
         </nav>
 
@@ -159,6 +160,83 @@
                             <tr><td colspan="9" class="loading">Loading Players...</td></tr>
                         </tbody>
                     </table>
+                </div>
+            </section>
+
+            <!-- Items Tab -->
+            <section id="items-tab" class="tab-content">
+                <h2>Item Generation</h2>
+
+                <!-- Generation Form -->
+                <div class="form-section">
+                    <h3>Generate Items</h3>
+                    <div class="form-group">
+                        <label for="item-template">Item Template:</label>
+                        <select id="item-template" class="form-input">
+                            <option value="weapon_melee">Melee Weapon</option>
+                            <option value="weapon_ranged">Ranged Weapon</option>
+                            <option value="armor">Armor</option>
+                            <option value="helmet">Helmet</option>
+                            <option value="chest">Chest Armor</option>
+                            <option value="gloves">Gloves</option>
+                            <option value="legs">Leg Armor</option>
+                            <option value="boots">Boots</option>
+                            <option value="belt">Belt</option>
+                            <option value="ring">Ring</option>
+                            <option value="earring">Earring</option>
+                            <option value="collar">Collar</option>
+                            <option value="potion">Potion</option>
+                            <option value="scroll">Scroll</option>
+                            <option value="jewelry">Jewelry</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="item-count">Number of Items:</label>
+                        <input type="number" id="item-count" class="form-input" min="1" max="100" value="1">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Constraints (Optional):</label>
+                        <div class="constraints-grid">
+                            <div>
+                                <label for="min-quality">Min Quality:</label>
+                                <select id="min-quality" class="form-input">
+                                    <option value="">Any</option>
+                                    <option value="poor">Poor</option>
+                                    <option value="common">Common</option>
+                                    <option value="fine">Fine</option>
+                                    <option value="superior">Superior</option>
+                                    <option value="masterwork">Masterwork</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="min-rarity">Min Rarity:</label>
+                                <select id="min-rarity" class="form-input">
+                                    <option value="">Any</option>
+                                    <option value="common">Common</option>
+                                    <option value="uncommon">Uncommon</option>
+                                    <option value="rare">Rare</option>
+                                    <option value="epic">Epic</option>
+                                    <option value="legendary">Legendary</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="min-value">Min Value:</label>
+                                <input type="number" id="min-value" class="form-input" placeholder="Optional">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-success btn-lg" id="generate-items-btn">⚔️ Generate Items</button>
+                </div>
+
+                <!-- Generated Items Display -->
+                <div class="items-section">
+                    <h3>Generated Items</h3>
+                    <div id="generated-items-container">
+                        <p class="help-text">No items generated yet. Use the form above to generate items.</p>
+                    </div>
                 </div>
             </section>
 
