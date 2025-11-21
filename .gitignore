@@ -45,3 +45,12 @@ output_*.json
 # Database files
 *.db
 *.db-journal
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# JSON Editor backups
+backups/
