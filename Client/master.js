@@ -124,6 +124,12 @@ function setupEventListeners() {
     document.getElementById('loot-table-form').addEventListener('submit', saveLootTable);
     document.getElementById('add-loot-item-btn').addEventListener('click', addLootTableItem);
     document.getElementById('delete-loot-table-btn').addEventListener('click', deleteLootTable);
+
+    // Database Management
+    document.getElementById('db-export-btn').addEventListener('click', exportDatabase);
+    document.getElementById('db-import-btn').addEventListener('click', () => document.getElementById('db-import-file').click());
+    document.getElementById('db-import-file').addEventListener('change', importDatabase);
+    document.getElementById('db-clear-btn').addEventListener('click', clearDatabase);
 }
 
 // ============================================================================
@@ -1488,6 +1494,132 @@ async function deleteLootTable() {
         showToast('Error deleting loot table', 'error');
     }
 }
+
+// ============================================================================
+// Database Management Functions
+// ============================================================================
+
+async function exportDatabase() {
+    try {
+        showToast('Exporting database...', 'info');
+
+        const response = await fetch(`${API_BASE}/database/export`);
+        const data = await response.json();
+
+        if (data.success) {
+            // Create a downloadable JSON file
+            const blob = new Blob([JSON.stringify(data.data, null, 2)], { type: 'application/json' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `rgen-database-backup-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+
+            showToast('Database exported successfully', 'success');
+        } else {
+            showToast(data.error || 'Error exporting database', 'error');
+        }
+    } catch (error) {
+        console.error('Error exporting database:', error);
+        showToast('Error exporting database', 'error');
+    }
+}
+
+async function importDatabase(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!confirm('Are you sure you want to import this database? This will merge the imported data with existing data.')) {
+        e.target.value = ''; // Reset file input
+        return;
+    }
+
+    try {
+        showToast('Importing database...', 'info');
+
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            try {
+                const importData = JSON.parse(event.target.result);
+
+                const response = await fetch(`${API_BASE}/database/import`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ data: importData })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showToast(result.message || 'Database imported successfully', 'success');
+                    await loadAllData();
+                } else {
+                    showToast(result.error || 'Error importing database', 'error');
+                }
+            } catch (error) {
+                console.error('Error parsing or importing database:', error);
+                showToast('Error importing database: Invalid file format', 'error');
+            }
+
+            // Reset file input
+            e.target.value = '';
+        };
+
+        reader.readAsText(file);
+    } catch (error) {
+        console.error('Error reading file:', error);
+        showToast('Error reading file', 'error');
+        e.target.value = '';
+    }
+}
+
+async function clearDatabase() {
+    const confirmText = 'DELETE ALL DATA';
+    const userInput = prompt(
+        `⚠️ WARNING: This will permanently delete ALL data including:\n` +
+        `- All players and their inventories\n` +
+        `- All NPCs and enemies\n` +
+        `- All locations\n` +
+        `- All items and loot tables\n` +
+        `- All world state and events\n\n` +
+        `This action CANNOT be undone!\n\n` +
+        `Type "${confirmText}" to confirm:`
+    );
+
+    if (userInput !== confirmText) {
+        if (userInput !== null) {
+            showToast('Database clear cancelled', 'info');
+        }
+        return;
+    }
+
+    try {
+        showToast('Clearing database...', 'info');
+
+        const response = await fetch(`${API_BASE}/database/clear`, {
+            method: 'POST'
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showToast(result.message || 'Database cleared successfully', 'success');
+            await loadAllData();
+        } else {
+            showToast(result.error || 'Error clearing database', 'error');
+        }
+    } catch (error) {
+        console.error('Error clearing database:', error);
+        showToast('Error clearing database', 'error');
+    }
+}
+
+// ============================================================================
+// Utility Functions
+// ============================================================================
 
 function escapeHtml(text) {
     const map = {

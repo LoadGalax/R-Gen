@@ -1616,6 +1616,408 @@ def delete_item(item_id):
     except Exception as e:
         return jsonify({'error': f'Failed to delete item: {str(e)}'}), 500
 
+@app.route('/api/master/database/export', methods=['GET'])
+def export_database():
+    """Export the entire database as JSON."""
+    database = get_db()
+    w = get_or_create_world()
+
+    try:
+        export_data = {
+            'export_date': datetime.now().isoformat(),
+            'world': {
+                'name': w.name,
+                'description': getattr(w, 'description', ''),
+                'seed': w.seed,
+                'time_of_day': w.time_of_day,
+                'current_day': w.current_day,
+                'npcs': [],
+                'locations': [],
+                'events': []
+            },
+            'players': [],
+            'generated_items': []
+        }
+
+        # Export NPCs
+        for npc_id, npc in w.npcs.items():
+            npc_data = {
+                'id': npc.id,
+                'name': npc.name,
+                'entity_type': getattr(npc, 'entity_type', 'npc'),
+                'profession': npc.profession,
+                'professions': npc.professions if hasattr(npc, 'professions') else [npc.profession],
+                'current_location_id': npc.current_location_id,
+                'energy': npc.energy,
+                'hunger': npc.hunger,
+                'mood': npc.mood,
+                'gold': npc.gold,
+                'current_activity': npc.current_activity,
+                'work_start_hour': npc.work_start_hour,
+                'work_end_hour': npc.work_end_hour,
+                'active': npc.active,
+                'inventory': npc.inventory,
+                'relationships': getattr(npc, 'relationships', {})
+            }
+            # Add enemy-specific fields if applicable
+            if hasattr(npc, 'max_health'):
+                npc_data['max_health'] = npc.max_health
+                npc_data['health'] = getattr(npc, 'health', npc.max_health)
+                npc_data['attack_power'] = getattr(npc, 'attack_power', 0)
+                npc_data['defense'] = getattr(npc, 'defense', 0)
+                npc_data['experience_reward'] = getattr(npc, 'experience_reward', 0)
+                npc_data['loot_table_id'] = getattr(npc, 'loot_table_id', None)
+            export_data['world']['npcs'].append(npc_data)
+
+        # Export locations
+        for loc_id, loc in w.locations.items():
+            loc_data = {
+                'id': loc.id,
+                'name': loc.name,
+                'template': loc.template,
+                'description': getattr(loc, 'description', ''),
+                'current_weather': loc.current_weather,
+                'market_open': loc.market_open,
+                'active': loc.active,
+                'npc_ids': [npc_id for npc_id, npc in w.npcs.items() if npc.current_location_id == loc.id]
+            }
+            export_data['world']['locations'].append(loc_data)
+
+        # Export events
+        if hasattr(w, 'events'):
+            for event in w.events:
+                event_data = {
+                    'timestamp': event.timestamp.isoformat() if hasattr(event.timestamp, 'isoformat') else str(event.timestamp),
+                    'event_type': event.event_type,
+                    'description': event.description,
+                    'entities': event.entities,
+                    'location_id': getattr(event, 'location_id', None)
+                }
+                export_data['world']['events'].append(event_data)
+
+        # Export loot tables
+        if hasattr(w, 'loot_tables'):
+            export_data['world']['loot_tables'] = w.loot_tables
+
+        # Export players from database
+        with database._get_connection() as conn:
+            cursor = conn.cursor()
+
+            # Get all players with stats
+            cursor.execute("""
+                SELECT p.*, ps.*
+                FROM players p
+                LEFT JOIN player_stats ps ON p.id = ps.player_id
+            """)
+            players = cursor.fetchall()
+
+            for player in players:
+                player_id = player['id']
+                player_data = {
+                    'id': player_id,
+                    'username': player['username'],
+                    'email': player['email'],
+                    'character_name': player['character_name'],
+                    'race': player['race'],
+                    'class': player['class'],
+                    'level': player['level'],
+                    'experience': player['experience'],
+                    'gold': player['gold'],
+                    'current_location_id': player['current_location_id'],
+                    'stats': {
+                        'health': player['health'],
+                        'max_health': player['max_health'],
+                        'mana': player['mana'],
+                        'max_mana': player['max_mana'],
+                        'energy': player['energy'],
+                        'max_energy': player['max_energy'],
+                        'strength': player['strength'],
+                        'dexterity': player['dexterity'],
+                        'intelligence': player['intelligence'],
+                        'constitution': player['constitution'],
+                        'wisdom': player['wisdom'],
+                        'charisma': player['charisma']
+                    } if player.get('health') is not None else {},
+                    'inventory': [],
+                    'professions': []
+                }
+
+                # Get player inventory
+                cursor.execute("SELECT * FROM player_inventory WHERE player_id = ?", (player_id,))
+                for item in cursor.fetchall():
+                    item_data = json.loads(item['data']) if item['data'] else {}
+                    player_data['inventory'].append({
+                        'item_name': item['item_name'],
+                        'item_type': item['item_type'],
+                        'quantity': item['quantity'],
+                        'equipped': item['equipped'],
+                        'data': item_data
+                    })
+
+                # Get player professions
+                cursor.execute("SELECT * FROM player_professions WHERE player_id = ?", (player_id,))
+                for prof in cursor.fetchall():
+                    player_data['professions'].append({
+                        'profession_id': prof['profession_id'],
+                        'level': prof['level'],
+                        'experience': prof['experience']
+                    })
+
+                export_data['players'].append(player_data)
+
+            # Export generated items
+            cursor.execute("SELECT * FROM generated_items")
+            for item in cursor.fetchall():
+                export_data['generated_items'].append({
+                    'id': item['id'],
+                    'item_name': item['item_name'],
+                    'item_type': item['item_type'],
+                    'data': json.loads(item['data']) if item['data'] else {}
+                })
+
+        return jsonify({'success': True, 'data': export_data}), 200
+
+    except Exception as e:
+        return jsonify({'error': f'Failed to export database: {str(e)}'}), 500
+
+@app.route('/api/master/database/import', methods=['POST'])
+def import_database():
+    """Import database from JSON."""
+    database = get_db()
+    w = get_or_create_world()
+
+    try:
+        import_data = request.json.get('data', {})
+
+        if not import_data:
+            return jsonify({'error': 'No data provided'}), 400
+
+        imported_counts = {
+            'npcs': 0,
+            'locations': 0,
+            'players': 0,
+            'items': 0
+        }
+
+        # Import world data
+        if 'world' in import_data:
+            world_data = import_data['world']
+
+            # Update world properties
+            if 'name' in world_data:
+                w.name = world_data['name']
+            if 'description' in world_data:
+                w.description = world_data['description']
+
+            # Import NPCs (merge with existing)
+            if 'npcs' in world_data:
+                for npc_data in world_data['npcs']:
+                    npc_id = npc_data['id']
+                    if npc_id not in w.npcs:
+                        # Create new NPC
+                        from SimulationEngine import NPC
+                        npc = NPC(
+                            id=npc_id,
+                            name=npc_data['name'],
+                            professions=npc_data.get('professions', [npc_data.get('profession', 'wanderer')]),
+                            current_location_id=npc_data.get('current_location_id')
+                        )
+                        npc.energy = npc_data.get('energy', 100)
+                        npc.hunger = npc_data.get('hunger', 50)
+                        npc.mood = npc_data.get('mood', 70)
+                        npc.gold = npc_data.get('gold', 0)
+                        npc.current_activity = npc_data.get('current_activity', 'idle')
+                        npc.work_start_hour = npc_data.get('work_start_hour', 8)
+                        npc.work_end_hour = npc_data.get('work_end_hour', 18)
+                        npc.active = npc_data.get('active', True)
+                        npc.inventory = npc_data.get('inventory', [])
+                        npc.entity_type = npc_data.get('entity_type', 'npc')
+
+                        # Add enemy-specific fields
+                        if 'max_health' in npc_data:
+                            npc.max_health = npc_data['max_health']
+                            npc.health = npc_data.get('health', npc_data['max_health'])
+                            npc.attack_power = npc_data.get('attack_power', 0)
+                            npc.defense = npc_data.get('defense', 0)
+                            npc.experience_reward = npc_data.get('experience_reward', 0)
+                            npc.loot_table_id = npc_data.get('loot_table_id')
+
+                        w.npcs[npc_id] = npc
+                        imported_counts['npcs'] += 1
+
+            # Import locations (merge with existing)
+            if 'locations' in world_data:
+                for loc_data in world_data['locations']:
+                    loc_id = loc_data['id']
+                    if loc_id not in w.locations:
+                        from SimulationEngine import Location
+                        loc = Location(
+                            id=loc_id,
+                            name=loc_data['name'],
+                            template=loc_data.get('template', 'settlement')
+                        )
+                        loc.description = loc_data.get('description', '')
+                        loc.current_weather = loc_data.get('current_weather', 'Clear')
+                        loc.market_open = loc_data.get('market_open', False)
+                        loc.active = loc_data.get('active', True)
+                        w.locations[loc_id] = loc
+                        imported_counts['locations'] += 1
+
+            # Import loot tables
+            if 'loot_tables' in world_data:
+                if not hasattr(w, 'loot_tables'):
+                    w.loot_tables = {}
+                w.loot_tables.update(world_data['loot_tables'])
+
+        # Import players
+        if 'players' in import_data:
+            with database._get_connection() as conn:
+                cursor = conn.cursor()
+
+                for player_data in import_data['players']:
+                    username = player_data['username']
+
+                    # Check if player exists
+                    cursor.execute("SELECT id FROM players WHERE username = ?", (username,))
+                    existing = cursor.fetchone()
+
+                    if not existing:
+                        # Create new player (note: password will need to be reset)
+                        from werkzeug.security import generate_password_hash
+                        cursor.execute("""
+                            INSERT INTO players (username, password_hash, email, character_name, race, class, level, experience, gold, current_location_id)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """, (
+                            username,
+                            generate_password_hash('changeme'),  # Default password
+                            player_data.get('email', f'{username}@imported.com'),
+                            player_data['character_name'],
+                            player_data.get('race', 'Human'),
+                            player_data.get('class', 'Adventurer'),
+                            player_data.get('level', 1),
+                            player_data.get('experience', 0),
+                            player_data.get('gold', 100),
+                            player_data.get('current_location_id')
+                        ))
+
+                        player_id = cursor.lastrowid
+
+                        # Insert player stats
+                        if 'stats' in player_data and player_data['stats']:
+                            stats = player_data['stats']
+                            cursor.execute("""
+                                INSERT INTO player_stats (player_id, health, max_health, mana, max_mana, energy, max_energy,
+                                    strength, dexterity, intelligence, constitution, wisdom, charisma)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            """, (
+                                player_id,
+                                stats.get('health', 100),
+                                stats.get('max_health', 100),
+                                stats.get('mana', 100),
+                                stats.get('max_mana', 100),
+                                stats.get('energy', 100),
+                                stats.get('max_energy', 100),
+                                stats.get('strength', 10),
+                                stats.get('dexterity', 10),
+                                stats.get('intelligence', 10),
+                                stats.get('constitution', 10),
+                                stats.get('wisdom', 10),
+                                stats.get('charisma', 10)
+                            ))
+
+                        # Import inventory
+                        for item in player_data.get('inventory', []):
+                            cursor.execute("""
+                                INSERT INTO player_inventory (player_id, item_name, item_type, quantity, equipped, data)
+                                VALUES (?, ?, ?, ?, ?, ?)
+                            """, (
+                                player_id,
+                                item['item_name'],
+                                item['item_type'],
+                                item.get('quantity', 1),
+                                item.get('equipped', 0),
+                                json.dumps(item.get('data', {}))
+                            ))
+
+                        # Import professions
+                        for prof in player_data.get('professions', []):
+                            cursor.execute("""
+                                INSERT INTO player_professions (player_id, profession_id, level, experience)
+                                VALUES (?, ?, ?, ?)
+                            """, (
+                                player_id,
+                                prof['profession_id'],
+                                prof.get('level', 1),
+                                prof.get('experience', 0)
+                            ))
+
+                        imported_counts['players'] += 1
+
+                conn.commit()
+
+        # Import generated items
+        if 'generated_items' in import_data:
+            with database._get_connection() as conn:
+                cursor = conn.cursor()
+
+                for item in import_data['generated_items']:
+                    cursor.execute("""
+                        INSERT INTO generated_items (item_name, item_type, data)
+                        VALUES (?, ?, ?)
+                    """, (
+                        item['item_name'],
+                        item['item_type'],
+                        json.dumps(item.get('data', {}))
+                    ))
+                    imported_counts['items'] += 1
+
+                conn.commit()
+
+        return jsonify({
+            'success': True,
+            'message': f'Database imported successfully',
+            'imported': imported_counts
+        }), 200
+
+    except Exception as e:
+        return jsonify({'error': f'Failed to import database: {str(e)}'}), 500
+
+@app.route('/api/master/database/clear', methods=['POST'])
+def clear_database():
+    """Clear all data from the database and world."""
+    database = get_db()
+    w = get_or_create_world()
+
+    try:
+        # Clear world data
+        w.npcs.clear()
+        w.locations.clear()
+        if hasattr(w, 'events'):
+            w.events.clear()
+        if hasattr(w, 'loot_tables'):
+            w.loot_tables.clear()
+
+        # Clear database tables
+        with database._get_connection() as conn:
+            cursor = conn.cursor()
+
+            # Clear all tables (CASCADE will handle related records)
+            cursor.execute("DELETE FROM players")
+            cursor.execute("DELETE FROM player_stats")
+            cursor.execute("DELETE FROM player_inventory")
+            cursor.execute("DELETE FROM player_professions")
+            cursor.execute("DELETE FROM generated_items")
+
+            conn.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'All data has been cleared from the database'
+        }), 200
+
+    except Exception as e:
+        return jsonify({'error': f'Failed to clear database: {str(e)}'}), 500
+
 # ============================================================================
 # WebSocket Events
 # ============================================================================
