@@ -267,12 +267,12 @@ def api_docs():
                 <h2>📊 API Overview</h2>
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <h3>20+</h3>
+                        <h3>24+</h3>
                         <p>Endpoints</p>
                     </div>
                     <div class="stat-card">
-                        <h3>10+</h3>
-                        <p>Content Types</p>
+                        <h3>24+</h3>
+                        <p>Categories</p>
                     </div>
                     <div class="stat-card">
                         <h3>REST</h3>
@@ -282,6 +282,67 @@ def api_docs():
                         <h3>Free</h3>
                         <p>Open Source</p>
                     </div>
+                </div>
+            </div>
+
+            <!-- Category Endpoints -->
+            <div class="section">
+                <h2>📂 Category/Data Endpoints</h2>
+
+                <div class="endpoint">
+                    <h3>
+                        <span class="method get">GET</span>
+                        <span class="path">/api/categories</span>
+                    </h3>
+                    <div class="description">
+                        List all available category JSON files (professions, items, spells, locations, etc.).
+                    </div>
+                    <button class="test-button" onclick="testEndpoint('/api/categories', 'GET', null, 'resp-categories')">
+                        Test Endpoint
+                    </button>
+                    <div id="resp-categories" class="response"></div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>
+                        <span class="method get">GET</span>
+                        <span class="path">/api/categories/{category_name}</span>
+                    </h3>
+                    <div class="description">
+                        Get the full content of a specific category. Example: /api/categories/professions
+                    </div>
+                    <button class="test-button" onclick="testEndpoint('/api/categories/professions', 'GET', null, 'resp-category')">
+                        Test Endpoint (Professions)
+                    </button>
+                    <div id="resp-category" class="response"></div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>
+                        <span class="method get">GET</span>
+                        <span class="path">/api/categories/{category_name}/keys</span>
+                    </h3>
+                    <div class="description">
+                        List all keys/items available in a specific category. Example: /api/categories/professions/keys
+                    </div>
+                    <button class="test-button" onclick="testEndpoint('/api/categories/professions/keys', 'GET', null, 'resp-keys')">
+                        Test Endpoint (Profession Keys)
+                    </button>
+                    <div id="resp-keys" class="response"></div>
+                </div>
+
+                <div class="endpoint">
+                    <h3>
+                        <span class="method get">GET</span>
+                        <span class="path">/api/categories/{category_name}/{item_key}</span>
+                    </h3>
+                    <div class="description">
+                        Get a specific item from a category. Example: /api/categories/professions/blacksmith
+                    </div>
+                    <button class="test-button" onclick="testEndpoint('/api/categories/professions/blacksmith', 'GET', null, 'resp-item-cat')">
+                        Test Endpoint (Blacksmith)
+                    </button>
+                    <div id="resp-item-cat" class="response"></div>
                 </div>
             </div>
 
@@ -665,6 +726,21 @@ def api_docs():
                 <h3>Python</h3>
                 <pre>import requests
 
+# List all categories
+response = requests.get('http://localhost:5000/api/categories')
+categories = response.json()
+print(f"Available categories: {len(categories['categories'])}")
+
+# Get all professions
+response = requests.get('http://localhost:5000/api/categories/professions')
+professions = response.json()
+print(f"Professions: {list(professions['data'].keys())}")
+
+# Get specific profession
+response = requests.get('http://localhost:5000/api/categories/professions/blacksmith')
+blacksmith = response.json()
+print(f"Blacksmith: {blacksmith['data']}")
+
 # Generate a legendary weapon
 response = requests.post('http://localhost:5000/api/generate/item', json={
     'template': 'weapon_melee',
@@ -684,14 +760,34 @@ npc = response.json()
 print(f"Created: {npc['npc']['name']}")</pre>
 
                 <h3>cURL</h3>
-                <pre>curl -X POST http://localhost:5000/api/generate/item \\
+                <pre># List all categories
+curl http://localhost:5000/api/categories
+
+# Get profession keys
+curl http://localhost:5000/api/categories/professions/keys
+
+# Get specific item from category
+curl http://localhost:5000/api/categories/professions/blacksmith
+
+# Generate content
+curl -X POST http://localhost:5000/api/generate/item \\
   -H "Content-Type: application/json" \\
   -d '{"template": "weapon_melee", "seed": 42}'
 
 curl -X GET http://localhost:5000/api/templates</pre>
 
                 <h3>JavaScript</h3>
-                <pre>// Generate an item
+                <pre>// Get all categories
+fetch('http://localhost:5000/api/categories')
+  .then(res => res.json())
+  .then(data => console.log('Categories:', data.categories));
+
+// Get specific category item
+fetch('http://localhost:5000/api/categories/spells/Evocation')
+  .then(res => res.json())
+  .then(data => console.log('Evocation Spells:', data.data));
+
+// Generate an item
 fetch('http://localhost:5000/api/generate/item', {
   method: 'POST',
   headers: {'Content-Type': 'application/json'},
@@ -743,6 +839,207 @@ fetch('http://localhost:5000/api/generate/item', {
 </html>
     """
     return html
+
+
+# ============================================================================
+# Category/Data File Endpoints
+# ============================================================================
+
+@app.route('/api/categories', methods=['GET'])
+def list_categories():
+    """List all available category JSON files."""
+    try:
+        data_dir = Path(__file__).parent / 'data'
+        if not data_dir.exists():
+            return jsonify({
+                'success': False,
+                'error': 'Data directory not found'
+            }), 404
+
+        # Get all JSON files
+        json_files = sorted([f.name for f in data_dir.glob('*.json')])
+
+        # Create category info with file sizes
+        categories = []
+        for filename in json_files:
+            filepath = data_dir / filename
+            file_stat = filepath.stat()
+            category_name = filename.replace('.json', '')
+
+            categories.append({
+                'name': category_name,
+                'filename': filename,
+                'size': file_stat.st_size,
+                'url': f'/api/categories/{category_name}'
+            })
+
+        return jsonify({
+            'success': True,
+            'count': len(categories),
+            'categories': categories
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/categories/<category_name>', methods=['GET'])
+def get_category(category_name):
+    """Get the full content of a specific category JSON file."""
+    try:
+        data_dir = Path(__file__).parent / 'data'
+        filepath = data_dir / f'{category_name}.json'
+
+        # Security check
+        if '/' in category_name or '\\' in category_name or '..' in category_name:
+            return jsonify({
+                'success': False,
+                'error': 'Invalid category name'
+            }), 400
+
+        if not filepath.exists():
+            return jsonify({
+                'success': False,
+                'error': f'Category "{category_name}" not found'
+            }), 404
+
+        with open(filepath, 'r', encoding='utf-8') as f:
+            content = json.load(f)
+
+        return jsonify({
+            'success': True,
+            'category': category_name,
+            'data': content
+        })
+    except json.JSONDecodeError as e:
+        return jsonify({
+            'success': False,
+            'error': f'Invalid JSON in file: {str(e)}'
+        }), 500
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/categories/<category_name>/keys', methods=['GET'])
+def get_category_keys(category_name):
+    """List all keys/items in a specific category."""
+    try:
+        data_dir = Path(__file__).parent / 'data'
+        filepath = data_dir / f'{category_name}.json'
+
+        # Security check
+        if '/' in category_name or '\\' in category_name or '..' in category_name:
+            return jsonify({
+                'success': False,
+                'error': 'Invalid category name'
+            }), 400
+
+        if not filepath.exists():
+            return jsonify({
+                'success': False,
+                'error': f'Category "{category_name}" not found'
+            }), 404
+
+        with open(filepath, 'r', encoding='utf-8') as f:
+            content = json.load(f)
+
+        # Extract keys based on structure
+        keys_info = []
+
+        if isinstance(content, dict):
+            for key in content.keys():
+                keys_info.append({
+                    'key': key,
+                    'url': f'/api/categories/{category_name}/{key}'
+                })
+        elif isinstance(content, list):
+            for idx, item in enumerate(content):
+                keys_info.append({
+                    'index': idx,
+                    'url': f'/api/categories/{category_name}/{idx}'
+                })
+
+        return jsonify({
+            'success': True,
+            'category': category_name,
+            'count': len(keys_info),
+            'keys': keys_info
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/categories/<category_name>/<item_key>', methods=['GET'])
+def get_category_item(category_name, item_key):
+    """Get a specific item from a category."""
+    try:
+        data_dir = Path(__file__).parent / 'data'
+        filepath = data_dir / f'{category_name}.json'
+
+        # Security check
+        if '/' in category_name or '\\' in category_name or '..' in category_name:
+            return jsonify({
+                'success': False,
+                'error': 'Invalid category name'
+            }), 400
+
+        if not filepath.exists():
+            return jsonify({
+                'success': False,
+                'error': f'Category "{category_name}" not found'
+            }), 404
+
+        with open(filepath, 'r', encoding='utf-8') as f:
+            content = json.load(f)
+
+        # Try to get the item
+        item = None
+
+        if isinstance(content, dict):
+            # For dict-based categories
+            if item_key in content:
+                item = content[item_key]
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': f'Item "{item_key}" not found in category "{category_name}"'
+                }), 404
+        elif isinstance(content, list):
+            # For list-based categories
+            try:
+                index = int(item_key)
+                if 0 <= index < len(content):
+                    item = content[index]
+                else:
+                    return jsonify({
+                        'success': False,
+                        'error': f'Index {index} out of range for category "{category_name}"'
+                    }), 404
+            except ValueError:
+                return jsonify({
+                    'success': False,
+                    'error': 'Item key must be an integer for list-based categories'
+                }), 400
+
+        return jsonify({
+            'success': True,
+            'category': category_name,
+            'key': item_key,
+            'data': item
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 
 # ============================================================================
