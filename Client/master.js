@@ -1179,13 +1179,26 @@ function filterNPCsByType(type) {
 function showCreateLocationModal() {
     const modal = document.getElementById('create-location-modal');
 
-    // Populate NPCs select
+    // Populate NPCs select - include both NPCs and Enemies
     const npcsSelect = document.getElementById('create-location-npcs');
     npcsSelect.innerHTML = '';
-    state.npcs.forEach(npc => {
+
+    // Sort by entity type first, then name
+    const sortedEntities = [...state.npcs].sort((a, b) => {
+        const typeA = a.entity_type || 'npc';
+        const typeB = b.entity_type || 'npc';
+        if (typeA !== typeB) {
+            return typeA === 'npc' ? -1 : 1; // NPCs first, then enemies
+        }
+        return a.name.localeCompare(b.name);
+    });
+
+    sortedEntities.forEach(npc => {
         const option = document.createElement('option');
         option.value = npc.id;
-        option.textContent = `${npc.name} (${npc.profession})`;
+        const entityType = npc.entity_type || 'npc';
+        const typeLabel = entityType === 'enemy' ? '⚔️ Enemy' : '👤 NPC';
+        option.textContent = `${typeLabel}: ${npc.name} (${npc.profession})`;
         npcsSelect.appendChild(option);
     });
 
@@ -1348,20 +1361,58 @@ function addLootTableItem() {
     addLootTableItemRow(null, Date.now());
 }
 
-function addLootTableItemRow(item, index) {
+async function addLootTableItemRow(item, index) {
     const container = document.getElementById('loot-table-items-container');
 
     const div = document.createElement('div');
     div.className = 'loot-item-row';
     div.style.cssText = 'display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 10px; margin-bottom: 10px;';
 
+    // Fetch generated items for the dropdown
+    let itemsOptions = '<option value="">-- Select Item --</option>';
+    try {
+        const response = await fetch(`${API_BASE}/items/generated`);
+        const data = await response.json();
+        if (data.success && data.items) {
+            data.items.forEach(genItem => {
+                const selected = (item && item.item_name === genItem.item_name) ? 'selected' : '';
+                itemsOptions += `<option value="${escapeHtml(genItem.item_name)}" ${selected}>${escapeHtml(genItem.item_name)}</option>`;
+            });
+        }
+    } catch (error) {
+        console.error('Error loading items for dropdown:', error);
+    }
+
+    // Allow both selecting from dropdown or typing custom item name
     div.innerHTML = `
-        <input type="text" class="form-input loot-item-name" placeholder="Item Name" value="${item ? escapeHtml(item.item_name) : ''}" required>
+        <div style="display: flex; gap: 5px;">
+            <select class="form-input loot-item-name-select" style="flex: 1;">
+                ${itemsOptions}
+            </select>
+            <input type="text" class="form-input loot-item-name" placeholder="Or type custom name" value="${item ? escapeHtml(item.item_name) : ''}" style="flex: 1;">
+        </div>
         <input type="number" class="form-input loot-item-drop-chance" placeholder="Drop %" min="0" max="100" value="${item ? item.drop_chance : 50}" required>
         <input type="number" class="form-input loot-item-qty-min" placeholder="Min Qty" min="1" value="${item ? item.quantity_min : 1}" required>
         <input type="number" class="form-input loot-item-qty-max" placeholder="Max Qty" min="1" value="${item ? item.quantity_max : 1}" required>
         <button type="button" class="btn btn-small btn-danger" onclick="this.parentElement.remove()">🗑️</button>
     `;
+
+    // Add event listener to sync dropdown with text input
+    const select = div.querySelector('.loot-item-name-select');
+    const textInput = div.querySelector('.loot-item-name');
+
+    select.addEventListener('change', (e) => {
+        if (e.target.value) {
+            textInput.value = e.target.value;
+        }
+    });
+
+    textInput.addEventListener('input', (e) => {
+        // Clear select if user types custom name
+        if (e.target.value !== select.value) {
+            select.value = '';
+        }
+    });
 
     container.appendChild(div);
 }
