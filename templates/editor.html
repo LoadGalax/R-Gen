@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dark Web JSON Editor - GenerationEngine</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 300px;
+            background: #161b22;
+            border-right: 1px solid #30363d;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            background: #1c2128;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .sidebar-header h1 {
+            font-size: 18px;
+            color: #58a6ff;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-header .subtitle {
+            font-size: 12px;
+            color: #8b949e;
+        }
+
+        .search-box {
+            padding: 10px;
+            background: #0d1117;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 8px 12px;
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            color: #c9d1d9;
+            font-size: 14px;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #58a6ff;
+        }
+
+        .file-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .file-item {
+            padding: 10px 12px;
+            margin-bottom: 5px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .file-item:hover {
+            background: #1c2128;
+            border-color: #58a6ff;
+        }
+
+        .file-item.active {
+            background: #1c2128;
+            border-color: #58a6ff;
+            color: #58a6ff;
+        }
+
+        .file-count {
+            padding: 10px;
+            text-align: center;
+            font-size: 12px;
+            color: #8b949e;
+            border-top: 1px solid #30363d;
+        }
+
+        /* Main Editor Area */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .editor-header {
+            padding: 15px 20px;
+            background: #161b22;
+            border-bottom: 1px solid #30363d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .editor-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #c9d1d9;
+        }
+
+        .editor-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            background: #21262d;
+            color: #c9d1d9;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:hover {
+            background: #30363d;
+            border-color: #58a6ff;
+        }
+
+        .btn.primary {
+            background: #238636;
+            border-color: #238636;
+            color: white;
+        }
+
+        .btn.primary:hover {
+            background: #2ea043;
+            border-color: #2ea043;
+        }
+
+        .btn.danger {
+            background: #da3633;
+            border-color: #da3633;
+            color: white;
+        }
+
+        .btn.danger:hover {
+            background: #e5534b;
+            border-color: #e5534b;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .editor-container {
+            flex: 1;
+            padding: 20px;
+            overflow: auto;
+        }
+
+        .editor-wrapper {
+            max-width: 100%;
+            height: 100%;
+        }
+
+        textarea.json-editor {
+            width: 100%;
+            height: 100%;
+            min-height: 500px;
+            padding: 15px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            color: #c9d1d9;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: vertical;
+        }
+
+        textarea.json-editor:focus {
+            outline: none;
+            border-color: #58a6ff;
+        }
+
+        .status-bar {
+            padding: 10px 20px;
+            background: #161b22;
+            border-top: 1px solid #30363d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+        }
+
+        .status-message {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-message.success {
+            color: #3fb950;
+        }
+
+        .status-message.error {
+            color: #f85149;
+        }
+
+        .status-message.info {
+            color: #58a6ff;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #3fb950;
+        }
+
+        .status-indicator.error {
+            background: #f85149;
+        }
+
+        .status-indicator.modified {
+            background: #d29922;
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #8b949e;
+            text-align: center;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state h2 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0d1117;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #30363d;
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #484f58;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #30363d;
+            border-top-color: #58a6ff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Notification Toast */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background: #1c2128;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast.success {
+            border-left: 3px solid #3fb950;
+        }
+
+        .toast.error {
+            border-left: 3px solid #f85149;
+        }
+
+        /* Keyboard Shortcuts Help */
+        .shortcuts {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            font-size: 11px;
+            color: #8b949e;
+            opacity: 0.7;
+        }
+
+        .shortcuts:hover {
+            opacity: 1;
+        }
+
+        kbd {
+            background: #21262d;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 10px;
+            border: 1px solid #30363d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h1>JSON Editor</h1>
+                <div class="subtitle">GenerationEngine Files</div>
+            </div>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search files...">
+            </div>
+            <div class="file-list" id="fileList">
+                <div style="text-align: center; padding: 20px; color: #8b949e;">
+                    <div class="spinner"></div>
+                    <div style="margin-top: 10px;">Loading files...</div>
+                </div>
+            </div>
+            <div class="file-count" id="fileCount">0 files</div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="editor-header">
+                <div class="editor-title" id="editorTitle">Select a file to edit</div>
+                <div class="editor-actions">
+                    <button class="btn" id="formatBtn" disabled>
+                        <span>📐</span> Format
+                    </button>
+                    <button class="btn" id="validateBtn" disabled>
+                        <span>✓</span> Validate
+                    </button>
+                    <button class="btn" id="revertBtn" disabled>
+                        <span>↶</span> Revert
+                    </button>
+                    <button class="btn primary" id="saveBtn" disabled>
+                        <span>💾</span> Save
+                    </button>
+                </div>
+            </div>
+
+            <div class="editor-container">
+                <div class="editor-wrapper" id="editorWrapper">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📝</div>
+                        <h2>Welcome to JSON Editor</h2>
+                        <p>Select a file from the sidebar to start editing</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="status-bar">
+                <div class="status-message" id="statusMessage">
+                    <div class="status-indicator"></div>
+                    <span>Ready</span>
+                </div>
+                <div id="statusInfo" style="color: #8b949e;">
+                    No file loaded
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="shortcuts">
+        <strong>Shortcuts:</strong> <kbd>Ctrl+S</kbd> Save | <kbd>Ctrl+F</kbd> Format | <kbd>Ctrl+Z</kbd> Undo
+    </div>
+
+    <script>
+        // State Management
+        let currentFile = null;
+        let originalContent = null;
+        let isModified = false;
+        let allFiles = [];
+
+        // DOM Elements
+        const fileList = document.getElementById('fileList');
+        const fileCount = document.getElementById('fileCount');
+        const searchInput = document.getElementById('searchInput');
+        const editorTitle = document.getElementById('editorTitle');
+        const editorWrapper = document.getElementById('editorWrapper');
+        const saveBtn = document.getElementById('saveBtn');
+        const revertBtn = document.getElementById('revertBtn');
+        const formatBtn = document.getElementById('formatBtn');
+        const validateBtn = document.getElementById('validateBtn');
+        const statusMessage = document.getElementById('statusMessage');
+        const statusInfo = document.getElementById('statusInfo');
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFileList();
+            setupEventListeners();
+        });
+
+        // Load file list from API
+        async function loadFileList() {
+            try {
+                const response = await fetch('/api/files');
+                allFiles = await response.json();
+                renderFileList(allFiles);
+                updateFileCount(allFiles.length);
+            } catch (error) {
+                showNotification('Failed to load files: ' + error.message, 'error');
+            }
+        }
+
+        // Render file list
+        function renderFileList(files) {
+            if (files.length === 0) {
+                fileList.innerHTML = '<div style="text-align: center; padding: 20px; color: #8b949e;">No files found</div>';
+                return;
+            }
+
+            fileList.innerHTML = files.map(file => `
+                <div class="file-item" data-file="${file}">
+                    📄 ${file}
+                </div>
+            `).join('');
+
+            // Add click handlers
+            document.querySelectorAll('.file-item').forEach(item => {
+                item.addEventListener('click', () => loadFile(item.dataset.file));
+            });
+        }
+
+        // Update file count
+        function updateFileCount(count) {
+            fileCount.textContent = `${count} file${count !== 1 ? 's' : ''}`;
+        }
+
+        // Search functionality
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const filtered = allFiles.filter(file => file.toLowerCase().includes(query));
+            renderFileList(filtered);
+            updateFileCount(filtered.length);
+        });
+
+        // Load file content
+        async function loadFile(filename) {
+            if (isModified) {
+                if (!confirm('You have unsaved changes. Do you want to discard them?')) {
+                    return;
+                }
+            }
+
+            try {
+                updateStatus('Loading...', 'info');
+                const response = await fetch(`/api/file/${filename}`);
+                const content = await response.json();
+
+                currentFile = filename;
+                originalContent = JSON.stringify(content, null, 2);
+                isModified = false;
+
+                renderEditor(originalContent);
+                updateActiveFile(filename);
+                editorTitle.textContent = filename;
+                enableEditorButtons();
+                updateStatus('File loaded', 'success');
+                updateStatusInfo();
+            } catch (error) {
+                showNotification('Failed to load file: ' + error.message, 'error');
+                updateStatus('Error loading file', 'error');
+            }
+        }
+
+        // Render editor
+        function renderEditor(content) {
+            editorWrapper.innerHTML = `
+                <textarea class="json-editor" id="jsonEditor">${content}</textarea>
+            `;
+
+            const editor = document.getElementById('jsonEditor');
+            editor.addEventListener('input', () => {
+                isModified = editor.value !== originalContent;
+                updateModifiedState();
+                updateStatusInfo();
+            });
+        }
+
+        // Update active file in sidebar
+        function updateActiveFile(filename) {
+            document.querySelectorAll('.file-item').forEach(item => {
+                item.classList.toggle('active', item.dataset.file === filename);
+            });
+        }
+
+        // Enable editor buttons
+        function enableEditorButtons() {
+            saveBtn.disabled = false;
+            revertBtn.disabled = false;
+            formatBtn.disabled = false;
+            validateBtn.disabled = false;
+        }
+
+        // Update modified state
+        function updateModifiedState() {
+            const indicator = statusMessage.querySelector('.status-indicator');
+            if (isModified) {
+                indicator.classList.add('modified');
+                saveBtn.textContent = '💾 Save *';
+            } else {
+                indicator.classList.remove('modified');
+                saveBtn.textContent = '💾 Save';
+            }
+        }
+
+        // Save file
+        saveBtn.addEventListener('click', async () => {
+            if (!currentFile) return;
+
+            const editor = document.getElementById('jsonEditor');
+            const content = editor.value;
+
+            try {
+                // Validate JSON first
+                const parsed = JSON.parse(content);
+
+                updateStatus('Saving...', 'info');
+                const response = await fetch(`/api/file/${currentFile}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(parsed)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    originalContent = content;
+                    isModified = false;
+                    updateModifiedState();
+                    showNotification(result.message, 'success');
+                    updateStatus('Saved successfully', 'success');
+                } else {
+                    showNotification('Save failed: ' + result.error, 'error');
+                    updateStatus('Save failed', 'error');
+                }
+            } catch (error) {
+                showNotification('Invalid JSON: ' + error.message, 'error');
+                updateStatus('Invalid JSON', 'error');
+            }
+        });
+
+        // Revert changes
+        revertBtn.addEventListener('click', () => {
+            if (!currentFile) return;
+
+            if (isModified) {
+                if (!confirm('Are you sure you want to revert all changes?')) {
+                    return;
+                }
+            }
+
+            const editor = document.getElementById('jsonEditor');
+            editor.value = originalContent;
+            isModified = false;
+            updateModifiedState();
+            showNotification('Changes reverted', 'success');
+            updateStatus('Reverted', 'success');
+        });
+
+        // Format JSON
+        formatBtn.addEventListener('click', () => {
+            const editor = document.getElementById('jsonEditor');
+            try {
+                const parsed = JSON.parse(editor.value);
+                editor.value = JSON.stringify(parsed, null, 2);
+                showNotification('JSON formatted', 'success');
+            } catch (error) {
+                showNotification('Invalid JSON: ' + error.message, 'error');
+            }
+        });
+
+        // Validate JSON
+        validateBtn.addEventListener('click', () => {
+            const editor = document.getElementById('jsonEditor');
+            try {
+                JSON.parse(editor.value);
+                showNotification('✓ Valid JSON', 'success');
+                updateStatus('Valid JSON', 'success');
+            } catch (error) {
+                showNotification('✗ Invalid JSON: ' + error.message, 'error');
+                updateStatus('Invalid JSON', 'error');
+            }
+        });
+
+        // Update status message
+        function updateStatus(message, type = 'info') {
+            const indicator = statusMessage.querySelector('.status-indicator');
+            const text = statusMessage.querySelector('span');
+
+            statusMessage.className = 'status-message ' + type;
+            indicator.className = 'status-indicator';
+
+            if (type === 'error') {
+                indicator.classList.add('error');
+            }
+
+            text.textContent = message;
+        }
+
+        // Update status info
+        function updateStatusInfo() {
+            if (!currentFile) {
+                statusInfo.textContent = 'No file loaded';
+                return;
+            }
+
+            const editor = document.getElementById('jsonEditor');
+            if (!editor) return;
+
+            const lines = editor.value.split('\n').length;
+            const chars = editor.value.length;
+            const modified = isModified ? ' • Modified' : '';
+
+            statusInfo.textContent = `${lines} lines • ${chars} chars${modified}`;
+        }
+
+        // Show notification toast
+        function showNotification(message, type = 'info') {
+            const existingToast = document.querySelector('.toast');
+            if (existingToast) {
+                existingToast.remove();
+            }
+
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Ctrl+S or Cmd+S - Save
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                if (!saveBtn.disabled) {
+                    saveBtn.click();
+                }
+            }
+
+            // Ctrl+F or Cmd+F - Format (override browser's find)
+            if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                e.preventDefault();
+                if (!formatBtn.disabled) {
+                    formatBtn.click();
+                }
+            }
+        });
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Warn before leaving with unsaved changes
+            window.addEventListener('beforeunload', (e) => {
+                if (isModified) {
+                    e.preventDefault();
+                    e.returnValue = '';
+                }
+            });
+        }
+    </script>
+</body>
+</html>
