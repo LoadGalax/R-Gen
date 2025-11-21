@@ -81,7 +81,7 @@ class GeneratorAdapter:
             NPC data dictionary
         """
         npc = self.generator.generate_npc(
-            professions=professions,
+            profession_names=professions,
             race=race,
             faction=faction,
             profession_level=level
