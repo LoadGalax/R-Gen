@@ -16,7 +16,21 @@ This game server runs independently with its own copy of:
 Game/
 ├── src/
 │   ├── __init__.py                 # Module initialization
-│   └── content_generator.py        # Content generation engine (118KB)
+│   ├── content_generator.py        # Content generation engine
+│   ├── core/                       # World simulation core
+│   │   ├── world.py                # World management
+│   │   ├── time_manager.py         # Time & seasons
+│   │   ├── event_system.py         # Event handling
+│   │   └── state_manager.py        # State persistence
+│   ├── entities/                   # Living entities
+│   │   ├── npc.py                  # NPC behavior
+│   │   ├── location.py             # Location simulation
+│   │   └── base_entity.py          # Base entity class
+│   ├── simulation/                 # Simulation engine
+│   │   └── simulator.py            # World simulator
+│   └── integration/                # Integration layer
+│       ├── generator_adapter.py    # Content generation bridge
+│       └── entity_factory.py       # Entity creation
 ├── data/
 │   ├── README.md                   # Data directory documentation
 │   └── *.json                      # 24 JSON configuration files
@@ -27,12 +41,13 @@ Game/
 
 ## Complete Independence
 
-This game instance does **NOT** require the GenerationEngine module:
+This game instance is **100% self-contained** with NO external engine dependencies:
 
-✅ All content generation logic is local (`src/content_generator.py`)
-✅ All configuration data is local (`data/*.json`)
-✅ No imports from GenerationEngine
-✅ Can be deployed standalone
+✅ **No GenerationEngine required** - Content generation logic copied to `src/content_generator.py`
+✅ **No SimulationEngine required** - World simulation copied to `src/core/`, `src/entities/`, `src/simulation/`
+✅ **All configuration local** - 24 JSON files in `data/`
+✅ **Fully portable** - Copy the Game folder and run anywhere
+✅ **Zero external dependencies** - Only requires Flask and standard Python libraries
 
 ## Running the Server
 
@@ -181,24 +196,31 @@ from src import ContentGenerator               # Local copy
 data_dir = "data"                              # Local data
 ```
 
-## Updating from Original Engine
+## Updating from Original Engines
 
-If you want to pull updates from the original GenerationEngine:
+If you want to pull updates from the original engines:
 
 ```bash
 # Update ContentGenerator source
 cp ../GenerationEngine/src/content_generator.py src/
 
+# Update SimulationEngine source
+cp -r ../SimulationEngine/src/* src/
+
 # Update JSON configs (⚠️ overwrites customizations!)
 cp ../GenerationEngine/data/*.json data/
 ```
 
+⚠️ **Note**: After updating, you may need to re-apply local modifications to `generator_adapter.py` to ensure it uses local imports.
+
 ## License
 
-This is a self-contained copy derived from the R-Gen GenerationEngine.
+This is a self-contained copy derived from:
+- R-Gen GenerationEngine (content generation)
+- R-Gen SimulationEngine (world simulation)
 
 ---
 
-**Version**: 1.0 (Fully Detached)
+**Version**: 2.0 (Fully Self-Contained)
 **Last Updated**: 2025-11-21
-**Original Engine**: GenerationEngine v1.0
+**Source Engines**: GenerationEngine v1.0, SimulationEngine v0.1.0

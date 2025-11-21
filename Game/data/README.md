@@ -107,4 +107,4 @@ Any changes to these JSON files require a server restart to take effect.
 ---
 
 **Last Updated**: 2025-11-21
-**Structure Version**: 1.0 (Detached from GenerationEngine)
+**Structure Version**: 2.0 (Fully Self-Contained - Detached from all engines)
