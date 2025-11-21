@@ -1,0 +1,208 @@
+{
+  "organization_types": {
+    "guild": {
+      "description": "Professional association of craftsmen or merchants",
+      "typical_size": {"min": 50, "max": 500},
+      "hierarchy_levels": ["Apprentice", "Journeyman", "Master", "Grandmaster", "Guild Leader"],
+      "common_activities": ["trade", "crafting", "training", "quality_control", "price_setting"],
+      "wealth_level": "moderate_to_high"
+    },
+    "thieves_guild": {
+      "description": "Criminal organization specializing in theft and smuggling",
+      "typical_size": {"min": 20, "max": 200},
+      "hierarchy_levels": ["Pickpocket", "Burglar", "Fence", "Master Thief", "Guild Master"],
+      "common_activities": ["theft", "smuggling", "blackmail", "information_brokering", "assassination"],
+      "wealth_level": "variable",
+      "secrecy": "high"
+    },
+    "mages_circle": {
+      "description": "Academic institution for magical study and research",
+      "typical_size": {"min": 30, "max": 300},
+      "hierarchy_levels": ["Initiate", "Acolyte", "Adept", "Magus", "Archmage"],
+      "common_activities": ["research", "teaching", "artifact_study", "spell_development", "magical_regulation"],
+      "wealth_level": "high",
+      "requirements": ["magical_ability"]
+    },
+    "religious_order": {
+      "description": "Spiritual organization devoted to a deity or philosophy",
+      "typical_size": {"min": 10, "max": 1000},
+      "hierarchy_levels": ["Acolyte", "Priest", "High Priest", "Bishop", "Patriarch"],
+      "common_activities": ["worship", "healing", "charity", "missionary_work", "exorcism"],
+      "wealth_level": "variable",
+      "requirements": ["faith", "devotion"]
+    },
+    "mercenary_company": {
+      "description": "Military organization offering combat services for hire",
+      "typical_size": {"min": 50, "max": 1000},
+      "hierarchy_levels": ["Recruit", "Soldier", "Veteran", "Captain", "Commander"],
+      "common_activities": ["combat", "guard_duty", "escort", "warfare", "training"],
+      "wealth_level": "moderate",
+      "requirements": ["combat_skill"]
+    },
+    "trade_consortium": {
+      "description": "Alliance of merchants controlling trade routes",
+      "typical_size": {"min": 100, "max": 2000},
+      "hierarchy_levels": ["Clerk", "Merchant", "Factor", "Director", "Guildmaster"],
+      "common_activities": ["trade", "shipping", "banking", "route_protection", "market_control"],
+      "wealth_level": "very_high"
+    },
+    "assassins_guild": {
+      "description": "Secretive organization specializing in contract killing",
+      "typical_size": {"min": 10, "max": 100},
+      "hierarchy_levels": ["Novice", "Assassin", "Master Assassin", "Shadow", "Grandmaster"],
+      "common_activities": ["assassination", "espionage", "poison_craft", "infiltration"],
+      "wealth_level": "high",
+      "secrecy": "very_high",
+      "requirements": ["combat_skill", "stealth"]
+    },
+    "scholars_society": {
+      "description": "Academic organization dedicated to knowledge and research",
+      "typical_size": {"min": 20, "max": 200},
+      "hierarchy_levels": ["Student", "Scholar", "Researcher", "Professor", "Dean"],
+      "common_activities": ["research", "teaching", "publication", "preservation", "archaeology"],
+      "wealth_level": "moderate"
+    },
+    "knightly_order": {
+      "description": "Elite military organization bound by honor and oath",
+      "typical_size": {"min": 30, "max": 500},
+      "hierarchy_levels": ["Squire", "Knight", "Knight-Captain", "Knight-Commander", "Grand Master"],
+      "common_activities": ["protection", "justice", "warfare", "training", "questing"],
+      "wealth_level": "high",
+      "requirements": ["combat_skill", "honor"]
+    },
+    "adventurers_guild": {
+      "description": "Organization that coordinates adventurers and quests",
+      "typical_size": {"min": 50, "max": 500},
+      "hierarchy_levels": ["Copper Rank", "Bronze Rank", "Silver Rank", "Gold Rank", "Platinum Rank"],
+      "common_activities": ["quest_posting", "monster_hunting", "exploration", "escort", "retrieval"],
+      "wealth_level": "moderate"
+    }
+  },
+  "organization_templates": [
+    {
+      "name_patterns": [
+        "The {adjective} {type}",
+        "{city} {type}",
+        "The {symbol} {type}",
+        "{founder}'s {type}",
+        "The Order of the {symbol}"
+      ],
+      "relationship_types": ["allied", "neutral", "rival", "enemy"],
+      "resources": ["gold", "property", "influence", "knowledge", "artifacts", "contacts"],
+      "benefits": {
+        "guild": ["discount_on_goods", "access_to_masters", "legal_protection", "trade_network"],
+        "thieves_guild": ["fence_services", "information_network", "safe_houses", "lockpick_training"],
+        "mages_circle": ["spell_library", "magical_training", "artifact_identification", "research_access"],
+        "religious_order": ["healing_services", "sanctuary", "blessings", "spiritual_guidance"],
+        "mercenary_company": ["combat_training", "weapon_access", "contract_work", "backup"],
+        "trade_consortium": ["trade_routes", "banking_services", "market_information", "bulk_discounts"],
+        "assassins_guild": ["contract_killing", "poison_access", "stealth_training", "intelligence"],
+        "scholars_society": ["library_access", "research_assistance", "translation_services", "expertise"],
+        "knightly_order": ["mount_training", "armor_access", "honor_quests", "military_support"],
+        "adventurers_guild": ["quest_board", "party_matching", "monster_information", "reward_distribution"]
+      }
+    }
+  ],
+  "organization_variables": {
+    "adjective": ["Noble", "Ancient", "Golden", "Silver", "Iron", "Shadow", "Crimson", "Azure", "Sacred", "Eternal", "Hidden", "Free", "United"],
+    "symbol": ["Dragon", "Phoenix", "Lion", "Eagle", "Raven", "Rose", "Sword", "Shield", "Crown", "Star", "Moon", "Sun", "Serpent"],
+    "type": ["Guild", "Order", "Circle", "Brotherhood", "Sisterhood", "Company", "Consortium", "League", "Alliance", "Society"],
+    "city": ["Waterdeep", "Baldur's Gate", "Neverwinter", "Silverymoon", "Luskan", "Athkatla", "Calimport", "Westgate"]
+  },
+  "membership_requirements": {
+    "skill_based": {
+      "description": "Requires specific skills or abilities",
+      "examples": ["combat_skill", "magical_ability", "crafting_skill", "stealth", "diplomacy"]
+    },
+    "wealth_based": {
+      "description": "Requires payment of dues or entrance fee",
+      "fee_range": {"min": 100, "max": 10000}
+    },
+    "reputation_based": {
+      "description": "Requires minimum reputation or recommendations",
+      "min_reputation": 50
+    },
+    "quest_based": {
+      "description": "Requires completion of initiation quest",
+      "difficulty_range": ["easy", "medium", "hard"]
+    },
+    "race_based": {
+      "description": "Restricted to certain races",
+      "allowed_races": ["configurable"]
+    },
+    "alignment_based": {
+      "description": "Restricted to certain alignments",
+      "allowed_alignments": ["lawful", "neutral", "chaotic", "good", "evil"]
+    }
+  },
+  "organization_resources": {
+    "wealth": {
+      "very_low": {"min": 100, "max": 1000},
+      "low": {"min": 1000, "max": 10000},
+      "moderate": {"min": 10000, "max": 100000},
+      "high": {"min": 100000, "max": 1000000},
+      "very_high": {"min": 1000000, "max": 10000000}
+    },
+    "influence": {
+      "description": "Political and social power",
+      "scale": ["none", "local", "regional", "national", "international"]
+    },
+    "property": {
+      "types": ["headquarters", "safe_house", "warehouse", "shop", "library", "training_ground", "temple", "fortress"],
+      "count_range": {"min": 1, "max": 20}
+    }
+  },
+  "organization_relationships": {
+    "allied": {
+      "description": "Friendly cooperation and mutual support",
+      "benefits": ["shared_resources", "joint_operations", "member_exchange"],
+      "relationship_value": 80
+    },
+    "neutral": {
+      "description": "No particular relationship",
+      "relationship_value": 50
+    },
+    "rival": {
+      "description": "Competitive but not openly hostile",
+      "conflicts": ["market_competition", "recruitment_competition", "territory_disputes"],
+      "relationship_value": 30
+    },
+    "enemy": {
+      "description": "Openly hostile",
+      "conflicts": ["warfare", "sabotage", "assassination", "espionage"],
+      "relationship_value": 10
+    }
+  },
+  "rank_benefits": {
+    "rank_1": {
+      "access_level": "basic",
+      "discount": 5,
+      "reputation_bonus": 1,
+      "special_privileges": []
+    },
+    "rank_2": {
+      "access_level": "intermediate",
+      "discount": 10,
+      "reputation_bonus": 2,
+      "special_privileges": ["training_access"]
+    },
+    "rank_3": {
+      "access_level": "advanced",
+      "discount": 15,
+      "reputation_bonus": 4,
+      "special_privileges": ["training_access", "resource_requisition"]
+    },
+    "rank_4": {
+      "access_level": "expert",
+      "discount": 20,
+      "reputation_bonus": 8,
+      "special_privileges": ["training_access", "resource_requisition", "leadership_role"]
+    },
+    "rank_5": {
+      "access_level": "master",
+      "discount": 25,
+      "reputation_bonus": 15,
+      "special_privileges": ["training_access", "resource_requisition", "leadership_role", "policy_influence"]
+    }
+  }
+}

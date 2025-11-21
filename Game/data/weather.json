@@ -1,0 +1,482 @@
+{
+  "weather_patterns": {
+    "clear": {
+      "description": "Clear skies with good visibility",
+      "temperature_modifier": 0,
+      "visibility": "excellent",
+      "travel_speed_modifier": 1.0,
+      "combat_modifier": 0,
+      "weight": 30,
+      "mood": "pleasant",
+      "effects": []
+    },
+    "cloudy": {
+      "description": "Overcast skies with reduced sunlight",
+      "temperature_modifier": -5,
+      "visibility": "good",
+      "travel_speed_modifier": 1.0,
+      "combat_modifier": 0,
+      "weight": 25,
+      "mood": "neutral",
+      "effects": []
+    },
+    "light_rain": {
+      "description": "Gentle rainfall, everything becomes damp",
+      "temperature_modifier": -10,
+      "visibility": "moderate",
+      "travel_speed_modifier": 0.9,
+      "combat_modifier": -1,
+      "weight": 15,
+      "mood": "dreary",
+      "effects": ["slippery_terrain", "ranged_disadvantage"]
+    },
+    "heavy_rain": {
+      "description": "Torrential downpour with poor visibility",
+      "temperature_modifier": -15,
+      "visibility": "poor",
+      "travel_speed_modifier": 0.7,
+      "combat_modifier": -2,
+      "weight": 8,
+      "mood": "miserable",
+      "effects": ["slippery_terrain", "ranged_disadvantage", "fire_resistance", "sound_dampening"]
+    },
+    "thunderstorm": {
+      "description": "Violent storm with lightning and thunder",
+      "temperature_modifier": -15,
+      "visibility": "very_poor",
+      "travel_speed_modifier": 0.5,
+      "combat_modifier": -3,
+      "weight": 5,
+      "mood": "ominous",
+      "effects": ["slippery_terrain", "ranged_disadvantage", "fire_resistance", "lightning_danger", "sound_dampening"],
+      "hazards": ["lightning_strike"]
+    },
+    "light_snow": {
+      "description": "Gentle snowfall covering the ground",
+      "temperature_modifier": -20,
+      "visibility": "moderate",
+      "travel_speed_modifier": 0.8,
+      "combat_modifier": -1,
+      "weight": 10,
+      "mood": "serene",
+      "effects": ["cold_damage_risk", "tracks_visible"],
+      "season_required": "winter"
+    },
+    "heavy_snow": {
+      "description": "Blinding blizzard with deep snowdrifts",
+      "temperature_modifier": -30,
+      "visibility": "very_poor",
+      "travel_speed_modifier": 0.5,
+      "combat_modifier": -3,
+      "weight": 4,
+      "mood": "harsh",
+      "effects": ["cold_damage_risk", "difficult_terrain", "ranged_disadvantage", "tracks_covered"],
+      "hazards": ["frostbite", "avalanche"],
+      "season_required": "winter"
+    },
+    "fog": {
+      "description": "Thick fog reducing visibility to near zero",
+      "temperature_modifier": -5,
+      "visibility": "minimal",
+      "travel_speed_modifier": 0.6,
+      "combat_modifier": -2,
+      "weight": 8,
+      "mood": "mysterious",
+      "effects": ["stealth_advantage", "ranged_severe_disadvantage", "navigation_difficulty"]
+    },
+    "wind": {
+      "description": "Strong winds buffeting everything",
+      "temperature_modifier": -10,
+      "visibility": "good",
+      "travel_speed_modifier": 0.8,
+      "combat_modifier": -1,
+      "weight": 12,
+      "mood": "blustery",
+      "effects": ["ranged_disadvantage", "flying_difficult", "sound_dispersal"]
+    },
+    "extreme_heat": {
+      "description": "Scorching heat with intense sun",
+      "temperature_modifier": 30,
+      "visibility": "excellent",
+      "travel_speed_modifier": 0.7,
+      "combat_modifier": -1,
+      "weight": 5,
+      "mood": "oppressive",
+      "effects": ["heat_exhaustion_risk", "water_consumption_doubled", "fire_vulnerability"],
+      "hazards": ["heatstroke"],
+      "season_required": "summer"
+    },
+    "sandstorm": {
+      "description": "Violent winds carrying stinging sand",
+      "temperature_modifier": 10,
+      "visibility": "minimal",
+      "travel_speed_modifier": 0.3,
+      "combat_modifier": -4,
+      "weight": 3,
+      "mood": "hostile",
+      "effects": ["difficult_terrain", "ranged_severe_disadvantage", "navigation_difficulty", "abrasion_damage"],
+      "hazards": ["sand_blindness"],
+      "biome_required": "desert"
+    },
+    "magical_anomaly": {
+      "description": "Reality warps with magical disturbances",
+      "temperature_modifier": 0,
+      "visibility": "distorted",
+      "travel_speed_modifier": 0.8,
+      "combat_modifier": 0,
+      "weight": 1,
+      "mood": "unsettling",
+      "effects": ["magic_surge", "spell_unpredictability", "planar_thin"],
+      "hazards": ["wild_magic"],
+      "biome_required": "magical"
+    }
+  },
+  "seasons": {
+    "spring": {
+      "description": "Season of renewal and growth",
+      "base_temperature": 15,
+      "temperature_variation": 15,
+      "common_weather": ["clear", "cloudy", "light_rain", "wind"],
+      "rare_weather": ["heavy_rain", "thunderstorm"],
+      "duration_days": 90,
+      "environmental_effects": ["flowers_blooming", "animals_active", "rivers_swollen"]
+    },
+    "summer": {
+      "description": "Season of heat and abundance",
+      "base_temperature": 28,
+      "temperature_variation": 12,
+      "common_weather": ["clear", "cloudy", "extreme_heat"],
+      "rare_weather": ["thunderstorm", "heavy_rain"],
+      "duration_days": 90,
+      "environmental_effects": ["crops_growing", "daylight_extended", "water_sources_reduced"]
+    },
+    "autumn": {
+      "description": "Season of harvest and change",
+      "base_temperature": 12,
+      "temperature_variation": 15,
+      "common_weather": ["cloudy", "wind", "light_rain"],
+      "rare_weather": ["heavy_rain", "fog"],
+      "duration_days": 90,
+      "environmental_effects": ["leaves_falling", "harvest_time", "animals_migrating"]
+    },
+    "winter": {
+      "description": "Season of cold and dormancy",
+      "base_temperature": -5,
+      "temperature_variation": 20,
+      "common_weather": ["cloudy", "light_snow", "wind"],
+      "rare_weather": ["heavy_snow", "clear"],
+      "duration_days": 90,
+      "environmental_effects": ["snow_covered", "ice_forming", "animals_hibernating", "daylight_reduced"]
+    }
+  },
+  "natural_disasters": {
+    "earthquake": {
+      "description": "Violent shaking of the ground",
+      "severity_levels": {
+        "minor": {
+          "damage": "cosmetic",
+          "duration_seconds": 10,
+          "radius_feet": 1000,
+          "effects": ["items_fall", "animals_frightened"]
+        },
+        "moderate": {
+          "damage": "structural_cracks",
+          "duration_seconds": 30,
+          "radius_feet": 5000,
+          "effects": ["items_fall", "animals_frightened", "difficult_standing", "building_damage"]
+        },
+        "major": {
+          "damage": "building_collapse",
+          "duration_seconds": 60,
+          "radius_feet": 20000,
+          "effects": ["items_fall", "animals_frightened", "difficult_standing", "building_damage", "ground_fissures"],
+          "casualties": "high"
+        }
+      },
+      "rarity": "very_rare",
+      "warning_time": "none"
+    },
+    "flood": {
+      "description": "Waters rise and inundate the land",
+      "severity_levels": {
+        "minor": {
+          "water_depth_feet": 3,
+          "duration_hours": 24,
+          "effects": ["difficult_terrain", "crops_damaged"]
+        },
+        "moderate": {
+          "water_depth_feet": 10,
+          "duration_hours": 72,
+          "effects": ["difficult_terrain", "crops_damaged", "buildings_flooded", "supplies_lost"]
+        },
+        "major": {
+          "water_depth_feet": 30,
+          "duration_hours": 168,
+          "effects": ["impassable_terrain", "crops_destroyed", "buildings_destroyed", "casualties"],
+          "casualties": "very_high"
+        }
+      },
+      "rarity": "rare",
+      "warning_time": "hours_to_days",
+      "triggered_by": ["heavy_rain", "thunderstorm"]
+    },
+    "tornado": {
+      "description": "Violently rotating column of air",
+      "severity_levels": {
+        "minor": {
+          "wind_speed_mph": 85,
+          "duration_minutes": 5,
+          "path_width_feet": 100,
+          "effects": ["debris_flying", "trees_damaged", "roof_damage"]
+        },
+        "moderate": {
+          "wind_speed_mph": 150,
+          "duration_minutes": 15,
+          "path_width_feet": 500,
+          "effects": ["debris_flying", "trees_destroyed", "buildings_damaged", "vehicles_overturned"]
+        },
+        "major": {
+          "wind_speed_mph": 250,
+          "duration_minutes": 30,
+          "path_width_feet": 2000,
+          "effects": ["debris_flying", "trees_destroyed", "buildings_destroyed", "instant_death_zone"],
+          "casualties": "extreme"
+        }
+      },
+      "rarity": "rare",
+      "warning_time": "minutes",
+      "triggered_by": ["thunderstorm"]
+    },
+    "hurricane": {
+      "description": "Massive tropical storm system",
+      "severity_levels": {
+        "category_1": {
+          "wind_speed_mph": 85,
+          "storm_surge_feet": 5,
+          "duration_hours": 12,
+          "effects": ["heavy_rain", "wind_damage", "coastal_flooding"]
+        },
+        "category_3": {
+          "wind_speed_mph": 120,
+          "storm_surge_feet": 12,
+          "duration_hours": 24,
+          "effects": ["heavy_rain", "wind_damage", "coastal_flooding", "power_outage", "building_damage"]
+        },
+        "category_5": {
+          "wind_speed_mph": 160,
+          "storm_surge_feet": 20,
+          "duration_hours": 48,
+          "effects": ["extreme_rain", "catastrophic_wind", "massive_flooding", "total_destruction"],
+          "casualties": "catastrophic"
+        }
+      },
+      "rarity": "very_rare",
+      "warning_time": "days",
+      "biome_required": "coastal"
+    },
+    "wildfire": {
+      "description": "Uncontrolled fire spreading across vegetation",
+      "severity_levels": {
+        "minor": {
+          "spread_rate_feet_per_minute": 50,
+          "duration_hours": 6,
+          "area_acres": 100,
+          "effects": ["smoke", "wildlife_displaced", "vegetation_burned"]
+        },
+        "moderate": {
+          "spread_rate_feet_per_minute": 200,
+          "duration_hours": 48,
+          "area_acres": 10000,
+          "effects": ["smoke", "wildlife_displaced", "vegetation_burned", "buildings_threatened", "air_quality_hazard"]
+        },
+        "major": {
+          "spread_rate_feet_per_minute": 500,
+          "duration_hours": 168,
+          "area_acres": 100000,
+          "effects": ["smoke", "wildlife_destroyed", "ecosystem_destroyed", "towns_destroyed", "firestorm"],
+          "casualties": "high"
+        }
+      },
+      "rarity": "rare",
+      "warning_time": "variable",
+      "triggered_by": ["extreme_heat", "lightning_strike"],
+      "biome_required": ["temperate_forest", "jungle", "plains"]
+    },
+    "volcanic_eruption": {
+      "description": "Explosive release of lava, ash, and gases",
+      "severity_levels": {
+        "minor": {
+          "ash_radius_miles": 5,
+          "lava_flow_miles": 1,
+          "duration_hours": 24,
+          "effects": ["ash_fall", "minor_earthquakes", "air_quality_hazard"]
+        },
+        "moderate": {
+          "ash_radius_miles": 50,
+          "lava_flow_miles": 10,
+          "duration_hours": 168,
+          "effects": ["ash_fall", "earthquakes", "lava_flows", "pyroclastic_flows", "sky_darkened"]
+        },
+        "major": {
+          "ash_radius_miles": 500,
+          "lava_flow_miles": 50,
+          "duration_hours": 720,
+          "effects": ["global_ash_cloud", "earthquakes", "massive_lava_flows", "pyroclastic_destruction", "climate_change"],
+          "casualties": "apocalyptic"
+        }
+      },
+      "rarity": "extremely_rare",
+      "warning_time": "days_to_weeks",
+      "biome_required": "volcanic"
+    },
+    "avalanche": {
+      "description": "Massive snow and ice slide down mountain",
+      "severity_levels": {
+        "minor": {
+          "snow_volume_cubic_feet": 10000,
+          "speed_mph": 30,
+          "path_length_feet": 500,
+          "effects": ["snow_burial", "path_blocked"]
+        },
+        "major": {
+          "snow_volume_cubic_feet": 1000000,
+          "speed_mph": 100,
+          "path_length_feet": 5000,
+          "effects": ["instant_burial", "destructive_force", "valley_filled"],
+          "casualties": "very_high"
+        }
+      },
+      "rarity": "rare",
+      "warning_time": "seconds",
+      "triggered_by": ["heavy_snow"],
+      "biome_required": ["mountains", "tundra"]
+    },
+    "plague": {
+      "description": "Widespread infectious disease outbreak",
+      "severity_levels": {
+        "minor": {
+          "infection_rate": 5,
+          "mortality_rate": 2,
+          "duration_days": 30,
+          "effects": ["sickness", "reduced_workforce", "fear"]
+        },
+        "moderate": {
+          "infection_rate": 30,
+          "mortality_rate": 15,
+          "duration_days": 180,
+          "effects": ["widespread_sickness", "economy_disrupted", "quarantines", "social_breakdown"]
+        },
+        "major": {
+          "infection_rate": 70,
+          "mortality_rate": 50,
+          "duration_days": 365,
+          "effects": ["mass_death", "civilization_collapse", "abandoned_cities", "survivors_traumatized"],
+          "casualties": "catastrophic"
+        }
+      },
+      "rarity": "very_rare",
+      "warning_time": "weeks",
+      "spread_method": ["contact", "airborne", "waterborne"]
+    }
+  },
+  "time_of_day": {
+    "dawn": {
+      "description": "Early morning as the sun rises",
+      "hours": [5, 6, 7],
+      "light_level": "dim",
+      "visibility_modifier": 0.7,
+      "mood": "hopeful",
+      "effects": ["dew_present", "animals_waking", "reduced_undead_activity"]
+    },
+    "morning": {
+      "description": "Mid-morning with bright sunlight",
+      "hours": [8, 9, 10, 11],
+      "light_level": "bright",
+      "visibility_modifier": 1.0,
+      "mood": "energetic",
+      "effects": ["full_visibility", "marketplace_active", "travelers_common"]
+    },
+    "noon": {
+      "description": "Peak daylight hours",
+      "hours": [12, 13],
+      "light_level": "very_bright",
+      "visibility_modifier": 1.0,
+      "mood": "intense",
+      "effects": ["full_visibility", "heat_peak", "shadows_minimal"]
+    },
+    "afternoon": {
+      "description": "Later day hours",
+      "hours": [14, 15, 16, 17],
+      "light_level": "bright",
+      "visibility_modifier": 1.0,
+      "mood": "relaxed",
+      "effects": ["full_visibility", "market_winding_down", "shadows_lengthening"]
+    },
+    "dusk": {
+      "description": "Evening as the sun sets",
+      "hours": [18, 19, 20],
+      "light_level": "dim",
+      "visibility_modifier": 0.7,
+      "mood": "contemplative",
+      "effects": ["reduced_visibility", "nocturnal_creatures_waking", "taverns_filling"]
+    },
+    "night": {
+      "description": "Dark hours after sunset",
+      "hours": [21, 22, 23, 0, 1, 2, 3, 4],
+      "light_level": "dark",
+      "visibility_modifier": 0.3,
+      "mood": "mysterious",
+      "effects": ["darkness", "nocturnal_creatures_active", "undead_active", "most_settlements_sleeping"]
+    }
+  },
+  "moon_phases": {
+    "new_moon": {
+      "description": "Moon is not visible",
+      "light_bonus": 0.0,
+      "magic_modifier": 0,
+      "effects": ["very_dark_nights", "stealth_advantage", "werewolf_weakened"]
+    },
+    "waxing_crescent": {
+      "description": "Thin crescent moon visible",
+      "light_bonus": 0.1,
+      "magic_modifier": 0,
+      "effects": ["dark_nights"]
+    },
+    "first_quarter": {
+      "description": "Half moon visible",
+      "light_bonus": 0.3,
+      "magic_modifier": 0,
+      "effects": ["moderate_moonlight"]
+    },
+    "waxing_gibbous": {
+      "description": "More than half moon visible",
+      "light_bonus": 0.5,
+      "magic_modifier": 1,
+      "effects": ["bright_moonlight", "lunar_magic_enhanced"]
+    },
+    "full_moon": {
+      "description": "Complete moon visible",
+      "light_bonus": 0.7,
+      "magic_modifier": 2,
+      "effects": ["very_bright_nights", "werewolf_transformation", "lunar_magic_powerful", "undead_empowered"]
+    },
+    "waning_gibbous": {
+      "description": "More than half moon visible, decreasing",
+      "light_bonus": 0.5,
+      "magic_modifier": 1,
+      "effects": ["bright_moonlight", "lunar_magic_enhanced"]
+    },
+    "last_quarter": {
+      "description": "Half moon visible, decreasing",
+      "light_bonus": 0.3,
+      "magic_modifier": 0,
+      "effects": ["moderate_moonlight"]
+    },
+    "waning_crescent": {
+      "description": "Thin crescent moon visible, decreasing",
+      "light_bonus": 0.1,
+      "magic_modifier": 0,
+      "effects": ["dark_nights"]
+    }
+  }
+}

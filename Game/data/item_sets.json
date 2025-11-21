@@ -1,0 +1,140 @@
+{
+  "blacksmith_inventory": [
+    "weapon_melee",
+    "armor"
+  ],
+  "merchant_inventory": [
+    "potion",
+    "scroll",
+    "jewelry"
+  ],
+  "warrior_inventory": [
+    "weapon_melee",
+    "armor",
+    "potion"
+  ],
+  "mage_inventory": [
+    "scroll",
+    "potion",
+    "jewelry"
+  ],
+  "treasure_hoard": [
+    "jewelry",
+    "weapon_melee",
+    "weapon_ranged",
+    "armor"
+  ],
+  "kingdom_items": [
+    "weapon_melee",
+    "armor",
+    "jewelry"
+  ],
+  "shadow_items": [
+    "weapon_melee",
+    "potion",
+    "jewelry"
+  ],
+  "nature_items": [
+    "potion",
+    "scroll"
+  ],
+  "arcane_items": [
+    "scroll",
+    "jewelry",
+    "potion"
+  ],
+  "legion_items": [
+    "weapon_melee",
+    "armor",
+    "weapon_ranged"
+  ],
+  "trader_items": [
+    "potion",
+    "scroll",
+    "jewelry",
+    "weapon_melee"
+  ],
+  "warrior_equipment": [
+    "helmet",
+    "chest",
+    "gloves",
+    "legs",
+    "boots",
+    "belt",
+    "ring",
+    "earring",
+    "collar"
+  ],
+  "mage_equipment": [
+    "helmet",
+    "chest",
+    "gloves",
+    "legs",
+    "boots",
+    "belt",
+    "ring",
+    "earring",
+    "collar"
+  ],
+  "rogue_equipment": [
+    "helmet",
+    "chest",
+    "gloves",
+    "legs",
+    "boots",
+    "belt",
+    "ring",
+    "earring",
+    "collar"
+  ],
+  "cleric_equipment": [
+    "helmet",
+    "chest",
+    "gloves",
+    "legs",
+    "boots",
+    "belt",
+    "ring",
+    "earring",
+    "collar"
+  ],
+  "heavy_armor_equipment": [
+    "helmet",
+    "chest",
+    "gloves",
+    "legs",
+    "boots",
+    "belt",
+    "ring",
+    "earring",
+    "collar"
+  ],
+  "light_armor_equipment": [
+    "helmet",
+    "chest",
+    "gloves",
+    "legs",
+    "boots",
+    "belt",
+    "ring",
+    "earring",
+    "collar"
+  ],
+  "jewelry_equipment": [
+    "belt",
+    "ring",
+    "earring",
+    "collar"
+  ],
+  "basic_equipment": [
+    "helmet",
+    "chest",
+    "gloves",
+    "legs",
+    "boots",
+    "belt",
+    "ring",
+    "earring",
+    "collar"
+  ]
+}
