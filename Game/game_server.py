@@ -25,8 +25,8 @@ project_root = Path(__file__).parent.parent  # Go up one level from Game/ to R-G
 from src import ContentGenerator, World, LivingNPC as NPC, LivingLocation as Location
 from game_database import GameDatabase
 
-# Client folder is at the root level, not in Game/
-client_folder = project_root / "Client"
+# Client folder is in the Game directory
+client_folder = Path(__file__).parent / "Client"
 app = Flask(__name__, static_folder=str(client_folder), static_url_path='')
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(32))
 app.config['SESSION_TYPE'] = 'filesystem'
