@@ -2,7 +2,7 @@
 
 ## Summary
 
-This update improves NPC and enemy generation by implementing profession-specific inventory sets and adding dedicated enemy types with appropriate loot.
+This update improves NPC and enemy generation by implementing profession-specific inventory sets and using a race-based enemy system where enemies are generated from **race (what they ARE) + profession (what they DO)** instead of hardcoded enemy types.
 
 ## Changes Made
 
@@ -49,64 +49,65 @@ Updated existing professions to use their specific inventory sets instead of gen
 - Carpenter: `blacksmith_inventory` → `carpenter_inventory`
 - Miner: `blacksmith_inventory` → `miner_inventory`
 
-### 3. New Enemy Professions
+### 3. New Enemy Races
 
-Added 7 new enemy types with full profession definitions:
+Added 4 new enemy races to the race system (`GenerationEngine/data/races.json`):
 
-#### Goblin
-- **Stats**: High DEX (8), Low STR (4)
-- **Skills**: Stealth, Ambush, Backstab, Scavenging
-- **Inventory**: Crude weapons and potions
-- **Typical Locations**: Cave, Forest, Ruins
+#### Goblin (Race)
+- **Base Stats**: High DEX (7), Low STR (3), Low CHA (2)
+- **Size**: Small
+- **Traits**: Cunning, Cowardly, Nimble
+- **Special Abilities**: Nimble Escape, Fury of the Small
+- **Languages**: Goblin, Common
+- **Preferred Biomes**: Cave, Forest, Ruins, Swamp
+- **Appearance**: Green skin, yellow eyes, pointed ears, sharp teeth
 
-#### Skeleton
-- **Stats**: Balanced STR/CON (6/8), Very Low INT/WIS/CHA (2/2/1)
-- **Skills**: Combat, Endurance, Relentless, Undead
-- **Inventory**: Rusty weapons and armor
-- **Typical Locations**: Crypt, Tomb, Graveyard
+#### Skeleton (Race)
+- **Base Stats**: Balanced STR/DEX/CON (5/5/6), Very Low mental (1/1/1)
+- **Size**: Medium
+- **Traits**: Undead, Mindless, Tireless
+- **Special Abilities**: Undead Fortitude, Mindless
+- **Languages**: None (mindless)
+- **Preferred Biomes**: Crypt, Tomb, Graveyard, Ruins, Underground
+- **Appearance**: Animated bones, empty sockets, skeletal, clicking
 
-#### Orc
-- **Stats**: High STR/CON (8/8), Low INT (3)
-- **Skills**: Combat, Intimidation, Endurance, Rage
-- **Inventory**: Brutal weapons and armor
-- **Typical Locations**: Mountain, Battlefield, Stronghold
+#### Zombie (Race)
+- **Base Stats**: High CON (8), Low DEX (2), Very Low mental (1/1/1)
+- **Size**: Medium
+- **Traits**: Undead, Relentless, Mindless
+- **Special Abilities**: Undead Fortitude, Relentless
+- **Languages**: None (mindless)
+- **Preferred Biomes**: Graveyard, Crypt, Ruins, Swamp
+- **Appearance**: Rotting flesh, sunken eyes, shambling, moaning
 
-#### Bandit
-- **Stats**: Balanced (6/7/6)
-- **Skills**: Combat, Stealth, Intimidation, Robbery
-- **Inventory**: Weapons, potions, and stolen jewelry
-- **Typical Locations**: Forest, Road, Hideout
+#### Wolf (Race)
+- **Base Stats**: Balanced DEX/CON (6/5), Very Low INT (1)
+- **Size**: Medium
+- **Traits**: Predatory, Pack-Minded, Wild
+- **Special Abilities**: Pack Tactics, Keen Senses
+- **Languages**: None (beast)
+- **Preferred Biomes**: Forest, Wilderness, Mountain, Plains, Tundra
+- **Appearance**: Fur, fangs, four-legged, wild eyes, predatory
 
-#### Cultist
-- **Stats**: High INT/CHA (7/7), Low STR (4)
-- **Skills**: Dark Magic, Rituals, Persuasion, Curses
-- **Inventory**: Dark scrolls, weapons, potions
-- **Typical Locations**: Ruins, Temple, Underground
+### 4. Profession Updates
 
-#### Zombie
-- **Stats**: High CON (9), Very Low INT/WIS/CHA (1/1/1)
-- **Skills**: Endurance, Grapple, Relentless, Undead
-- **Inventory**: Minimal (weapons/armor from their past life)
-- **Typical Locations**: Graveyard, Crypt, Ruins
+**Added**:
+- **Warrior**: Generic combat profession for enemies (uses warrior_inventory)
+- Kept **Bandit** and **Cultist** as actual professions (what they DO, not what they ARE)
 
-#### Wolf
-- **Stats**: Balanced DEX/CON (7/6), Low INT/CHA (2/2)
-- **Skills**: Tracking, Bite, Pack Tactics, Stealth
-- **Inventory**: Minimal beast loot
-- **Typical Locations**: Forest, Wilderness, Mountain
-
-### 4. New Enemy Generation API Endpoint
+### 5. New Enemy Generation API Endpoint
 
 **File**: `Game/game_server.py`
 
-Added a new dedicated endpoint for easier enemy creation:
+Added a new race-based enemy generation endpoint:
 
 **Endpoint**: `POST /api/master/enemy`
 
 **Request Body**:
 ```json
 {
-  "enemy_type": "goblin",      // goblin, skeleton, orc, bandit, cultist, zombie, wolf
+  "race": "goblin",             // goblin, skeleton, orc, zombie, wolf, human, etc.
+  "profession": "warrior",      // warrior, bandit, cultist, thief, or null for beasts
   "difficulty": "standard",     // minion (0.5x), standard (1x), elite (1.5x), boss (2.5x)
   "location_id": "forest_1",    // Optional
   "name": "Custom Name"         // Optional custom name
@@ -123,15 +124,20 @@ Added a new dedicated endpoint for easier enemy creation:
 ```json
 {
   "success": true,
-  "message": "Standard Goblin created",
+  "message": "Standard Goblin Warrior created",
   "enemy_id": "npc_abc123",
   "enemy_data": {
-    "name": "Snik Raider",
+    "name": "Zik Creeper",
+    "race": "goblin",
+    "professions": ["warrior"],
     "max_health": 50,
     "attack_power": 14,
     "defense": 5,
     "experience_reward": 75,
-    "inventory": [...]
+    "inventory": [
+      {"name": "Standard Leather Shield", "type": "armor"},
+      {"name": "Excellent Bronze Mace", "type": "weapon"}
+    ]
   }
 }
 ```
@@ -169,35 +175,69 @@ Successfully tested NPC and enemy generation:
 
 ## Usage Examples
 
-### Create a Standard Goblin Enemy
+### Create a Standard Goblin Warrior
 ```bash
 curl -X POST http://localhost:5000/api/master/enemy \
   -H "Content-Type: application/json" \
   -d '{
-    "enemy_type": "goblin",
+    "race": "goblin",
+    "profession": "warrior",
     "difficulty": "standard"
   }'
 ```
 
-### Create a Boss Orc
+### Create a Boss Orc Warrior
 ```bash
 curl -X POST http://localhost:5000/api/master/enemy \
   -H "Content-Type: application/json" \
   -d '{
-    "enemy_type": "orc",
+    "race": "orc",
+    "profession": "warrior",
     "difficulty": "boss",
     "name": "Grok the Destroyer",
     "location_id": "mountain_pass_1"
   }'
 ```
 
-### Create a Minion Skeleton (for groups)
+### Create an Elite Skeleton (no profession)
 ```bash
 curl -X POST http://localhost:5000/api/master/enemy \
   -H "Content-Type: application/json" \
   -d '{
-    "enemy_type": "skeleton",
+    "race": "skeleton",
+    "difficulty": "elite"
+  }'
+```
+
+### Create a Human Bandit
+```bash
+curl -X POST http://localhost:5000/api/master/enemy \
+  -H "Content-Type: application/json" \
+  -d '{
+    "race": "human",
+    "profession": "bandit",
+    "difficulty": "standard"
+  }'
+```
+
+### Create a Wolf Pack (minions)
+```bash
+curl -X POST http://localhost:5000/api/master/enemy \
+  -H "Content-Type: application/json" \
+  -d '{
+    "race": "wolf",
     "difficulty": "minion"
+  }'
+```
+
+### Create an Orc Bandit (cross combinations!)
+```bash
+curl -X POST http://localhost:5000/api/master/enemy \
+  -H "Content-Type: application/json" \
+  -d '{
+    "race": "orc",
+    "profession": "bandit",
+    "difficulty": "standard"
   }'
 ```
 
@@ -215,27 +255,38 @@ curl -X POST http://localhost:5000/api/master/npc \
 ## Benefits
 
 1. **More Realistic Inventories**: NPCs now carry items appropriate to their profession
-   - Merchants have jewelry and potions
-   - Guards have weapons and armor
+   - Merchants have jewelry and potions (not weapons)
+   - Guards have weapons and armor (not scrolls)
    - Farmers have basic consumables
    - Alchemists have potions and scrolls
 
-2. **Enemy Variety**: 7 different enemy types with unique stats and loot
-   - Weak but sneaky goblins
-   - Tough orcs with heavy weapons
-   - Undead with rusted gear
-   - Smart cultists with magic items
+2. **Race-Based Enemy System**: Enemies use race + profession combinations
+   - **Races** (what they ARE): goblin, orc, skeleton, zombie, wolf, human, etc.
+   - **Professions** (what they DO): warrior, bandit, cultist, thief, etc.
+   - Any race can have any profession: goblin bandit, orc cultist, human warrior
 
-3. **Flexible Difficulty**: Single enemy type can be scaled from minion to boss
-   - Spawn groups of weak minions
-   - Create challenging boss encounters
+3. **Flexible Combinations**: Unlimited enemy variety
+   - Goblin Warrior - sneaky fighter
+   - Orc Bandit - brutal outlaw
+   - Human Cultist - dark mage
+   - Skeleton - mindless undead (no profession)
+   - Wolf - wild beast (no profession)
+
+4. **Flexible Difficulty**: Single enemy type can be scaled from minion to boss
+   - Spawn groups of weak minions (0.5x stats)
+   - Create challenging boss encounters (2.5x stats)
    - Balance encounters easily
 
-4. **Better Loot Tables**: Enemies drop appropriate items
+5. **Better Loot Tables**: Enemies drop items based on their profession
    - Warriors drop weapons/armor
-   - Casters drop scrolls/potions
-   - Bandits drop stolen goods
+   - Bandits drop weapons/stolen goods
+   - Cultists drop scrolls/dark items
    - Beasts drop minimal loot
+
+6. **Proper Architecture**: Follows D&D-style conventions
+   - Races define physical/mental attributes
+   - Professions define skills and inventory
+   - No duplicate/redundant definitions
 
 ## Backward Compatibility
 
@@ -244,3 +295,4 @@ All existing functionality remains unchanged:
 - Existing NPCs are unaffected
 - Original `/api/master/npc` endpoint still available
 - New enemy endpoint is additive, not replacing anything
+- Orc race was already in races.json, no breaking changes
