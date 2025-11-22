@@ -59,6 +59,9 @@ function setupEventListeners() {
     // World settings
     document.getElementById('save-world-btn').addEventListener('click', saveWorldSettings);
 
+    // Settings
+    document.getElementById('save-settings-btn').addEventListener('click', saveSettings);
+
     // Search inputs
     document.getElementById('npc-search').addEventListener('input', (e) => filterNPCs(e.target.value));
     document.getElementById('location-search').addEventListener('input', (e) => filterLocations(e.target.value));
@@ -223,6 +226,11 @@ function switchTab(tabName) {
     document.querySelectorAll('.tab-content').forEach(content => {
         content.classList.toggle('active', content.id === `${tabName}-tab`);
     });
+
+    // Load settings when switching to settings tab
+    if (tabName === 'settings') {
+        loadSettings();
+    }
 }
 
 // ============================================================================
@@ -268,6 +276,51 @@ async function saveWorldSettings(e) {
     } catch (error) {
         console.error('Error saving world:', error);
         showToast('Error saving world settings', 'error');
+    }
+}
+
+// ============================================================================
+// Settings Management
+// ============================================================================
+
+async function loadSettings() {
+    try {
+        const response = await fetch(`${API_BASE}/settings`);
+        const settings = await response.json();
+
+        // Populate settings form
+        document.getElementById('generation-engine-url').value = settings.generation_engine_url || '';
+        document.getElementById('use-external-generator').checked = settings.use_external_generator === 'true';
+    } catch (error) {
+        console.error('Error loading settings:', error);
+    }
+}
+
+async function saveSettings(e) {
+    e.preventDefault();
+
+    const settings = {
+        generation_engine_url: document.getElementById('generation-engine-url').value,
+        use_external_generator: document.getElementById('use-external-generator').checked
+    };
+
+    try {
+        const response = await fetch(`${API_BASE}/settings`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(settings)
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            showToast('Settings saved successfully', 'success');
+            await loadSettings();
+        } else {
+            showToast('Error saving settings', 'error');
+        }
+    } catch (error) {
+        console.error('Error saving settings:', error);
+        showToast('Error saving settings', 'error');
     }
 }
 

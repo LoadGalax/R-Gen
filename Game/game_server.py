@@ -861,6 +861,24 @@ def update_master_world_data():
 
     return jsonify({'success': True, 'message': 'World updated'})
 
+@app.route('/api/master/settings', methods=['GET'])
+def get_settings():
+    """Get all system settings."""
+    database = get_db()
+    settings = database.get_all_settings()
+    return jsonify(settings)
+
+@app.route('/api/master/settings', methods=['PATCH'])
+def update_settings():
+    """Update system settings."""
+    database = get_db()
+    data = request.get_json()
+
+    for key, value in data.items():
+        database.set_setting(key, str(value))
+
+    return jsonify({'success': True, 'message': 'Settings updated'})
+
 @app.route('/api/master/npcs', methods=['GET'])
 def get_master_npcs():
     """Get all NPCs with full details for editing."""

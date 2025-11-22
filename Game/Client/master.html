@@ -27,6 +27,7 @@
             <button class="tab-btn" data-tab="items">⚔️ Items</button>
             <button class="tab-btn" data-tab="loot">📦 Loot Tables</button>
             <button class="tab-btn" data-tab="simulation">⚙️ Simulation</button>
+            <button class="tab-btn" data-tab="settings">⚙️ Settings</button>
             <button class="tab-btn" data-tab="database">💾 Database</button>
         </nav>
 
@@ -332,6 +333,27 @@
                         <button class="btn btn-lg btn-success" id="sim-refresh-btn">🔄 Refresh All Data</button>
                         <p class="help-text">Reload all data from the server</p>
                     </div>
+                </div>
+            </section>
+
+            <!-- Settings Tab -->
+            <section id="settings-tab" class="tab-content">
+                <h2>System Settings</h2>
+                <div class="form-section">
+                    <h3>Generation Engine Configuration</h3>
+                    <div class="form-group">
+                        <label for="generation-engine-url">Generation Engine URL:</label>
+                        <input type="text" id="generation-engine-url" class="form-input"
+                               placeholder="http://localhost:5000">
+                        <p class="help-text">URL of the external GenerationEngine API service (leave empty to use local generator)</p>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="use-external-generator" class="form-checkbox">
+                            Use External Generation Engine
+                        </label>
+                    </div>
+                    <button class="btn btn-success" id="save-settings-btn">💾 Save Settings</button>
                 </div>
             </section>
 
