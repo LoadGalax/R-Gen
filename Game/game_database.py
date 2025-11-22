@@ -116,6 +116,15 @@ class GameDatabase:
                 )
             """)
 
+            # Settings table for system configuration
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS settings (
+                    key TEXT PRIMARY KEY,
+                    value TEXT NOT NULL,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+
             conn.commit()
 
     # ===================================================================
@@ -482,5 +491,44 @@ class GameDatabase:
         with self._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("DELETE FROM generated_items WHERE id = ?", (item_id,))
+            conn.commit()
+            return cursor.rowcount > 0
+
+    # ===================================================================
+    # Settings Management
+    # ===================================================================
+
+    def get_setting(self, key: str) -> Optional[str]:
+        """Get a setting value by key."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT value FROM settings WHERE key = ?", (key,))
+            row = cursor.fetchone()
+            return row['value'] if row else None
+
+    def get_all_settings(self) -> Dict[str, str]:
+        """Get all settings."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT key, value FROM settings")
+            return {row['key']: row['value'] for row in cursor.fetchall()}
+
+    def set_setting(self, key: str, value: str) -> bool:
+        """Set a setting value."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO settings (key, value, updated_at)
+                VALUES (?, ?, ?)
+                ON CONFLICT(key) DO UPDATE SET value = ?, updated_at = ?
+            """, (key, value, datetime.now(), value, datetime.now()))
+            conn.commit()
+            return True
+
+    def delete_setting(self, key: str) -> bool:
+        """Delete a setting."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM settings WHERE key = ?", (key,))
             conn.commit()
             return cursor.rowcount > 0
