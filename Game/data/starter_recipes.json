@@ -1,0 +1,327 @@
+{
+  "blacksmith_recipes": [
+    {
+      "recipe_id": "recipe_iron_sword",
+      "name": "Iron Sword",
+      "profession": "blacksmith",
+      "category": "weapon",
+      "required_level": 1,
+      "difficulty": 1,
+      "ingredients": [
+        {"item_name": "Iron Ingot", "quantity": 3},
+        {"item_name": "Wood Plank", "quantity": 1}
+      ],
+      "result_item_name": "Iron Sword",
+      "result_item_type": "weapon",
+      "result_item_data": {
+        "rarity": "common",
+        "damage": 8,
+        "material": "Iron",
+        "quality": "standard",
+        "description": "A sturdy iron sword, well-balanced for combat.",
+        "weight": 3.5
+      },
+      "result_quantity": 1,
+      "crafting_time": 10,
+      "experience_gain": 25
+    },
+    {
+      "recipe_id": "recipe_iron_helmet",
+      "name": "Iron Helmet",
+      "profession": "blacksmith",
+      "category": "armor",
+      "required_level": 2,
+      "difficulty": 2,
+      "ingredients": [
+        {"item_name": "Iron Ingot", "quantity": 5}
+      ],
+      "result_item_name": "Iron Helmet",
+      "result_item_type": "armor",
+      "result_item_data": {
+        "rarity": "common",
+        "defense": 5,
+        "material": "Iron",
+        "quality": "standard",
+        "description": "A protective iron helmet.",
+        "weight": 4.0,
+        "equipment_slot": "helmet"
+      },
+      "result_quantity": 1,
+      "crafting_time": 15,
+      "experience_gain": 30
+    },
+    {
+      "recipe_id": "recipe_steel_sword",
+      "name": "Steel Sword",
+      "profession": "blacksmith",
+      "category": "weapon",
+      "required_level": 5,
+      "difficulty": 3,
+      "ingredients": [
+        {"item_name": "Steel Ingot", "quantity": 4},
+        {"item_name": "Oak Plank", "quantity": 1},
+        {"item_name": "Leather Strip", "quantity": 2}
+      ],
+      "result_item_name": "Steel Sword",
+      "result_item_type": "weapon",
+      "result_item_data": {
+        "rarity": "uncommon",
+        "damage": 15,
+        "material": "Steel",
+        "quality": "fine",
+        "description": "A finely crafted steel sword with excellent balance.",
+        "weight": 3.8
+      },
+      "result_quantity": 1,
+      "crafting_time": 20,
+      "experience_gain": 50
+    }
+  ],
+  "alchemist_recipes": [
+    {
+      "recipe_id": "recipe_health_potion",
+      "name": "Health Potion",
+      "profession": "alchemist",
+      "category": "potion",
+      "required_level": 1,
+      "difficulty": 1,
+      "ingredients": [
+        {"item_name": "Red Herbs", "quantity": 2},
+        {"item_name": "Empty Vial", "quantity": 1}
+      ],
+      "result_item_name": "Health Potion",
+      "result_item_type": "consumable",
+      "result_item_data": {
+        "rarity": "common",
+        "healing": 50,
+        "quality": "standard",
+        "description": "Restores 50 health points when consumed.",
+        "weight": 0.2,
+        "consumable": true
+      },
+      "result_quantity": 1,
+      "crafting_time": 5,
+      "experience_gain": 15
+    },
+    {
+      "recipe_id": "recipe_mana_potion",
+      "name": "Mana Potion",
+      "profession": "alchemist",
+      "category": "potion",
+      "required_level": 1,
+      "difficulty": 1,
+      "ingredients": [
+        {"item_name": "Blue Herbs", "quantity": 2},
+        {"item_name": "Empty Vial", "quantity": 1}
+      ],
+      "result_item_name": "Mana Potion",
+      "result_item_type": "consumable",
+      "result_item_data": {
+        "rarity": "common",
+        "mana_restore": 50,
+        "quality": "standard",
+        "description": "Restores 50 mana points when consumed.",
+        "weight": 0.2,
+        "consumable": true
+      },
+      "result_quantity": 1,
+      "crafting_time": 5,
+      "experience_gain": 15
+    },
+    {
+      "recipe_id": "recipe_greater_health_potion",
+      "name": "Greater Health Potion",
+      "profession": "alchemist",
+      "category": "potion",
+      "required_level": 3,
+      "difficulty": 2,
+      "ingredients": [
+        {"item_name": "Red Herbs", "quantity": 4},
+        {"item_name": "Crystal Dust", "quantity": 1},
+        {"item_name": "Empty Vial", "quantity": 1}
+      ],
+      "result_item_name": "Greater Health Potion",
+      "result_item_type": "consumable",
+      "result_item_data": {
+        "rarity": "uncommon",
+        "healing": 150,
+        "quality": "fine",
+        "description": "Restores 150 health points when consumed.",
+        "weight": 0.3,
+        "consumable": true
+      },
+      "result_quantity": 1,
+      "crafting_time": 8,
+      "experience_gain": 30
+    }
+  ],
+  "tailor_recipes": [
+    {
+      "recipe_id": "recipe_cloth_tunic",
+      "name": "Cloth Tunic",
+      "profession": "tailor",
+      "category": "armor",
+      "required_level": 1,
+      "difficulty": 1,
+      "ingredients": [
+        {"item_name": "Cloth Bolt", "quantity": 3},
+        {"item_name": "Thread", "quantity": 2}
+      ],
+      "result_item_name": "Cloth Tunic",
+      "result_item_type": "armor",
+      "result_item_data": {
+        "rarity": "common",
+        "defense": 2,
+        "material": "Cloth",
+        "quality": "standard",
+        "description": "A simple cloth tunic providing light protection.",
+        "weight": 1.0,
+        "equipment_slot": "chest"
+      },
+      "result_quantity": 1,
+      "crafting_time": 8,
+      "experience_gain": 20
+    },
+    {
+      "recipe_id": "recipe_leather_armor",
+      "name": "Leather Armor",
+      "profession": "tailor",
+      "category": "armor",
+      "required_level": 3,
+      "difficulty": 2,
+      "ingredients": [
+        {"item_name": "Leather", "quantity": 8},
+        {"item_name": "Thread", "quantity": 5},
+        {"item_name": "Buckle", "quantity": 3}
+      ],
+      "result_item_name": "Leather Armor",
+      "result_item_type": "armor",
+      "result_item_data": {
+        "rarity": "uncommon",
+        "defense": 8,
+        "dexterity": 2,
+        "material": "Leather",
+        "quality": "fine",
+        "description": "Flexible leather armor that doesn't restrict movement.",
+        "weight": 5.0,
+        "equipment_slot": "chest"
+      },
+      "result_quantity": 1,
+      "crafting_time": 15,
+      "experience_gain": 35
+    }
+  ],
+  "carpenter_recipes": [
+    {
+      "recipe_id": "recipe_wooden_shield",
+      "name": "Wooden Shield",
+      "profession": "carpenter",
+      "category": "shield",
+      "required_level": 1,
+      "difficulty": 1,
+      "ingredients": [
+        {"item_name": "Wood Plank", "quantity": 5},
+        {"item_name": "Iron Nails", "quantity": 10}
+      ],
+      "result_item_name": "Wooden Shield",
+      "result_item_type": "armor",
+      "result_item_data": {
+        "rarity": "common",
+        "defense": 4,
+        "material": "Wood",
+        "quality": "standard",
+        "description": "A basic wooden shield for blocking attacks.",
+        "weight": 4.0,
+        "equipment_slot": "offhand"
+      },
+      "result_quantity": 1,
+      "crafting_time": 10,
+      "experience_gain": 20
+    },
+    {
+      "recipe_id": "recipe_longbow",
+      "name": "Longbow",
+      "profession": "carpenter",
+      "category": "weapon",
+      "required_level": 2,
+      "difficulty": 2,
+      "ingredients": [
+        {"item_name": "Flexible Wood", "quantity": 1},
+        {"item_name": "Bowstring", "quantity": 1},
+        {"item_name": "Wood Plank", "quantity": 2}
+      ],
+      "result_item_name": "Longbow",
+      "result_item_type": "weapon",
+      "result_item_data": {
+        "rarity": "common",
+        "damage": 12,
+        "range": "long",
+        "material": "Yew Wood",
+        "quality": "standard",
+        "description": "A well-crafted longbow with good range.",
+        "weight": 2.0,
+        "weapon_type": "ranged"
+      },
+      "result_quantity": 1,
+      "crafting_time": 12,
+      "experience_gain": 25
+    }
+  ],
+  "jeweler_recipes": [
+    {
+      "recipe_id": "recipe_silver_ring",
+      "name": "Silver Ring",
+      "profession": "jeweler",
+      "category": "accessory",
+      "required_level": 1,
+      "difficulty": 1,
+      "ingredients": [
+        {"item_name": "Silver Bar", "quantity": 1}
+      ],
+      "result_item_name": "Silver Ring",
+      "result_item_type": "accessory",
+      "result_item_data": {
+        "rarity": "common",
+        "charisma": 1,
+        "material": "Silver",
+        "quality": "standard",
+        "description": "A simple silver ring.",
+        "weight": 0.1,
+        "equipment_slot": "ring",
+        "value": 50
+      },
+      "result_quantity": 1,
+      "crafting_time": 8,
+      "experience_gain": 15
+    },
+    {
+      "recipe_id": "recipe_gold_amulet",
+      "name": "Gold Amulet",
+      "profession": "jeweler",
+      "category": "accessory",
+      "required_level": 4,
+      "difficulty": 3,
+      "ingredients": [
+        {"item_name": "Gold Bar", "quantity": 2},
+        {"item_name": "Gem", "quantity": 1},
+        {"item_name": "Chain", "quantity": 1}
+      ],
+      "result_item_name": "Gold Amulet",
+      "result_item_type": "accessory",
+      "result_item_data": {
+        "rarity": "rare",
+        "intelligence": 3,
+        "wisdom": 2,
+        "material": "Gold",
+        "quality": "excellent",
+        "description": "A beautiful gold amulet set with a precious gem.",
+        "weight": 0.3,
+        "equipment_slot": "collar",
+        "value": 500
+      },
+      "result_quantity": 1,
+      "crafting_time": 20,
+      "experience_gain": 60
+    }
+  ]
+}

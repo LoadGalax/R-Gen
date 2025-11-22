@@ -70,6 +70,8 @@ class GameDatabase:
                     constitution INTEGER DEFAULT 10,
                     wisdom INTEGER DEFAULT 10,
                     charisma INTEGER DEFAULT 10,
+                    carrying_capacity REAL DEFAULT 0.0,
+                    max_carrying_capacity REAL DEFAULT 100.0,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE
                 )
@@ -85,8 +87,46 @@ class GameDatabase:
                     quantity INTEGER DEFAULT 1,
                     equipped INTEGER DEFAULT 0,
                     data TEXT NOT NULL,
+                    weight REAL DEFAULT 1.0,
+                    durability INTEGER DEFAULT 100,
+                    max_durability INTEGER DEFAULT 100,
                     acquired_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE
+                )
+            """)
+
+            # Recipes table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS recipes (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    recipe_id TEXT UNIQUE NOT NULL,
+                    name TEXT NOT NULL,
+                    profession TEXT NOT NULL,
+                    category TEXT NOT NULL,
+                    required_level INTEGER DEFAULT 1,
+                    difficulty INTEGER DEFAULT 1,
+                    ingredients TEXT NOT NULL,
+                    result_item_name TEXT NOT NULL,
+                    result_item_type TEXT NOT NULL,
+                    result_item_data TEXT NOT NULL,
+                    result_quantity INTEGER DEFAULT 1,
+                    crafting_time INTEGER DEFAULT 5,
+                    experience_gain INTEGER DEFAULT 10,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+
+            # Player known recipes table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS player_known_recipes (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    player_id INTEGER NOT NULL,
+                    recipe_id TEXT NOT NULL,
+                    learned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    times_crafted INTEGER DEFAULT 0,
+                    UNIQUE(player_id, recipe_id),
+                    FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE,
+                    FOREIGN KEY (recipe_id) REFERENCES recipes(recipe_id) ON DELETE CASCADE
                 )
             """)
 
@@ -224,7 +264,7 @@ class GameDatabase:
             cursor.execute("""
                 SELECT health, max_health, mana, max_mana, energy, max_energy,
                        strength, dexterity, intelligence, constitution, wisdom, charisma,
-                       updated_at
+                       carrying_capacity, max_carrying_capacity, updated_at
                 FROM player_stats WHERE player_id = ?
             """, (player_id,))
 
@@ -239,7 +279,8 @@ class GameDatabase:
             cursor = conn.cursor()
 
             allowed_fields = ['health', 'max_health', 'mana', 'max_mana', 'energy', 'max_energy',
-                            'strength', 'dexterity', 'intelligence', 'constitution', 'wisdom', 'charisma']
+                            'strength', 'dexterity', 'intelligence', 'constitution', 'wisdom', 'charisma',
+                            'carrying_capacity', 'max_carrying_capacity']
 
             set_clauses = []
             params = []
@@ -271,7 +312,8 @@ class GameDatabase:
         with self._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT id, item_name, item_type, quantity, equipped, data, acquired_at
+                SELECT id, item_name, item_type, quantity, equipped, data, weight,
+                       durability, max_durability, acquired_at
                 FROM player_inventory WHERE player_id = ?
                 ORDER BY acquired_at DESC
             """, (player_id,))
@@ -316,17 +358,44 @@ class GameDatabase:
             return [dict(row) for row in cursor.fetchall()]
 
     def add_to_inventory(self, player_id: int, item_name: str, item_type: str,
-                        item_data: Dict[str, Any], quantity: int = 1) -> int:
-        """Add item to inventory."""
+                        item_data: Dict[str, Any], quantity: int = 1, weight: float = 1.0,
+                        durability: Optional[int] = None, max_durability: Optional[int] = None) -> int:
+        """Add item to inventory. Auto-stacks if similar item exists."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("""
-                INSERT INTO player_inventory (player_id, item_name, item_type, quantity, data)
-                VALUES (?, ?, ?, ?, ?)
-            """, (player_id, item_name, item_type, quantity, json.dumps(item_data)))
 
-            conn.commit()
-            return cursor.lastrowid
+            # Set default durability values
+            if durability is None:
+                durability = 100
+            if max_durability is None:
+                max_durability = 100
+
+            # Try to find similar item to stack with
+            cursor.execute("""
+                SELECT id, quantity FROM player_inventory
+                WHERE player_id = ? AND item_name = ? AND item_type = ? AND equipped = 0
+                LIMIT 1
+            """, (player_id, item_name, item_type))
+
+            existing = cursor.fetchone()
+            if existing:
+                # Stack with existing item
+                cursor.execute("""
+                    UPDATE player_inventory
+                    SET quantity = quantity + ?
+                    WHERE id = ? AND player_id = ?
+                """, (quantity, existing['id'], player_id))
+                conn.commit()
+                return existing['id']
+            else:
+                # Add as new item
+                cursor.execute("""
+                    INSERT INTO player_inventory (player_id, item_name, item_type, quantity, data, weight, durability, max_durability)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """, (player_id, item_name, item_type, quantity, json.dumps(item_data), weight, durability, max_durability))
+
+                conn.commit()
+                return cursor.lastrowid
 
     def remove_from_inventory(self, player_id: int, inventory_id: int,
                              quantity: Optional[int] = None) -> bool:
@@ -363,7 +432,7 @@ class GameDatabase:
         with self._get_connection() as conn:
             cursor = conn.cursor()
 
-            allowed_fields = ['equipped', 'quantity']
+            allowed_fields = ['equipped', 'quantity', 'durability', 'max_durability']
             set_clauses = []
             params = []
 
@@ -381,6 +450,19 @@ class GameDatabase:
             cursor.execute(query, params)
             conn.commit()
             return cursor.rowcount > 0
+
+    def calculate_carrying_weight(self, player_id: int) -> float:
+        """Calculate total carrying weight for a player."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT SUM(weight * quantity) as total_weight
+                FROM player_inventory
+                WHERE player_id = ?
+            """, (player_id,))
+
+            row = cursor.fetchone()
+            return row['total_weight'] if row['total_weight'] else 0.0
 
     # ===================================================================
     # Player Professions Management
@@ -530,5 +612,161 @@ class GameDatabase:
         with self._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("DELETE FROM settings WHERE key = ?", (key,))
+            conn.commit()
+            return cursor.rowcount > 0
+
+    # ===================================================================
+    # Recipe Management
+    # ===================================================================
+
+    def add_recipe(self, recipe_id: str, name: str, profession: str, category: str,
+                   required_level: int, difficulty: int, ingredients: List[Dict[str, Any]],
+                   result_item_name: str, result_item_type: str, result_item_data: Dict[str, Any],
+                   result_quantity: int = 1, crafting_time: int = 5, experience_gain: int = 10) -> int:
+        """Add a recipe to the database."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO recipes (recipe_id, name, profession, category, required_level, difficulty,
+                                   ingredients, result_item_name, result_item_type, result_item_data,
+                                   result_quantity, crafting_time, experience_gain)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (recipe_id, name, profession, category, required_level, difficulty,
+                  json.dumps(ingredients), result_item_name, result_item_type,
+                  json.dumps(result_item_data), result_quantity, crafting_time, experience_gain))
+
+            conn.commit()
+            return cursor.lastrowid
+
+    def get_all_recipes(self) -> List[Dict[str, Any]]:
+        """Get all recipes."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT recipe_id, name, profession, category, required_level, difficulty,
+                       ingredients, result_item_name, result_item_type, result_item_data,
+                       result_quantity, crafting_time, experience_gain, created_at
+                FROM recipes
+                ORDER BY profession, required_level
+            """)
+
+            recipes = []
+            for row in cursor.fetchall():
+                recipe = dict(row)
+                try:
+                    recipe['ingredients'] = json.loads(recipe['ingredients'])
+                    recipe['result_item_data'] = json.loads(recipe['result_item_data'])
+                except:
+                    recipe['ingredients'] = []
+                    recipe['result_item_data'] = {}
+                recipes.append(recipe)
+
+            return recipes
+
+    def get_recipes_by_profession(self, profession: str) -> List[Dict[str, Any]]:
+        """Get recipes for a specific profession."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT recipe_id, name, profession, category, required_level, difficulty,
+                       ingredients, result_item_name, result_item_type, result_item_data,
+                       result_quantity, crafting_time, experience_gain, created_at
+                FROM recipes
+                WHERE profession = ?
+                ORDER BY required_level
+            """, (profession,))
+
+            recipes = []
+            for row in cursor.fetchall():
+                recipe = dict(row)
+                try:
+                    recipe['ingredients'] = json.loads(recipe['ingredients'])
+                    recipe['result_item_data'] = json.loads(recipe['result_item_data'])
+                except:
+                    recipe['ingredients'] = []
+                    recipe['result_item_data'] = {}
+                recipes.append(recipe)
+
+            return recipes
+
+    def get_recipe_by_id(self, recipe_id: str) -> Optional[Dict[str, Any]]:
+        """Get a specific recipe by ID."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT recipe_id, name, profession, category, required_level, difficulty,
+                       ingredients, result_item_name, result_item_type, result_item_data,
+                       result_quantity, crafting_time, experience_gain, created_at
+                FROM recipes
+                WHERE recipe_id = ?
+            """, (recipe_id,))
+
+            row = cursor.fetchone()
+            if row:
+                recipe = dict(row)
+                try:
+                    recipe['ingredients'] = json.loads(recipe['ingredients'])
+                    recipe['result_item_data'] = json.loads(recipe['result_item_data'])
+                except:
+                    recipe['ingredients'] = []
+                    recipe['result_item_data'] = {}
+                return recipe
+            return None
+
+    # ===================================================================
+    # Player Known Recipes Management
+    # ===================================================================
+
+    def add_player_recipe(self, player_id: int, recipe_id: str) -> int:
+        """Add a recipe to player's known recipes."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO player_known_recipes (player_id, recipe_id)
+                VALUES (?, ?)
+                ON CONFLICT(player_id, recipe_id) DO NOTHING
+            """, (player_id, recipe_id))
+
+            conn.commit()
+            return cursor.lastrowid
+
+    def get_player_known_recipes(self, player_id: int) -> List[Dict[str, Any]]:
+        """Get all recipes known by a player."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT pkr.recipe_id, pkr.learned_at, pkr.times_crafted,
+                       r.name, r.profession, r.category, r.required_level, r.difficulty,
+                       r.ingredients, r.result_item_name, r.result_item_type, r.result_item_data,
+                       r.result_quantity, r.crafting_time, r.experience_gain
+                FROM player_known_recipes pkr
+                JOIN recipes r ON pkr.recipe_id = r.recipe_id
+                WHERE pkr.player_id = ?
+                ORDER BY r.profession, r.required_level
+            """, (player_id,))
+
+            recipes = []
+            for row in cursor.fetchall():
+                recipe = dict(row)
+                try:
+                    recipe['ingredients'] = json.loads(recipe['ingredients'])
+                    recipe['result_item_data'] = json.loads(recipe['result_item_data'])
+                except:
+                    recipe['ingredients'] = []
+                    recipe['result_item_data'] = {}
+                recipes.append(recipe)
+
+            return recipes
+
+    def increment_recipe_craft_count(self, player_id: int, recipe_id: str) -> bool:
+        """Increment the times_crafted counter for a recipe."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                UPDATE player_known_recipes
+                SET times_crafted = times_crafted + 1
+                WHERE player_id = ? AND recipe_id = ?
+            """, (player_id, recipe_id))
+
             conn.commit()
             return cursor.rowcount > 0

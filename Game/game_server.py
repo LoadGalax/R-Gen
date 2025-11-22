@@ -48,6 +48,54 @@ def get_db():
         db = GameDatabase()
     return db
 
+def initialize_starter_recipes():
+    """Load starter recipes from JSON file into the database."""
+    database = get_db()
+
+    # Check if recipes are already loaded
+    existing_recipes = database.get_all_recipes()
+    if existing_recipes:
+        print(f"Recipes already loaded ({len(existing_recipes)} recipes found)")
+        return
+
+    # Load starter recipes
+    recipes_file = data_dir / "starter_recipes.json"
+    if not recipes_file.exists():
+        print("Warning: starter_recipes.json not found, skipping recipe initialization")
+        return
+
+    try:
+        with open(recipes_file, 'r') as f:
+            recipes_data = json.load(f)
+
+        total_loaded = 0
+        for profession_key, recipes in recipes_data.items():
+            for recipe in recipes:
+                try:
+                    database.add_recipe(
+                        recipe_id=recipe['recipe_id'],
+                        name=recipe['name'],
+                        profession=recipe['profession'],
+                        category=recipe['category'],
+                        required_level=recipe['required_level'],
+                        difficulty=recipe['difficulty'],
+                        ingredients=recipe['ingredients'],
+                        result_item_name=recipe['result_item_name'],
+                        result_item_type=recipe['result_item_type'],
+                        result_item_data=recipe['result_item_data'],
+                        result_quantity=recipe['result_quantity'],
+                        crafting_time=recipe['crafting_time'],
+                        experience_gain=recipe['experience_gain']
+                    )
+                    total_loaded += 1
+                except Exception as e:
+                    print(f"Failed to load recipe {recipe.get('name', 'unknown')}: {str(e)}")
+
+        print(f"Successfully loaded {total_loaded} starter recipes")
+
+    except Exception as e:
+        print(f"Error loading starter recipes: {str(e)}")
+
 def get_or_create_world():
     """Get or create world instance."""
     global world
@@ -577,7 +625,18 @@ def get_player_inventory():
             except json.JSONDecodeError:
                 item['item_data'] = {}
 
-    return jsonify({'inventory': inventory})
+    # Calculate and update carrying weight
+    total_weight = database.calculate_carrying_weight(player_id)
+    database.update_player_stats(player_id, {'carrying_capacity': total_weight})
+
+    # Get player stats for capacity info
+    stats = database.get_player_stats(player_id)
+
+    return jsonify({
+        'inventory': inventory,
+        'carrying_capacity': total_weight,
+        'max_carrying_capacity': stats.get('max_carrying_capacity', 100.0) if stats else 100.0
+    })
 
 @app.route('/api/player/inventory', methods=['POST'])
 @login_required
@@ -593,18 +652,42 @@ def add_to_player_inventory():
             return jsonify({'error': f'Missing required field: {field}'}), 400
 
     try:
+        # Get weight from item_data or default to 1.0
+        weight = data['item_data'].get('weight', 1.0)
+        quantity = data.get('quantity', 1)
+
+        # Check carrying capacity
+        stats = database.get_player_stats(player_id)
+        current_weight = database.calculate_carrying_weight(player_id)
+        max_capacity = stats.get('max_carrying_capacity', 100.0) if stats else 100.0
+
+        new_weight = current_weight + (weight * quantity)
+        if new_weight > max_capacity:
+            return jsonify({
+                'error': 'Not enough carrying capacity',
+                'current_weight': current_weight,
+                'max_capacity': max_capacity,
+                'needed_weight': weight * quantity
+            }), 400
+
         inventory_id = database.add_to_inventory(
             player_id=player_id,
             item_name=data['item_name'],
             item_type=data['item_type'],
             item_data=data['item_data'],
-            quantity=data.get('quantity', 1)
+            quantity=quantity,
+            weight=weight
         )
+
+        # Update carrying capacity
+        database.update_player_stats(player_id, {'carrying_capacity': new_weight})
 
         return jsonify({
             'success': True,
             'message': 'Item added to inventory',
-            'inventory_id': inventory_id
+            'inventory_id': inventory_id,
+            'carrying_capacity': new_weight,
+            'max_carrying_capacity': max_capacity
         }), 201
 
     except Exception as e:
@@ -779,30 +862,181 @@ def update_player_profession(profession_id):
 
 @app.route('/api/recipes', methods=['GET'])
 def get_all_recipes():
-    """Get all recipes (placeholder - to be generated from GenerationEngine)."""
-    # TODO: Generate recipes dynamically from GenerationEngine
-    return jsonify({'recipes': []})
+    """Get all available recipes."""
+    database = get_db()
+    recipes = database.get_all_recipes()
+    return jsonify({'recipes': recipes})
+
+@app.route('/api/recipes/profession/<profession>', methods=['GET'])
+def get_recipes_by_profession(profession):
+    """Get recipes for a specific profession."""
+    database = get_db()
+    recipes = database.get_recipes_by_profession(profession)
+    return jsonify({'recipes': recipes})
 
 @app.route('/api/player/recipes', methods=['GET'])
 @login_required
 def get_player_recipes():
-    """Get player's known recipes (placeholder)."""
-    # TODO: Generate recipes based on player professions
-    return jsonify({'recipes': []})
+    """Get player's known recipes."""
+    database = get_db()
+    player_id = session['player_id']
+
+    known_recipes = database.get_player_known_recipes(player_id)
+    return jsonify({'recipes': known_recipes})
 
 @app.route('/api/player/recipes', methods=['POST'])
 @login_required
 def add_player_recipe():
-    """Add a recipe to player's known recipes (placeholder)."""
-    # TODO: Implement recipe learning
-    return jsonify({'success': True, 'message': 'Recipe system coming soon'})
+    """Add a recipe to player's known recipes."""
+    data = request.get_json()
+    database = get_db()
+    player_id = session['player_id']
+
+    if 'recipe_id' not in data:
+        return jsonify({'error': 'Missing recipe_id'}), 400
+
+    # Check if recipe exists
+    recipe = database.get_recipe_by_id(data['recipe_id'])
+    if not recipe:
+        return jsonify({'error': 'Recipe not found'}), 404
+
+    # Check if player has the required profession
+    player_professions = database.get_player_professions(player_id)
+    has_profession = any(p['profession_id'] == recipe['profession'] for p in player_professions)
+
+    if not has_profession:
+        return jsonify({'error': f'You need the {recipe["profession"]} profession to learn this recipe'}), 400
+
+    try:
+        database.add_player_recipe(player_id, data['recipe_id'])
+        return jsonify({'success': True, 'message': 'Recipe learned successfully'})
+    except Exception as e:
+        return jsonify({'error': f'Failed to learn recipe: {str(e)}'}), 500
 
 @app.route('/api/craft', methods=['POST'])
 @login_required
 def craft_item():
-    """Craft an item from a recipe (placeholder)."""
-    # TODO: Implement crafting with GenerationEngine
-    return jsonify({'success': False, 'message': 'Crafting system coming soon'})
+    """Craft an item from a recipe."""
+    data = request.get_json()
+    database = get_db()
+    player_id = session['player_id']
+
+    if 'recipe_id' not in data:
+        return jsonify({'error': 'Missing recipe_id'}), 400
+
+    # Get the recipe
+    recipe = database.get_recipe_by_id(data['recipe_id'])
+    if not recipe:
+        return jsonify({'error': 'Recipe not found'}), 404
+
+    # Check if player knows this recipe
+    known_recipes = database.get_player_known_recipes(player_id)
+    knows_recipe = any(r['recipe_id'] == data['recipe_id'] for r in known_recipes)
+
+    if not knows_recipe:
+        return jsonify({'error': 'You do not know this recipe'}), 400
+
+    # Check if player has required profession level
+    player_professions = database.get_player_professions(player_id)
+    profession = next((p for p in player_professions if p['profession_id'] == recipe['profession']), None)
+
+    if not profession:
+        return jsonify({'error': f'You need the {recipe["profession"]} profession'}), 400
+
+    if profession['level'] < recipe['required_level']:
+        return jsonify({
+            'error': f'Requires {recipe["profession"]} level {recipe["required_level"]} (you are level {profession["level"]})'
+        }), 400
+
+    # Get player inventory
+    inventory = database.get_player_inventory(player_id)
+
+    # Check if player has all required ingredients
+    missing_ingredients = []
+    inventory_updates = []
+
+    for ingredient in recipe['ingredients']:
+        item_name = ingredient['item_name']
+        required_qty = ingredient['quantity']
+
+        # Find item in inventory
+        inv_item = next((item for item in inventory if item['item_name'] == item_name), None)
+
+        if not inv_item or inv_item['quantity'] < required_qty:
+            current_qty = inv_item['quantity'] if inv_item else 0
+            missing_ingredients.append({
+                'item_name': item_name,
+                'required': required_qty,
+                'have': current_qty
+            })
+        else:
+            inventory_updates.append({
+                'id': inv_item['id'],
+                'name': item_name,
+                'remove_qty': required_qty,
+                'current_qty': inv_item['quantity']
+            })
+
+    if missing_ingredients:
+        return jsonify({
+            'error': 'Missing required ingredients',
+            'missing_ingredients': missing_ingredients
+        }), 400
+
+    try:
+        # Remove ingredients from inventory
+        for update in inventory_updates:
+            database.remove_from_inventory(player_id, update['id'], update['remove_qty'])
+
+        # Add crafted item to inventory
+        result_data = recipe['result_item_data'].copy()
+        inventory_id = database.add_to_inventory(
+            player_id=player_id,
+            item_name=recipe['result_item_name'],
+            item_type=recipe['result_item_type'],
+            item_data=result_data,
+            quantity=recipe['result_quantity'],
+            weight=result_data.get('weight', 1.0)
+        )
+
+        # Increment craft count
+        database.increment_recipe_craft_count(player_id, data['recipe_id'])
+
+        # Award experience to profession
+        new_xp = profession['experience'] + recipe['experience_gain']
+        database.update_player_profession(
+            player_id,
+            recipe['profession'],
+            experience=new_xp
+        )
+
+        # Check for level up (simple: every 100 XP = 1 level)
+        new_level = profession['level']
+        if new_xp >= (profession['level'] * 100):
+            new_level = profession['level'] + 1
+            database.update_player_profession(
+                player_id,
+                recipe['profession'],
+                level=new_level,
+                experience=new_xp
+            )
+
+        return jsonify({
+            'success': True,
+            'message': f'Successfully crafted {recipe["result_item_name"]}!',
+            'crafted_item': {
+                'name': recipe['result_item_name'],
+                'type': recipe['result_item_type'],
+                'quantity': recipe['result_quantity'],
+                'inventory_id': inventory_id
+            },
+            'profession_experience_gained': recipe['experience_gain'],
+            'profession_level': new_level,
+            'profession_experience': new_xp
+        })
+
+    except Exception as e:
+        return jsonify({'error': f'Crafting failed: {str(e)}'}), 500
 
 @app.route('/api/player/update', methods=['PATCH'])
 @login_required
@@ -2214,6 +2448,11 @@ if __name__ == '__main__':
     print("\nStarting server...")
     print("Game will be available at: http://localhost:5000")
     print("Press Ctrl+C to stop\n")
+
+    # Initialize database and load starter recipes
+    print("Initializing database...")
+    get_db()
+    initialize_starter_recipes()
 
     # Create world on startup
     get_or_create_world()
