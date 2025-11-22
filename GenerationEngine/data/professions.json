@@ -128,7 +128,7 @@
       "This {trait} {race} sentinel maintains a {tactile_adjective} watch over the area.",
       "A {trait} {race} {title} with a {visual_adjective} weapon at their side."
     ],
-    "inventory_set": "warrior_inventory",
+    "inventory_set": "guard_inventory",
     "typical_locations": [
       "gate",
       "barracks",
@@ -350,7 +350,7 @@
       "This {trait} {race} host maintains a {visual_adjective} establishment.",
       "A {trait} {race} {title} who greets everyone with {tactile_adjective} hospitality."
     ],
-    "inventory_set": "merchant_inventory",
+    "inventory_set": "innkeeper_inventory",
     "typical_locations": [
       "tavern",
       "inn"
@@ -496,7 +496,7 @@
       "This {trait} {race} alchemist has a {tactile_adjective} precision in their movements.",
       "A {trait} {race} {title} whose workspace is filled with {visual_adjective} ingredients."
     ],
-    "inventory_set": "mage_inventory",
+    "inventory_set": "alchemist_inventory",
     "typical_locations": [
       "workshop",
       "market",
@@ -570,7 +570,7 @@
       "This {trait} {race} priest radiates a {tactile_adjective} aura of divinity.",
       "A {trait} {race} {title} who carries {visual_adjective} religious texts."
     ],
-    "inventory_set": "mage_inventory",
+    "inventory_set": "cleric_inventory",
     "typical_locations": [
       "temple",
       "shrine",
@@ -790,7 +790,7 @@
       "This {trait} {race} rogue has {visual_adjective} features hidden beneath a hood.",
       "A {trait} {race} {title} whose movements are {tactile_adjective} and silent."
     ],
-    "inventory_set": "merchant_inventory",
+    "inventory_set": "thief_inventory",
     "typical_locations": [
       "alley",
       "market",
@@ -936,7 +936,7 @@
       "This {trait} {race} woodworker has {tactile_adjective} calloused hands.",
       "A {trait} {race} {title} surrounded by {visual_adjective} wooden creations."
     ],
-    "inventory_set": "blacksmith_inventory",
+    "inventory_set": "carpenter_inventory",
     "typical_locations": [
       "workshop",
       "market",
@@ -1155,7 +1155,7 @@
       "This {trait} {race} farmer has a {tactile_adjective} connection to the land.",
       "A {trait} {race} {title} working {visual_adjective} fields."
     ],
-    "inventory_set": "merchant_inventory",
+    "inventory_set": "farmer_inventory",
     "typical_locations": [
       "farmland",
       "village",
@@ -1309,7 +1309,7 @@
       "This {trait} {race} tracker moves with {tactile_adjective} stealth.",
       "A {trait} {race} {title} with {visual_adjective} keen eyes."
     ],
-    "inventory_set": "warrior_inventory",
+    "inventory_set": "hunter_inventory",
     "typical_locations": [
       "forest",
       "wilderness",
@@ -2620,7 +2620,7 @@
       "This {trait} {race} delver has {tactile_adjective} powerful arms.",
       "A {trait} {race} {title} carrying {visual_adjective} mining tools."
     ],
-    "inventory_set": "blacksmith_inventory",
+    "inventory_set": "miner_inventory",
     "typical_locations": [
       "mine",
       "quarry",
@@ -3149,6 +3149,472 @@
           "weight": 5
         }
       ]
+    }
+  },
+  "goblin": {
+    "title": "Goblin",
+    "use_race_names": false,
+    "possible_races": [
+      "goblin",
+      "half_orc"
+    ],
+    "possible_factions": [
+      "blood_clans",
+      "shadow_syndicate"
+    ],
+    "first_names": [
+      "Grik",
+      "Snark",
+      "Zik",
+      "Grot",
+      "Snik",
+      "Krik"
+    ],
+    "last_names": [
+      "the Sneaky",
+      "Sharpknife",
+      "Backstabber",
+      "Raider",
+      "Thief"
+    ],
+    "skills": [
+      "Stealth",
+      "Ambush",
+      "Backstab",
+      "Scavenging"
+    ],
+    "base_stats": {
+      "Strength": 4,
+      "Dexterity": 8,
+      "Constitution": 5,
+      "Intelligence": 4,
+      "Wisdom": 4,
+      "Charisma": 3
+    },
+    "dialogue_hooks": [
+      "Grrr... shiny!",
+      "Me stab you!",
+      "Mine! All mine!",
+      "No see me!"
+    ],
+    "description_templates": [
+      "A {trait} {race} with {visual_adjective} green skin and beady eyes.",
+      "This {trait} goblin brandishes {visual_adjective} crude weapons.",
+      "A {trait} goblin warrior with {tactile_adjective} movements."
+    ],
+    "inventory_set": "goblin_inventory",
+    "typical_locations": [
+      "cave",
+      "forest",
+      "ruins"
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.2,
+      "preferred_pets": [
+        {
+          "species": "Rat",
+          "weight": 10
+        },
+        {
+          "species": "Wolf",
+          "weight": 5
+        }
+      ]
+    }
+  },
+  "skeleton": {
+    "title": "Skeleton Warrior",
+    "use_race_names": false,
+    "possible_races": [
+      "undead",
+      "human"
+    ],
+    "possible_factions": [
+      "shadow_syndicate"
+    ],
+    "first_names": [
+      "Ancient",
+      "Restless",
+      "Cursed",
+      "Hollow",
+      "Bone",
+      "Grave"
+    ],
+    "last_names": [
+      "Warrior",
+      "Guardian",
+      "Sentinel",
+      "Bones",
+      "the Dead"
+    ],
+    "skills": [
+      "Combat",
+      "Endurance",
+      "Relentless",
+      "Undead"
+    ],
+    "base_stats": {
+      "Strength": 6,
+      "Dexterity": 5,
+      "Constitution": 8,
+      "Intelligence": 2,
+      "Wisdom": 2,
+      "Charisma": 1
+    },
+    "dialogue_hooks": [
+      "*rattle rattle*",
+      "*bony clacking*",
+      "...",
+      "*silent menace*"
+    ],
+    "description_templates": [
+      "A {trait} animated skeleton with {visual_adjective} bones.",
+      "This undead warrior moves with {tactile_adjective} jerky motions.",
+      "A skeleton in {visual_adjective} rusted armor."
+    ],
+    "inventory_set": "skeleton_inventory",
+    "typical_locations": [
+      "crypt",
+      "tomb",
+      "graveyard"
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.0,
+      "preferred_pets": []
+    }
+  },
+  "orc": {
+    "title": "Orc Warrior",
+    "use_race_names": false,
+    "possible_races": [
+      "orc",
+      "half_orc"
+    ],
+    "possible_factions": [
+      "blood_clans",
+      "iron_legion"
+    ],
+    "first_names": [
+      "Gruk",
+      "Throg",
+      "Urak",
+      "Morg",
+      "Krag",
+      "Dorg"
+    ],
+    "last_names": [
+      "Skullsplitter",
+      "Bonecrusher",
+      "the Fierce",
+      "Bloodaxe",
+      "Ironjaw"
+    ],
+    "skills": [
+      "Combat",
+      "Intimidation",
+      "Endurance",
+      "Rage"
+    ],
+    "base_stats": {
+      "Strength": 8,
+      "Dexterity": 5,
+      "Constitution": 8,
+      "Intelligence": 3,
+      "Wisdom": 4,
+      "Charisma": 3
+    },
+    "dialogue_hooks": [
+      "Puny humans!",
+      "Me crush you!",
+      "Blood for the clan!",
+      "You die now!"
+    ],
+    "description_templates": [
+      "A {trait} {race} with {visual_adjective} tusks and muscular build.",
+      "This fierce orc wields {visual_adjective} brutal weapons.",
+      "A {trait} orc warrior covered in {tactile_adjective} battle scars."
+    ],
+    "inventory_set": "orc_inventory",
+    "typical_locations": [
+      "mountain",
+      "battlefield",
+      "stronghold"
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.3,
+      "preferred_pets": [
+        {
+          "species": "Wolf",
+          "weight": 15
+        },
+        {
+          "species": "Boar",
+          "weight": 10
+        }
+      ]
+    }
+  },
+  "bandit": {
+    "title": "Bandit",
+    "use_race_names": true,
+    "possible_races": [
+      "human",
+      "half_orc",
+      "half_elf",
+      "halfling"
+    ],
+    "possible_factions": [
+      "shadow_syndicate",
+      "free_traders"
+    ],
+    "first_names": [
+      "Dirk",
+      "Slash",
+      "Rogue",
+      "Thug",
+      "Rake",
+      "Cutpurse"
+    ],
+    "last_names": [
+      "the Outlaw",
+      "Roadthief",
+      "Blackhand",
+      "the Wanted",
+      "Highwayman"
+    ],
+    "skills": [
+      "Combat",
+      "Stealth",
+      "Intimidation",
+      "Robbery"
+    ],
+    "base_stats": {
+      "Strength": 6,
+      "Dexterity": 7,
+      "Constitution": 6,
+      "Intelligence": 5,
+      "Wisdom": 5,
+      "Charisma": 5
+    },
+    "dialogue_hooks": [
+      "Your gold or your life!",
+      "Hand over the valuables!",
+      "Don't make this harder than it needs to be.",
+      "You're in the wrong place, friend."
+    ],
+    "description_templates": [
+      "A {trait} {race} {title} wearing {visual_adjective} leather and a scarf.",
+      "This {trait} outlaw has {tactile_adjective} threatening demeanor.",
+      "A {trait} bandit armed with {visual_adjective} weapons."
+    ],
+    "inventory_set": "bandit_inventory",
+    "typical_locations": [
+      "forest",
+      "road",
+      "hideout"
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.1,
+      "preferred_pets": [
+        {
+          "species": "Dog",
+          "weight": 8
+        },
+        {
+          "species": "Horse",
+          "weight": 5
+        }
+      ]
+    }
+  },
+  "cultist": {
+    "title": "Cultist",
+    "use_race_names": true,
+    "possible_races": [
+      "human",
+      "tiefling",
+      "dark_elf"
+    ],
+    "possible_factions": [
+      "shadow_syndicate"
+    ],
+    "first_names": [
+      "Malachi",
+      "Mortis",
+      "Dread",
+      "Dark",
+      "Void",
+      "Shadow"
+    ],
+    "last_names": [
+      "the Devoted",
+      "Darkpriest",
+      "Voidcaller",
+      "the Faithful",
+      "Ritualist"
+    ],
+    "skills": [
+      "Dark Magic",
+      "Rituals",
+      "Persuasion",
+      "Curses"
+    ],
+    "base_stats": {
+      "Strength": 4,
+      "Dexterity": 5,
+      "Constitution": 5,
+      "Intelligence": 7,
+      "Wisdom": 6,
+      "Charisma": 7
+    },
+    "dialogue_hooks": [
+      "The dark gods will rise!",
+      "Join us or perish!",
+      "Your soul is ours!",
+      "The ritual must be completed!"
+    ],
+    "description_templates": [
+      "A {trait} {race} {title} wearing {visual_adjective} dark robes.",
+      "This {trait} cultist chants with {tactile_adjective} fervor.",
+      "A {trait} devotee bearing {visual_adjective} dark symbols."
+    ],
+    "inventory_set": "cultist_inventory",
+    "typical_locations": [
+      "ruins",
+      "temple",
+      "underground"
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.2,
+      "preferred_pets": [
+        {
+          "species": "Raven",
+          "weight": 10
+        },
+        {
+          "species": "Snake",
+          "weight": 8
+        }
+      ]
+    }
+  },
+  "zombie": {
+    "title": "Zombie",
+    "use_race_names": false,
+    "possible_races": [
+      "undead",
+      "human"
+    ],
+    "possible_factions": [
+      "shadow_syndicate"
+    ],
+    "first_names": [
+      "Shambling",
+      "Rotting",
+      "Hungry",
+      "Decayed",
+      "Walking",
+      "Flesh"
+    ],
+    "last_names": [
+      "Dead",
+      "Corpse",
+      "Eater",
+      "Horror",
+      "Ghoul"
+    ],
+    "skills": [
+      "Endurance",
+      "Grapple",
+      "Relentless",
+      "Undead"
+    ],
+    "base_stats": {
+      "Strength": 7,
+      "Dexterity": 3,
+      "Constitution": 9,
+      "Intelligence": 1,
+      "Wisdom": 1,
+      "Charisma": 1
+    },
+    "dialogue_hooks": [
+      "Grraaaahhh...",
+      "*moan*",
+      "Braaains...",
+      "*hungry growl*"
+    ],
+    "description_templates": [
+      "A {trait} zombie with {visual_adjective} rotting flesh.",
+      "This shambling undead moves with {tactile_adjective} unnatural gait.",
+      "A decaying corpse with {visual_adjective} hollow eyes."
+    ],
+    "inventory_set": "undead_inventory",
+    "typical_locations": [
+      "graveyard",
+      "crypt",
+      "ruins"
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.0,
+      "preferred_pets": []
+    }
+  },
+  "wolf": {
+    "title": "Wolf",
+    "use_race_names": false,
+    "possible_races": [
+      "beast"
+    ],
+    "possible_factions": [],
+    "first_names": [
+      "Dire",
+      "Gray",
+      "Fang",
+      "Snarl",
+      "Pack",
+      "Wild"
+    ],
+    "last_names": [
+      "Hunter",
+      "Stalker",
+      "Beast",
+      "Predator",
+      "Alpha"
+    ],
+    "skills": [
+      "Tracking",
+      "Bite",
+      "Pack Tactics",
+      "Stealth"
+    ],
+    "base_stats": {
+      "Strength": 6,
+      "Dexterity": 7,
+      "Constitution": 6,
+      "Intelligence": 2,
+      "Wisdom": 6,
+      "Charisma": 2
+    },
+    "dialogue_hooks": [
+      "*growl*",
+      "*howl*",
+      "*snarl*",
+      "*bark*"
+    ],
+    "description_templates": [
+      "A {trait} wolf with {visual_adjective} fur and sharp fangs.",
+      "This wild beast moves with {tactile_adjective} predatory grace.",
+      "A {trait} wolf with {visual_adjective} hungry eyes."
+    ],
+    "inventory_set": "beast_inventory",
+    "typical_locations": [
+      "forest",
+      "wilderness",
+      "mountain"
+    ],
+    "pet_ownership": {
+      "pet_chance": 0.0,
+      "preferred_pets": []
     }
   }
 }

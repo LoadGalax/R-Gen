@@ -18,6 +18,78 @@
     "potion",
     "jewelry"
   ],
+  "guard_inventory": [
+    "weapon_melee",
+    "armor"
+  ],
+  "alchemist_inventory": [
+    "potion",
+    "potion",
+    "scroll"
+  ],
+  "innkeeper_inventory": [
+    "potion"
+  ],
+  "farmer_inventory": [
+    "potion"
+  ],
+  "hunter_inventory": [
+    "weapon_ranged",
+    "weapon_melee",
+    "potion"
+  ],
+  "thief_inventory": [
+    "weapon_melee",
+    "potion",
+    "jewelry"
+  ],
+  "cleric_inventory": [
+    "scroll",
+    "potion",
+    "jewelry"
+  ],
+  "carpenter_inventory": [
+    "weapon_melee"
+  ],
+  "miner_inventory": [
+    "weapon_melee",
+    "armor"
+  ],
+  "goblin_inventory": [
+    "weapon_melee",
+    "potion"
+  ],
+  "skeleton_inventory": [
+    "weapon_melee",
+    "armor"
+  ],
+  "orc_inventory": [
+    "weapon_melee",
+    "armor"
+  ],
+  "bandit_inventory": [
+    "weapon_melee",
+    "potion",
+    "jewelry"
+  ],
+  "cultist_inventory": [
+    "scroll",
+    "weapon_melee",
+    "potion"
+  ],
+  "undead_inventory": [
+    "weapon_melee",
+    "armor"
+  ],
+  "beast_inventory": [
+    "potion"
+  ],
+  "dragon_inventory": [
+    "jewelry",
+    "jewelry",
+    "weapon_melee",
+    "armor"
+  ],
   "treasure_hoard": [
     "jewelry",
     "weapon_melee",
