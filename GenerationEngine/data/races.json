@@ -418,6 +418,146 @@
       "special_abilities": ["Breath Weapon", "Draconic Ancestry"],
       "languages": ["Common", "Draconic"],
       "appearance_traits": ["scales", "draconic_head", "clawed_hands", "tail", "imposing"]
+    },
+    "goblin": {
+      "name": "Goblin",
+      "plural": "Goblins",
+      "description": "Small, cunning creatures known for their mischief and numbers",
+      "size": "small",
+      "base_stats": {
+        "Strength": 3,
+        "Dexterity": 7,
+        "Constitution": 4,
+        "Intelligence": 3,
+        "Wisdom": 3,
+        "Charisma": 2
+      },
+      "stat_modifiers": {
+        "Dexterity": 2,
+        "Constitution": 1
+      },
+      "lifespan": {
+        "min": 20,
+        "max": 40
+      },
+      "height_range": {
+        "min": 90,
+        "max": 120
+      },
+      "first_names_male": ["Grik", "Snark", "Zik", "Grot", "Snik", "Krik", "Brak", "Zog", "Nix", "Glim"],
+      "first_names_female": ["Grika", "Snikka", "Zikka", "Gretta", "Nixie", "Krikka", "Brakka", "Zogga", "Glimra", "Snakka"],
+      "last_names": ["Backstabber", "Sharpknife", "Raider", "the Sneaky", "Thief", "Shadowfoot", "Quickhand", "Grubber", "Snatcher", "Creeper"],
+      "common_factions": ["blood_clans", "shadow_syndicate"],
+      "preferred_biomes": ["cave", "forest", "ruins", "swamp"],
+      "traits": ["Cunning", "Cowardly", "Nimble"],
+      "special_abilities": ["Nimble Escape", "Fury of the Small"],
+      "languages": ["Goblin", "Common"],
+      "appearance_traits": ["green_skin", "yellow_eyes", "pointed_ears", "sharp_teeth", "small"]
+    },
+    "skeleton": {
+      "name": "Skeleton",
+      "plural": "Skeletons",
+      "description": "Animated bones of the dead, often serving necromancers",
+      "size": "medium",
+      "base_stats": {
+        "Strength": 5,
+        "Dexterity": 5,
+        "Constitution": 6,
+        "Intelligence": 1,
+        "Wisdom": 1,
+        "Charisma": 1
+      },
+      "stat_modifiers": {
+        "Constitution": 2,
+        "Dexterity": 1
+      },
+      "lifespan": {
+        "min": 999,
+        "max": 999
+      },
+      "height_range": {
+        "min": 150,
+        "max": 180
+      },
+      "first_names_male": ["Ancient", "Restless", "Cursed", "Hollow", "Bone", "Grave", "Death", "Rattle", "Marrow", "Crypt"],
+      "first_names_female": ["Ancient", "Restless", "Cursed", "Hollow", "Bone", "Grave", "Death", "Rattle", "Marrow", "Crypt"],
+      "last_names": ["Bones", "the Dead", "Guardian", "Sentinel", "Walker", "Horror", "Terror", "Remains", "Specter", "Shade"],
+      "common_factions": ["shadow_syndicate"],
+      "preferred_biomes": ["crypt", "tomb", "graveyard", "ruins", "underground"],
+      "traits": ["Undead", "Mindless", "Tireless"],
+      "special_abilities": ["Undead Fortitude", "Mindless"],
+      "languages": [],
+      "appearance_traits": ["animated_bones", "empty_sockets", "skeletal", "lifeless", "clicking"]
+    },
+    "zombie": {
+      "name": "Zombie",
+      "plural": "Zombies",
+      "description": "Shambling corpses reanimated through dark magic",
+      "size": "medium",
+      "base_stats": {
+        "Strength": 6,
+        "Dexterity": 2,
+        "Constitution": 8,
+        "Intelligence": 1,
+        "Wisdom": 1,
+        "Charisma": 1
+      },
+      "stat_modifiers": {
+        "Constitution": 2,
+        "Strength": 1
+      },
+      "lifespan": {
+        "min": 999,
+        "max": 999
+      },
+      "height_range": {
+        "min": 155,
+        "max": 185
+      },
+      "first_names_male": ["Shambling", "Rotting", "Hungry", "Decayed", "Walking", "Flesh", "Corpse", "Undying", "Plagued", "Ghoul"],
+      "first_names_female": ["Shambling", "Rotting", "Hungry", "Decayed", "Walking", "Flesh", "Corpse", "Undying", "Plagued", "Ghoul"],
+      "last_names": ["Dead", "Corpse", "Eater", "Horror", "Terror", "Walker", "Remains", "Ghoul", "Plague", "Rotter"],
+      "common_factions": ["shadow_syndicate"],
+      "preferred_biomes": ["graveyard", "crypt", "ruins", "swamp"],
+      "traits": ["Undead", "Relentless", "Mindless"],
+      "special_abilities": ["Undead Fortitude", "Relentless"],
+      "languages": [],
+      "appearance_traits": ["rotting_flesh", "sunken_eyes", "shambling", "decayed", "moaning"]
+    },
+    "wolf": {
+      "name": "Wolf",
+      "plural": "Wolves",
+      "description": "Wild predators that hunt in packs across forests and plains",
+      "size": "medium",
+      "base_stats": {
+        "Strength": 5,
+        "Dexterity": 6,
+        "Constitution": 5,
+        "Intelligence": 1,
+        "Wisdom": 5,
+        "Charisma": 2
+      },
+      "stat_modifiers": {
+        "Dexterity": 2,
+        "Wisdom": 1
+      },
+      "lifespan": {
+        "min": 10,
+        "max": 15
+      },
+      "height_range": {
+        "min": 80,
+        "max": 100
+      },
+      "first_names_male": ["Dire", "Gray", "Fang", "Snarl", "Pack", "Wild", "Alpha", "Shadow", "Storm", "Night"],
+      "first_names_female": ["Dire", "Gray", "Fang", "Snarl", "Pack", "Wild", "Alpha", "Shadow", "Storm", "Night"],
+      "last_names": ["Hunter", "Stalker", "Beast", "Predator", "Alpha", "Runner", "Howler", "Tracker", "Fang", "Claw"],
+      "common_factions": [],
+      "preferred_biomes": ["forest", "wilderness", "mountain", "plains", "tundra"],
+      "traits": ["Predatory", "Pack-Minded", "Wild"],
+      "special_abilities": ["Pack Tactics", "Keen Senses"],
+      "languages": [],
+      "appearance_traits": ["fur", "fangs", "four_legged", "wild_eyes", "predatory"]
     }
   }
 }

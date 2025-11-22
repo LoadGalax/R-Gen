@@ -1015,6 +1015,124 @@ def create_master_npc():
     else:
         return jsonify({'error': 'Generator not available'}), 500
 
+@app.route('/api/master/enemy', methods=['POST'])
+def create_master_enemy():
+    """
+    Create a new Enemy using race + profession system.
+
+    Enemies are generated using race (what they are) and profession (what they do):
+    - Races: goblin, orc, skeleton, zombie, wolf, human, etc.
+    - Professions: warrior, bandit, cultist, thief, or none for beasts
+
+    Examples:
+    - goblin + warrior = goblin warrior
+    - skeleton + (no profession) = skeleton
+    - human + bandit = human bandit
+    - wolf + (no profession) = wolf (beasts don't need professions)
+    """
+    w = get_or_create_world()
+    data = request.get_json()
+
+    # Race determines what the enemy IS
+    race = data.get('race', 'goblin')  # goblin, skeleton, orc, zombie, wolf, human, etc.
+
+    # Profession determines what the enemy DOES (optional for beasts)
+    profession = data.get('profession', None)  # warrior, bandit, cultist, thief, or None
+
+    # If profession is provided as a string, convert to list
+    if profession and isinstance(profession, str):
+        professions = [profession] if profession else []
+    elif profession:
+        professions = profession
+    else:
+        professions = []
+
+    # Auto-assign default professions for certain races if not specified
+    if not professions:
+        default_professions = {
+            'goblin': ['warrior'],
+            'orc': ['warrior'],
+            'skeleton': [],  # No profession for undead
+            'zombie': [],    # No profession for undead
+            'wolf': [],      # No profession for beasts
+        }
+        professions = default_professions.get(race, ['warrior'])
+
+    location_id = data.get('location_id')
+    custom_name = data.get('name')  # Optional custom name
+
+    # Enemy difficulty level affects stats
+    difficulty = data.get('difficulty', 'standard')  # minion, standard, elite, boss
+
+    # Difficulty multipliers for stats
+    difficulty_multipliers = {
+        'minion': 0.5,
+        'standard': 1.0,
+        'elite': 1.5,
+        'boss': 2.5
+    }
+    multiplier = difficulty_multipliers.get(difficulty, 1.0)
+
+    # Generate enemy data using race + profession
+    if w.generator_adapter:
+        enemy_data = w.generator_adapter.spawn_npc(
+            professions=professions,
+            race=race,
+            location_id=location_id
+        )
+
+        # Override name if custom name provided
+        if custom_name:
+            enemy_data['name'] = custom_name
+
+        # Set entity type to enemy
+        enemy_data['entity_type'] = 'enemy'
+        enemy_data['enemy_type'] = difficulty
+
+        # Calculate enemy stats based on base stats and difficulty
+        base_health = enemy_data.get('stats', {}).get('Constitution', 5) * 10
+        base_attack = enemy_data.get('stats', {}).get('Strength', 5) + 5
+        base_defense = enemy_data.get('stats', {}).get('Constitution', 5)
+
+        enemy_data['max_health'] = int(base_health * multiplier)
+        enemy_data['current_health'] = enemy_data['max_health']
+        enemy_data['attack_power'] = int(base_attack * multiplier)
+        enemy_data['defense'] = int(base_defense * multiplier)
+        enemy_data['experience_reward'] = int(50 * multiplier * (1 + enemy_data.get('challenge_rating', 1)))
+
+        # Allow manual overrides
+        if 'max_health' in data:
+            enemy_data['max_health'] = data['max_health']
+            enemy_data['current_health'] = enemy_data['max_health']
+        if 'attack_power' in data:
+            enemy_data['attack_power'] = data['attack_power']
+        if 'defense' in data:
+            enemy_data['defense'] = data['defense']
+        if 'experience_reward' in data:
+            enemy_data['experience_reward'] = data['experience_reward']
+
+        # Create enemy entity
+        enemy = w.spawn_npc(enemy_data)
+
+        profession_text = f" {professions[0].title()}" if professions else ""
+        return jsonify({
+            'success': True,
+            'message': f'{difficulty.title()} {race.title()}{profession_text} created',
+            'enemy_id': enemy.id,
+            'enemy_data': {
+                'name': enemy_data['name'],
+                'race': enemy_data.get('race'),
+                'professions': enemy_data.get('professions', []),
+                'max_health': enemy_data['max_health'],
+                'attack_power': enemy_data['attack_power'],
+                'defense': enemy_data['defense'],
+                'experience_reward': enemy_data['experience_reward'],
+                'inventory': enemy_data.get('inventory', [])
+            }
+        })
+    else:
+        return jsonify({'error': 'Generator not available'}), 500
+
 @app.route('/api/master/npc/<npc_id>/inventory', methods=['GET'])
 def get_npc_inventory(npc_id):
     """Get NPC inventory."""
