@@ -14,21 +14,12 @@ from pathlib import Path
 from datetime import datetime
 
 from src.content_generator import ContentGenerator
-from src.database import DatabaseManager
 
 app = Flask(__name__)
 CORS(app)
 
-# Initialize generator and database
+# Initialize generator
 generator = ContentGenerator()
-db = None  # Will be initialized when needed
-
-def get_db():
-    """Get or create database instance."""
-    global db
-    if db is None:
-        db = DatabaseManager()
-    return db
 
 
 # ============================================================================
@@ -267,7 +258,7 @@ def api_docs():
                 <h2>📊 API Overview</h2>
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <h3>20+</h3>
+                        <h3>11</h3>
                         <p>Endpoints</p>
                     </div>
                     <div class="stat-card">
@@ -355,10 +346,6 @@ def api_docs():
                             <span class="param-type">(integer, optional)</span> - Random seed for reproducibility
                         </div>
                         <div class="param">
-                            <span class="param-name">save</span>
-                            <span class="param-type">(boolean, optional)</span> - Save to database
-                        </div>
-                        <div class="param">
                             <span class="param-name">min_quality</span>
                             <span class="param-type">(string, optional)</span> - Minimum quality level
                         </div>
@@ -400,10 +387,6 @@ def api_docs():
                         <div class="param">
                             <span class="param-name">seed</span>
                             <span class="param-type">(integer, optional)</span> - Random seed
-                        </div>
-                        <div class="param">
-                            <span class="param-name">save</span>
-                            <span class="param-type">(boolean, optional)</span> - Save to database
                         </div>
                     </div>
                     <button class="test-button" onclick="testEndpoint('/api/generate/npc', 'POST', {archetype_name: 'merchant', seed: 42}, 'resp-npc')">
@@ -583,81 +566,6 @@ def api_docs():
                 </div>
             </div>
 
-            <!-- Database Endpoints -->
-            <div class="section">
-                <h2>💾 Database Endpoints</h2>
-
-                <div class="endpoint">
-                    <h3>
-                        <span class="method get">GET</span>
-                        <span class="path">/api/history?type={type}&limit={limit}</span>
-                    </h3>
-                    <div class="description">
-                        Get generation history from database.
-                    </div>
-                    <div class="params">
-                        <h4>Query Parameters:</h4>
-                        <div class="param">
-                            <span class="param-name">type</span>
-                            <span class="param-type">(string, optional)</span> - Content type filter
-                        </div>
-                        <div class="param">
-                            <span class="param-name">limit</span>
-                            <span class="param-type">(integer, optional)</span> - Number of records (default: 100)
-                        </div>
-                    </div>
-                </div>
-
-                <div class="endpoint">
-                    <h3>
-                        <span class="method get">GET</span>
-                        <span class="path">/api/search/items?quality={quality}&rarity={rarity}</span>
-                    </h3>
-                    <div class="description">
-                        Search for items in database with filters.
-                    </div>
-                    <div class="params">
-                        <h4>Query Parameters:</h4>
-                        <div class="param">
-                            <span class="param-name">quality</span>
-                            <span class="param-type">(string, optional)</span> - Quality filter
-                        </div>
-                        <div class="param">
-                            <span class="param-name">rarity</span>
-                            <span class="param-type">(string, optional)</span> - Rarity filter
-                        </div>
-                        <div class="param">
-                            <span class="param-name">min_value</span>
-                            <span class="param-type">(integer, optional)</span> - Minimum value
-                        </div>
-                        <div class="param">
-                            <span class="param-name">max_value</span>
-                            <span class="param-type">(integer, optional)</span> - Maximum value
-                        </div>
-                    </div>
-                </div>
-
-                <div class="endpoint">
-                    <h3>
-                        <span class="method get">GET</span>
-                        <span class="path">/api/item/{id}</span>
-                    </h3>
-                    <div class="description">
-                        Get a specific item by database ID.
-                    </div>
-                </div>
-
-                <div class="endpoint">
-                    <h3>
-                        <span class="method get">GET</span>
-                        <span class="path">/api/npc/{id}</span>
-                    </h3>
-                    <div class="description">
-                        Get a specific NPC by database ID.
-                    </div>
-                </div>
-            </div>
-
             <!-- Examples -->
             <div class="section">
                 <h2>📚 Usage Examples</h2>
@@ -677,8 +585,7 @@ print(f"Generated: {item['item']['name']}")
 
 # Generate a merchant NPC
 response = requests.post('http://localhost:5000/api/generate/npc', json={
-    'archetype_name': 'merchant',
-    'save': True
+    'archetype_name': 'merchant'
 })
 npc = response.json()
 print(f"Created: {npc['npc']['name']}")</pre>
@@ -756,7 +663,7 @@ def health_check():
         'status': 'healthy',
         'version': '2.0.0',
         'timestamp': datetime.utcnow().isoformat(),
-        'endpoints': 20,
+        'endpoints': 11,
         'features': [
             'items', 'npcs', 'locations', 'worlds',
             'spells', 'organizations', 'markets',
@@ -839,7 +746,6 @@ def generate_item():
 
     template = data.get('template')
     seed = data.get('seed')
-    save_to_db = data.get('save', False)
 
     # Build constraints
     constraints = {}
@@ -867,15 +773,9 @@ def generate_item():
     try:
         item = generator.generate_item(template, constraints if constraints else None)
 
-        # Save to database if requested
-        item_id = None
-        if save_to_db:
-            item_id = get_db().save_item(item, template, constraints, seed)
-
         return jsonify({
             'success': True,
             'item': item,
-            'db_id': item_id,
             'seed': seed
         })
     except Exception as e:
@@ -899,7 +799,6 @@ def generate_npc():
         archetype = data.get('archetype')
 
     seed = data.get('seed')
-    save_to_db = data.get('save', False)
 
     # Set seed if provided
     if seed is not None:
@@ -908,15 +807,9 @@ def generate_npc():
     try:
         npc = generator.generate_npc(archetype)
 
-        # Save to database if requested
-        npc_id = None
-        if save_to_db:
-            npc_id = get_db().save_npc(npc, archetype, seed)
-
         return jsonify({
             'success': True,
             'npc': npc,
-            'db_id': npc_id,
             'seed': seed
         })
     except Exception as e:
@@ -939,7 +832,6 @@ def generate_spell():
     school = data.get('school')
     spell_template = data.get('spell_template')
     seed = data.get('seed')
-    save_to_db = data.get('save', False)
 
     # Set seed if provided
     if seed is not None:
@@ -983,7 +875,6 @@ def generate_location():
     template = data.get('template')
     generate_connections = data.get('connections', False)  # Changed default to False for API
     seed = data.get('seed')
-    save_to_db = data.get('save', False)
 
     # Set seed if provided
     if seed is not None:
@@ -992,15 +883,9 @@ def generate_location():
     try:
         location = generator.generate_location(template, generate_connections)
 
-        # Save to database if requested
-        location_id = None
-        if save_to_db:
-            location_id = get_db().save_location(location, template, seed)
-
         return jsonify({
             'success': True,
             'location': location,
-            'db_id': location_id,
             'seed': seed
         })
     except Exception as e:
@@ -1017,7 +902,6 @@ def generate_world():
 
     size = data.get('size', 5)
     seed = data.get('seed')
-    save_to_db = data.get('save', False)
     name = data.get('name')
 
     # Set seed if provided
@@ -1027,15 +911,9 @@ def generate_world():
     try:
         world = generator.generate_world(int(size))
 
-        # Save to database if requested
-        world_id = None
-        if save_to_db:
-            world_id = get_db().save_world(world, name, seed)
-
         return jsonify({
             'success': True,
             'world': world,
-            'db_id': world_id,
             'seed': seed
         })
     except Exception as e:
@@ -1140,7 +1018,6 @@ def generate_bulk():
     count = min(int(data.get('count', 10)), 100)  # Limit to 100 for performance
     template = data.get('template')
     seed = data.get('seed')
-    save_to_db = data.get('save', False)
 
     # Set seed if provided
     if seed is not None:
@@ -1148,24 +1025,14 @@ def generate_bulk():
 
     try:
         results = []
-        db_ids = []
 
         for i in range(count):
             if content_type == 'item':
                 content = generator.generate_item(template)
-                if save_to_db:
-                    db_id = get_db().save_item(content, template, None, seed)
-                    db_ids.append(db_id)
             elif content_type == 'npc':
                 content = generator.generate_npc(template)
-                if save_to_db:
-                    db_id = get_db().save_npc(content, template, seed)
-                    db_ids.append(db_id)
             elif content_type == 'location':
                 content = generator.generate_location(template, False)
-                if save_to_db:
-                    db_id = get_db().save_location(content, template, seed)
-                    db_ids.append(db_id)
             else:
                 return jsonify({'success': False, 'error': 'Invalid content type'}), 400
 
@@ -1175,183 +1042,7 @@ def generate_bulk():
             'success': True,
             'results': results,
             'count': len(results),
-            'db_ids': db_ids if save_to_db else None,
             'seed': seed
-        })
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 400
-
-
-# ============================================================================
-# Database Query Endpoints
-# ============================================================================
-
-@app.route('/api/history', methods=['GET'])
-def get_history():
-    """Get generation history."""
-    content_type = request.args.get('type')
-    limit = request.args.get('limit', 100)
-
-    try:
-        history = get_db().get_history(content_type, int(limit))
-        return jsonify({
-            'success': True,
-            'history': history
-        })
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 400
-
-
-@app.route('/api/search/items', methods=['GET'])
-def search_items():
-    """Search for items in database."""
-    filters = {}
-
-    if request.args.get('type'):
-        filters['type'] = request.args.get('type')
-    if request.args.get('quality'):
-        filters['quality'] = request.args.get('quality')
-    if request.args.get('rarity'):
-        filters['rarity'] = request.args.get('rarity')
-    if request.args.get('min_value'):
-        filters['min_value'] = int(request.args.get('min_value'))
-    if request.args.get('max_value'):
-        filters['max_value'] = int(request.args.get('max_value'))
-    if request.args.get('material'):
-        filters['material'] = request.args.get('material')
-
-    limit = request.args.get('limit', 100)
-
-    try:
-        items = get_db().search_items(filters, int(limit))
-        return jsonify({
-            'success': True,
-            'items': items,
-            'count': len(items)
-        })
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 400
-
-
-@app.route('/api/item/<int:item_id>', methods=['GET'])
-def get_item(item_id):
-    """Get a specific item by ID."""
-    try:
-        item = get_db().get_item(item_id)
-        if item:
-            return jsonify({
-                'success': True,
-                'item': item
-            })
-        else:
-            return jsonify({
-                'success': False,
-                'error': 'Item not found'
-            }), 404
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 400
-
-
-@app.route('/api/npc/<int:npc_id>', methods=['GET'])
-def get_npc(npc_id):
-    """Get a specific NPC by ID."""
-    try:
-        npc = get_db().get_npc(npc_id)
-        if npc:
-            return jsonify({
-                'success': True,
-                'npc': npc
-            })
-        else:
-            return jsonify({
-                'success': False,
-                'error': 'NPC not found'
-            }), 404
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 400
-
-
-@app.route('/api/location/<int:location_id>', methods=['GET'])
-def get_location(location_id):
-    """Get a specific location by ID."""
-    try:
-        location = get_db().get_location(location_id)
-        if location:
-            return jsonify({
-                'success': True,
-                'location': location
-            })
-        else:
-            return jsonify({
-                'success': False,
-                'error': 'Location not found'
-            }), 404
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 400
-
-
-@app.route('/api/world/<int:world_id>', methods=['GET'])
-def get_world(world_id):
-    """Get a specific world by ID."""
-    try:
-        world = get_db().get_world(world_id)
-        if world:
-            return jsonify({
-                'success': True,
-                'world': world
-            })
-        else:
-            return jsonify({
-                'success': False,
-                'error': 'World not found'
-            }), 404
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 400
-
-
-# ============================================================================
-# Statistics Endpoints
-# ============================================================================
-
-@app.route('/api/stats', methods=['GET'])
-def get_stats():
-    """Get statistics about generated content."""
-    try:
-        # Get counts from database
-        db_instance = get_db()
-
-        # Simple implementation - could be enhanced with actual DB queries
-        return jsonify({
-            'success': True,
-            'stats': {
-                'message': 'Database statistics available through individual endpoints',
-                'available_templates': {
-                    'items': len(generator.item_templates),
-                    'npcs': len(generator.professions),
-                    'locations': len(generator.locations_config.get('templates', {}))
-                }
-            }
         })
     except Exception as e:
         return jsonify({
