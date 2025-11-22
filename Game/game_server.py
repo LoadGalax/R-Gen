@@ -1017,12 +1017,47 @@ def create_master_npc():
 
 @app.route('/api/master/enemy', methods=['POST'])
 def create_master_enemy():
-    """Create a new Enemy with automatic defaults based on enemy type."""
+    """
+    Create a new Enemy using race + profession system.
+
+    Enemies are generated using race (what they are) and profession (what they do):
+    - Races: goblin, orc, skeleton, zombie, wolf, human, etc.
+    - Professions: warrior, bandit, cultist, thief, or none for beasts
+
+    Examples:
+    - goblin + warrior = goblin warrior
+    - skeleton + (no profession) = skeleton
+    - human + bandit = human bandit
+    - wolf + (no profession) = wolf (beasts don't need professions)
+    """
     w = get_or_create_world()
     data = request.get_json()
 
-    # Enemy type determines the profession
-    enemy_type = data.get('enemy_type', 'goblin')  # goblin, skeleton, orc, bandit, cultist, zombie, wolf
+    # Race determines what the enemy IS
+    race = data.get('race', 'goblin')  # goblin, skeleton, orc, zombie, wolf, human, etc.
+
+    # Profession determines what the enemy DOES (optional for beasts)
+    profession = data.get('profession', None)  # warrior, bandit, cultist, thief, or None
+
+    # If profession is provided as a string, convert to list
+    if profession and isinstance(profession, str):
+        professions = [profession] if profession else []
+    elif profession:
+        professions = profession
+    else:
+        professions = []
+
+    # Auto-assign default professions for certain races if not specified
+    if not professions:
+        default_professions = {
+            'goblin': ['warrior'],
+            'orc': ['warrior'],
+            'skeleton': [],  # No profession for undead
+            'zombie': [],    # No profession for undead
+            'wolf': [],      # No profession for beasts
+        }
+        professions = default_professions.get(race, ['warrior'])
+
     location_id = data.get('location_id')
     custom_name = data.get('name')  # Optional custom name
 
@@ -1038,10 +1073,11 @@ def create_master_enemy():
     }
     multiplier = difficulty_multipliers.get(difficulty, 1.0)
 
-    # Generate enemy data using the enemy profession
+    # Generate enemy data using race + profession
     if w.generator_adapter:
         enemy_data = w.generator_adapter.spawn_npc(
-            professions=[enemy_type],
+            professions=professions,
+            race=race,
             location_id=location_id
         )
 
@@ -1078,12 +1114,15 @@ def create_master_enemy():
         # Create enemy entity
         enemy = w.spawn_npc(enemy_data)
 
+        profession_text = f" {professions[0].title()}" if professions else ""
         return jsonify({
             'success': True,
-            'message': f'{difficulty.title()} {enemy_type.title()} created',
+            'message': f'{difficulty.title()} {race.title()}{profession_text} created',
             'enemy_id': enemy.id,
             'enemy_data': {
                 'name': enemy_data['name'],
+                'race': enemy_data.get('race'),
+                'professions': enemy_data.get('professions', []),
                 'max_health': enemy_data['max_health'],
                 'attack_power': enemy_data['attack_power'],
                 'defense': enemy_data['defense'],
