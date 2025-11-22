@@ -341,6 +341,8 @@ class RGenGame {
                 const data = await response.json();
                 if (this.player) {
                     this.player.inventory = data.inventory;
+                    this.player.carrying_capacity = data.carrying_capacity || 0;
+                    this.player.max_carrying_capacity = data.max_carrying_capacity || 100;
                 }
                 this.updateInventoryPage();
                 console.log('Inventory loaded:', data.inventory);
@@ -466,10 +468,13 @@ class RGenGame {
             if (emptySection) emptySection.style.display = 'none';
         }
 
-        // Update subtitle with count
+        // Update subtitle with count and weight
         const subtitle = document.querySelector('[data-page="inventory"] .page-subtitle');
         if (subtitle) {
-            subtitle.textContent = `~ Carrying ${inventory.length} items ~`;
+            const weight = this.player.carrying_capacity || 0;
+            const maxWeight = this.player.max_carrying_capacity || 100;
+            const percentFull = maxWeight > 0 ? Math.round((weight / maxWeight) * 100) : 0;
+            subtitle.textContent = `~ Carrying ${inventory.length} items | Weight: ${weight.toFixed(1)}/${maxWeight.toFixed(1)} (${percentFull}%) ~`;
         }
     }
 
@@ -1728,23 +1733,40 @@ class RGenGame {
 
             const data = await response.json();
 
-            if (response.ok) {
-                this.showNotification(`${data.message}! +${data.xp_gained} XP`, 'success');
+            if (response.ok && data.success) {
+                let message = data.message || 'Item crafted successfully!';
+                if (data.profession_experience_gained) {
+                    message += ` +${data.profession_experience_gained} XP`;
+                }
+                this.showNotification(message, 'success');
 
                 // Reload inventory and professions to reflect changes
                 await this.loadPlayerInventory();
                 await this.loadPlayerProfessions();
+                await this.loadPlayerRecipes();
 
                 // Update displays
                 this.updateInventoryPage();
                 this.updateCraftPage();
 
                 // If leveled up, show additional notification
-                if (data.new_level > this.player.professions.find(p => p.level === data.new_level - 1)?.level) {
-                    this.showNotification(`Profession leveled up to ${data.new_level}!`, 'success');
+                if (data.profession_level) {
+                    const oldLevel = this.player.professions?.find(p => p.level < data.profession_level);
+                    if (oldLevel) {
+                        this.showNotification(`🎉 Profession leveled up to ${data.profession_level}!`, 'success');
+                    }
                 }
             } else {
-                this.showNotification(data.error || 'Failed to craft item', 'error');
+                // Handle missing ingredients with detailed message
+                if (data.missing_ingredients) {
+                    let message = 'Missing ingredients:\n';
+                    data.missing_ingredients.forEach(ing => {
+                        message += `${ing.item_name}: ${ing.have}/${ing.required}\n`;
+                    });
+                    this.showNotification(message, 'error');
+                } else {
+                    this.showNotification(data.error || 'Failed to craft item', 'error');
+                }
             }
         } catch (error) {
             console.error('Error crafting item:', error);
