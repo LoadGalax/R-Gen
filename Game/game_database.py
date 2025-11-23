@@ -53,6 +53,9 @@ class GameDatabase:
                 )
             """)
 
+            # Migrate existing tables - add new columns if they don't exist
+            self._migrate_database(cursor)
+
             # Player stats table
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS player_stats (
@@ -166,6 +169,36 @@ class GameDatabase:
             """)
 
             conn.commit()
+
+    def _migrate_database(self, cursor):
+        """Migrate existing database schema to add new columns."""
+        # Check and add carrying_capacity columns to player_stats
+        cursor.execute("PRAGMA table_info(player_stats)")
+        columns = [col[1] for col in cursor.fetchall()]
+
+        if 'carrying_capacity' not in columns:
+            print("Migrating database: Adding carrying_capacity to player_stats...")
+            cursor.execute("ALTER TABLE player_stats ADD COLUMN carrying_capacity REAL DEFAULT 0.0")
+
+        if 'max_carrying_capacity' not in columns:
+            print("Migrating database: Adding max_carrying_capacity to player_stats...")
+            cursor.execute("ALTER TABLE player_stats ADD COLUMN max_carrying_capacity REAL DEFAULT 100.0")
+
+        # Check and add new columns to player_inventory
+        cursor.execute("PRAGMA table_info(player_inventory)")
+        columns = [col[1] for col in cursor.fetchall()]
+
+        if 'weight' not in columns:
+            print("Migrating database: Adding weight to player_inventory...")
+            cursor.execute("ALTER TABLE player_inventory ADD COLUMN weight REAL DEFAULT 1.0")
+
+        if 'durability' not in columns:
+            print("Migrating database: Adding durability to player_inventory...")
+            cursor.execute("ALTER TABLE player_inventory ADD COLUMN durability INTEGER DEFAULT 100")
+
+        if 'max_durability' not in columns:
+            print("Migrating database: Adding max_durability to player_inventory...")
+            cursor.execute("ALTER TABLE player_inventory ADD COLUMN max_durability INTEGER DEFAULT 100")
 
     # ===================================================================
     # Player Management
